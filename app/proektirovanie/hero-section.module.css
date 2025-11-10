@@ -1,0 +1,14 @@
+.hero {
+  padding: 130px 10px 40px;
+}
+
+.title {
+  font-size: clamp(28px, 4vw, 62px);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1;
+  color: #252525;
+  letter-spacing: 0.04em;
+  width: 100%;
+}
+

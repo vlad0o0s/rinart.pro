@@ -1,0 +1,150 @@
+.section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  padding: 120px 10px 0;
+  align-items: start;
+}
+
+.left,
+.right {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.title {
+  font-size: clamp(24px, 2.1vw, 40px);
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1;
+  color: #252525;
+  letter-spacing: 0.03em;
+  text-align: left;
+}
+
+.bodyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.bodyWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sectionsWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionsTitle {
+  font-size: clamp(18px, 1.6vw, 24px);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #252525;
+  border-bottom: 3px solid #252525;
+  padding-bottom: 8px;
+}
+
+.sectionsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: clamp(16px, 1.2vw, 20px);
+  font-weight: 600;
+  color: #252525;
+  position: relative;
+  padding-bottom: 8px;
+  border-bottom: 3px solid #252525;
+}
+
+.sectionIcon {
+  width: 18px;
+  height: 18px;
+  background-image: linear-gradient(90deg, currentColor 50%, transparent 50%),
+    linear-gradient(90deg, currentColor 50%, transparent 50%),
+    linear-gradient(currentColor, currentColor),
+    linear-gradient(currentColor, currentColor);
+  background-size:
+    50% 50%,
+    50% 50%,
+    100% 3px,
+    3px 100%;
+  background-position:
+    left top,
+    right bottom,
+    left bottom,
+    left top;
+  background-repeat: no-repeat;
+}
+
+.body {
+  font-size: clamp(16px, 1.3vw, 24px);
+  font-weight: 500;
+  line-height: 1.2;
+  color: #252525;
+  margin-top: 20px;
+}
+
+.preheading {
+  font-size: clamp(26px, 3.1vw, 48px);
+  font-weight: 700;
+  line-height: 1;
+  color: #252525;
+  font-style: italic;
+  text-transform: uppercase;
+}
+
+.progressSquares {
+  display: grid;
+  grid-template-columns: repeat(2, 8px);
+  grid-template-rows: repeat(2, 8px);
+  gap: 3px;
+}
+
+.progressSquare {
+  width: 8px;
+  height: 8px;
+  border: 1px solid #252525;
+}
+
+.progressSquareFilled {
+  background-color: #252525;
+}
+
+.progressSquareEmpty {
+  background-color: transparent;
+}
+
+@media (max-width: 768px) {
+  .section {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .bodyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .bodyWrapper {
+    gap: 16px;
+  }
+
+  .sectionsList {
+    gap: 10px;
+  }
+}
+
