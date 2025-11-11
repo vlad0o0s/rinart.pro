@@ -70,3 +70,21 @@
   }
 }
 
+@media (max-width: 768px) {
+  .section {
+    padding: 25px 10px;
+    gap: 24px;
+  }
+
+  .preheading,
+  .title {
+    font-size: 4.3vw;
+    line-height: 1;
+  }
+
+  .body {
+    font-size: 3.8vw;
+    line-height: 1;
+  }
+}
+

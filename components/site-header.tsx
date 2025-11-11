@@ -54,14 +54,11 @@ export function SiteHeader({
   return (
     <header className={`w-full bg-white ${styles.header}`}>
       <div className={`${styles.wrapper} md:flex`}>
-        {showBrand ? (
-          <p
-            className={`inline-block w-auto max-w-none text-[12px] font-black uppercase leading-[12px] md:text-[clamp(18px,1.5vw,32px)] md:leading-[17px] ${styles.root}`}
-          >
-            Архитектор{" "}
-            <span className={styles.accent}>РИНАТ ГИЛЬМУТДИНОВ</span>
-          </p>
-        ) : null}
+        <p
+          className={`inline-block w-auto max-w-none text-[12px] font-black uppercase leading-[12px] md:text-[clamp(18px,1.5vw,32px)] md:leading-[17px] ${styles.root} ${styles.desktopBrand}`}
+        >
+          Архитектор <span className={styles.accent}>РИНАТ ГИЛЬМУТДИНОВ</span>
+        </p>
 
         {showDesktopNav ? (
           <nav className={styles.desktopNav} aria-label="Основное меню">
@@ -104,6 +101,11 @@ export function SiteHeader({
         className={`${styles.menu} ${menuOpen ? styles.menuOpen : ""}`}
         aria-hidden={!menuOpen}
       >
+        <p
+          className={`inline-block w-auto max-w-none text-[12px] font-black uppercase leading-[12px] md:hidden ${styles.root} ${styles.mobileBrand}`}
+        >
+          Архитектор <span className={styles.accent}>РИНАТ ГИЛЬМУТДИНОВ</span>
+        </p>
         <ul className={styles.menuList}>
           {NAV_LINKS.map((link) => (
             <li key={`${link.href}-mobile`} className={styles.menuItem}>

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function ProektirovaniePage() {
   return (
     <>
-      <SiteHeader showDesktopNav showBrand={false} subLinks={PROEKTIR_SUBLINKS} />
+      <SiteHeader showDesktopNav subLinks={PROEKTIR_SUBLINKS} />
       <main className="min-h-screen bg-white text-neutral-900 antialiased">
         <HeroSection />
         <IntroSection />

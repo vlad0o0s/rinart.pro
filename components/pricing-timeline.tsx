@@ -1,9 +1,11 @@
+import type { CSSProperties } from "react";
 import styles from "./pricing-timeline.module.css";
 
 type PricingItem = {
   label: string;
   price: string;
   filledSquares: number;
+  connectorHeight: number;
 };
 
 const TOP_ITEMS: PricingItem[] = [
@@ -11,21 +13,25 @@ const TOP_ITEMS: PricingItem[] = [
     label: "Эскизный проект \nдома:",
     price: "1500 р/м2",
     filledSquares: 1,
+    connectorHeight: 45,
   },
   {
     label: "Конструктивные \nрешения:",
     price: "1000 р/м2",
     filledSquares: 3,
+    connectorHeight: 185,
   },
   {
     label: "Проект отопления:",
     price: "300 р/м2",
     filledSquares: 5,
+    connectorHeight: 95,
   },
   {
     label: "Дизайн проект интерьера:",
     price: "4000 р/м2",
     filledSquares: 7,
+    connectorHeight: 265,
   },
 ];
 
@@ -34,20 +40,31 @@ const BOTTOM_ITEMS: PricingItem[] = [
     label: "Архитектурные \nрешения:",
     price: "1500 р/м2",
     filledSquares: 2,
+    connectorHeight: 60,
   },
   {
     label: "Проект водоснабжения \nи канализации:",
     price: "300 р/м2",
     filledSquares: 4,
+    connectorHeight: 210,
   },
   {
     label: "Проект электроснабжения:",
     price: "300 р/м2",
     filledSquares: 6,
+    connectorHeight: 105,
   },
 ];
 
-const MOBILE_ITEMS = [...TOP_ITEMS, ...BOTTOM_ITEMS];
+const MOBILE_TIMELINE: Array<{ item: PricingItem; side: "left" | "right" }> = [
+  { item: TOP_ITEMS[0], side: "left" },
+  { item: BOTTOM_ITEMS[0], side: "right" },
+  { item: TOP_ITEMS[1], side: "left" },
+  { item: BOTTOM_ITEMS[1], side: "right" },
+  { item: TOP_ITEMS[2], side: "left" },
+  { item: BOTTOM_ITEMS[2], side: "right" },
+  { item: TOP_ITEMS[3], side: "left" },
+];
 
 const TOTAL_SLOTS = 8;
 const BLANK_SLOT_INDEX = 3;
@@ -76,20 +93,37 @@ function IndicatorSquares({ filled }: { filled: number }) {
   );
 }
 
-function DesktopPricingItem({ item, variant }: { item: PricingItem; variant: "top" | "bottom" }) {
+function DesktopPricingItem({
+  item,
+  variant,
+}: {
+  item: PricingItem;
+  variant: "top" | "bottom";
+}) {
   const blockClass =
     variant === "top"
       ? `${styles.indicatorBlock} ${styles.indicatorBlockTop}`
       : `${styles.indicatorBlock} ${styles.indicatorBlockBottom}`;
 
+  const indicatorStyle = {
+    "--connector-length": `${item.connectorHeight}px`,
+  } as CSSProperties;
+
+  const copyBlock = (
+    <div className={styles.copyBlock}>
+      <p className={styles.itemTitle}>{item.label}</p>
+      <p className={styles.itemPrice}>{item.price}</p>
+    </div>
+  );
+
   return (
     <div className={`${styles.item} ${variant === "top" ? styles.itemTop : styles.itemBottom}`}>
-      <div className={blockClass}>
+      {variant === "top" ? copyBlock : null}
+      <div className={blockClass} style={indicatorStyle}>
         <IndicatorSquares filled={item.filledSquares} />
         <span className={styles.connectorSegment} aria-hidden="true" />
       </div>
-      <p className={styles.itemTitle}>{item.label}</p>
-      <p className={styles.itemPrice}>{item.price}</p>
+      {variant === "bottom" ? copyBlock : null}
     </div>
   );
 }
@@ -113,16 +147,36 @@ export function PricingTimeline() {
           ))}
         </div>
       </div>
-      <div className={styles.mobileList}>
-        {MOBILE_ITEMS.map((item) => (
-          <div key={`mobile-${item.label}`} className={styles.mobileItem}>
-            <IndicatorSquares filled={item.filledSquares} />
-            <div className={styles.mobileCopy}>
-              <p className={styles.itemTitle}>{item.label}</p>
-              <p className={styles.itemPrice}>{item.price}</p>
+      <div className={styles.mobileTimeline}>
+        {MOBILE_TIMELINE.map(({ item, side }) => {
+          const isLeft = side === "left";
+          const content = (
+            <div className={styles.mobileContent}>
+              <IndicatorSquares filled={item.filledSquares} />
+              <div className={styles.mobileCopy}>
+                <p className={styles.itemTitle}>{item.label}</p>
+                <p className={styles.itemPrice}>{item.price}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+
+          return (
+            <div
+              key={`mobile-${item.label}`}
+              className={`${styles.mobileTimelineItem} ${isLeft ? styles.mobileTimelineItemLeft : styles.mobileTimelineItemRight}`}
+            >
+              {isLeft ? content : <div className={styles.mobileSpacer} aria-hidden="true" />}
+              <div className={styles.mobileCenter}>
+                <span
+                  className={`${styles.mobileConnector} ${
+                    isLeft ? styles.mobileConnectorLeft : styles.mobileConnectorRight
+                  }`}
+                />
+              </div>
+              {!isLeft ? content : <div className={styles.mobileSpacer} aria-hidden="true" />}
+            </div>
+          );
+        })}
       </div>
     </section>
   );

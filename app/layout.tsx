@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { Preloader } from "@/components/preloader";
 
 const neueHaasUnica = localFont({
   variable: "--font-neue-haas",
@@ -60,9 +59,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" data-preload-state="running">
+    <html lang="ru">
       <body className={`${neueHaasUnica.variable} antialiased`}>
-        <Preloader />
         {children}
       </body>
     </html>

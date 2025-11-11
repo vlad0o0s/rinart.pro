@@ -83,7 +83,7 @@
   display: grid;
   grid-template-columns: repeat(2, 10px);
   grid-template-rows: repeat(2, 10px);
-  gap: 4px;
+  gap: 1px;
 }
 
 .progressSquare {
@@ -112,6 +112,26 @@
 
   .body {
     margin-bottom: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 25px 10px;
+    gap: 24px;
+  }
+
+  .preheading,
+  .title,
+  .sectionsTitle {
+    font-size: 4.3vw;
+    line-height: 1;
+  }
+
+  .body,
+  .sectionItem {
+    font-size: 3.8vw;
+    line-height: 1;
   }
 }
 

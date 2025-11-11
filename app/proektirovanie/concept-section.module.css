@@ -14,7 +14,7 @@
 
 .number {
   font-family: "Neue Haas Unica", sans-serif;
-  font-size: clamp(120px, 12vw, 220px);
+  font-size: clamp(96px, 10vw, 180px);
   font-weight: 700;
   font-style: italic;
   line-height: 1;
@@ -81,7 +81,7 @@
   display: grid;
   grid-template-columns: repeat(2, 8px);
   grid-template-rows: repeat(2, 8px);
-  gap: 3px;
+  gap: 1px;
   margin-top: 3px;
 }
 
@@ -107,7 +107,7 @@
   }
 
   .number {
-    font-size: clamp(96px, 20vw, 180px);
+    font-size: clamp(72px, 18vw, 140px);
   }
 
   .bodyRow {
@@ -117,6 +117,41 @@
 
   .list {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 25px 10px;
+    gap: 24px;
+  }
+
+  .left {
+    justify-content: flex-start;
+  }
+
+  .number {
+    font-size: clamp(60px, 14vw, 120px);
+  }
+
+  .title {
+    font-size: 4.3vw;
+    line-height: 1;
+  }
+
+  .listTitle {
+    font-size: 4.3vw;
+    line-height: 1;
+  }
+
+  .body,
+  .item {
+    font-size: 3.8vw;
+    line-height: 1;
+  }
+
+  .list {
     gap: 16px;
   }
 }

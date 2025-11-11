@@ -1,5 +1,6 @@
 .hero {
   padding: 130px 10px 40px;
+  transition: padding 0.3s ease;
 }
 
 .title {
@@ -9,5 +10,16 @@
   font-size: clamp(28px, 4vw, 62px);
   font-weight: 900;
   line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 5vw;
+    line-height: 1;
+  }
+
+  .hero {
+    padding: 120px 10px 25px;
+  }
 }
 

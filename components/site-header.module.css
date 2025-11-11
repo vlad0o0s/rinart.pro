@@ -97,8 +97,8 @@
   grid-auto-flow: row;
   grid-template-columns: repeat(2, 10px);
   grid-template-rows: repeat(2, 10px);
-  grid-column-gap: 2px;
-  grid-row-gap: 2px;
+  grid-column-gap: 1px;
+  grid-row-gap: 1px;
   width: 22px;
   min-width: 22px;
   height: 22px;
@@ -195,27 +195,33 @@
   justify-content: center;
 }
 
-.socialLink {
+.socials a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  color: #5c5c5c;
-  background-color: transparent;
-  transition: color 0.3s ease, transform 0.3s ease;
+  color: #252525bf;
+  background-color: rgba(37, 37, 37, 0.08);
+  transition:
+    color 0.3s ease,
+    background-color 0.3s ease,
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
-.socialLink:focus-visible,
-.socialLink:hover {
-  transform: translateY(-2px);
-  color: rgba(37, 37, 37, 0.7);
+.socials a:hover,
+.socials a:focus-visible {
+  color: #252525;
+  background-color: rgba(37, 37, 37, 0.16);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(37, 37, 37, 0.12);
 }
 
 .icon {
-  width: 30px;
-  height: 30px;
+  width: 18px;
+  height: 18px;
   display: block;
   background-color: currentColor;
   mask-repeat: no-repeat;
@@ -227,9 +233,19 @@
   transition: transform 0.3s ease, background-color 0.3s ease;
 }
 
-.socialLink:focus-visible .icon,
-.socialLink:hover .icon {
-  transform: scale(1.1);
+.socials a:hover .icon,
+.socials a:focus-visible .icon {
+  transform: scale(1.05);
+}
+
+.mobileBrand {
+  margin: 0 0 24px;
+  text-align: center;
+  color: rgba(37, 37, 37, 0.8);
+}
+
+.desktopBrand {
+  display: inline-block;
 }
 
 .iconPinterest {
@@ -318,6 +334,10 @@
 
   .desktopNavItem {
     animation: headerNavItem 0.8s ease-out forwards;
+  }
+
+  .desktopBrand {
+    display: none;
   }
 
   .desktopNavItem:nth-child(1) {
