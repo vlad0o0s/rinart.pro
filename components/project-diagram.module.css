@@ -1,0 +1,109 @@
+.section {
+  position: relative;
+  padding: 120px 10px;
+  background-color: #ffffff;
+}
+
+.diagramWrapper {
+  position: relative;
+  max-width: 1189px;
+  margin: 0 auto;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: clamp(12px, 1.1vw, 18px);
+  font-weight: 600;
+  color: #252525;
+}
+
+.labelSquares {
+  display: grid;
+  grid-template-columns: repeat(2, 8px);
+  grid-template-rows: repeat(2, 8px);
+  gap: 3px;
+}
+
+.labelSquare {
+  width: 8px;
+  height: 8px;
+  border: 1px solid #252525;
+  background-color: transparent;
+}
+
+.labelSquareFilled {
+  background-color: #252525;
+}
+
+.label_topLeft {
+  top: -32px;
+  left: 40px;
+  transform: translateY(-100%);
+}
+
+.label_topRight {
+  top: -32px;
+  right: 200px;
+  transform: translateY(-100%);
+}
+
+.label_bottomLeft {
+  bottom: -40px;
+  left: 300px;
+  transform: translateY(100%);
+}
+
+.label_bottomRight {
+  bottom: -40px;
+  right: 160px;
+  transform: translateY(100%);
+}
+
+.labelText {
+  max-width: 260px;
+}
+
+@media (max-width: 1024px) {
+  .section {
+    padding: 80px 10px;
+  }
+
+  .label {
+    font-size: 14px;
+  }
+
+  .label_topLeft,
+  .label_topRight {
+    top: -24px;
+  }
+
+  .label_bottomLeft,
+  .label_bottomRight {
+    bottom: -32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .diagramWrapper {
+    padding: 0 10px;
+  }
+
+  .label {
+    position: static;
+    transform: none !important;
+    margin-top: 24px;
+  }
+
+  .labelSquares {
+    order: -1;
+  }
+}

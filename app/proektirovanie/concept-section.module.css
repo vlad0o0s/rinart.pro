@@ -1,0 +1,122 @@
+.section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  padding: 120px 10px 0;
+  align-items: start;
+}
+
+.left {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.number {
+  font-family: "Neue Haas Unica", sans-serif;
+  font-size: clamp(120px, 12vw, 220px);
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  color: #dcdcdc;
+  margin: 0;
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.bodyRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.title {
+  font-size: clamp(24px, 2.2vw, 40px);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.1;
+  color: #252525;
+  margin: 0;
+}
+
+.body {
+  font-size: clamp(16px, 1.3vw, 22px);
+  font-weight: 500;
+  line-height: 1.25;
+  color: #252525;
+  margin: 0;
+}
+
+.listTitle {
+  font-size: clamp(18px, 1.4vw, 22px);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #252525;
+  margin: 20px 0 0;
+}
+
+.list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 60px;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: clamp(16px, 1.2vw, 20px);
+  font-weight: 600;
+  color: #252525;
+}
+
+.itemSquares {
+  display: grid;
+  grid-template-columns: repeat(2, 8px);
+  grid-template-rows: repeat(2, 8px);
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.itemSquare {
+  width: 8px;
+  height: 8px;
+  border: 1px solid #252525;
+}
+
+.itemSquareFilled {
+  background-color: #252525;
+}
+
+@media (max-width: 1024px) {
+  .section {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-top: 80px;
+  }
+
+  .right {
+    padding-left: 0;
+  }
+
+  .number {
+    font-size: clamp(96px, 20vw, 180px);
+  }
+
+  .bodyRow {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .list {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

@@ -1,0 +1,68 @@
+.section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  padding: 80px 10px 0;
+  align-items: start;
+}
+
+.left {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.number {
+  font-family: "Neue Haas Unica", sans-serif;
+  font-size: clamp(120px, 12vw, 220px);
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  color: #dcdcdc;
+  margin: 0;
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.title {
+  font-size: clamp(24px, 2.2vw, 38px);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.1;
+  color: #252525;
+  margin: 0;
+}
+
+.bodyRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.body {
+  font-size: clamp(16px, 1.3vw, 22px);
+  font-weight: 500;
+  line-height: 1.25;
+  color: #252525;
+  margin: 0;
+}
+
+@media (max-width: 1024px) {
+  .section {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .bodyRow {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .number {
+    font-size: clamp(96px, 20vw, 180px);
+  }
+}

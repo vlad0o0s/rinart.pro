@@ -46,7 +46,6 @@
   font-size: clamp(16px, 1.2vw, 26px);
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
   width: 100%;
   justify-content: space-between;
   align-items: center;
@@ -57,14 +56,14 @@
 }
 
 .desktopNavItem a {
+  font-family: var(--font-neue-haas), "Neue Haas Unica", sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: clamp(16px, 1.2vw, 26px);
   color: rgba(37, 37, 37, 0.5);
   text-decoration: none;
   position: relative;
-  background-image: linear-gradient(currentColor, currentColor);
-  background-position: 0 100%;
-  background-repeat: no-repeat;
-  background-size: 0% 2px;
-  transition: background-size 0.25s ease, color 0.3s ease;
+  transition: color 0.3s ease;
 }
 
 .desktopNavItem a:hover,
@@ -270,13 +269,14 @@
 }
 
 .subnavItem a {
-  color: inherit;
+  font-family: var(--font-neue-haas), "Neue Haas Unica", sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: clamp(14px, 1vw, 20px);
+  color: rgba(37, 37, 37, 0.5);
   text-decoration: none;
-  background-image: linear-gradient(currentColor, currentColor);
-  background-position: 0 100%;
-  background-repeat: no-repeat;
-  background-size: 0% 2px;
-  transition: background-size 0.25s ease, color 0.25s ease;
+  position: relative;
+  transition: color 0.3s ease;
 }
 
 .subnavItem a:hover,

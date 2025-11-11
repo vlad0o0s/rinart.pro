@@ -3,12 +3,11 @@
 }
 
 .title {
+  text-transform: uppercase;
+  color: #252525;
+  width: 100%;
   font-size: clamp(28px, 4vw, 62px);
   font-weight: 900;
-  text-transform: uppercase;
   line-height: 1;
-  color: #252525;
-  letter-spacing: 0.04em;
-  width: 100%;
 }
 

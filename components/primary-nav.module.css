@@ -26,18 +26,14 @@
 }
 
 .item a {
-  font-family: var(--font-neue-haas), "Neue Haas Unica", sans-serif;
-  font-weight: 900;
+  display: block;
   text-transform: uppercase;
-  font-size: clamp(16px, 1.2vw, 26px);
-  color: rgba(37, 37, 37, 0.5);
+  color: rgba(37, 37, 37, 0.45);
+  font-size: clamp(18px, 1.6vw, 30px);
+  font-weight: 900;
   text-decoration: none;
-  letter-spacing: 0.04em;
-  background-image: linear-gradient(currentColor, currentColor);
-  background-position: 0 100%;
-  background-repeat: no-repeat;
-  background-size: 0% 2px;
-  transition: background-size 0.25s ease, color 0.25s ease;
+  position: relative;
+  transition: color 0.25s ease;
 }
 
 .item a:focus-visible,

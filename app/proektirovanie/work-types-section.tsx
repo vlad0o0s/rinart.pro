@@ -10,18 +10,15 @@ const PROJECT_SECTIONS = [
 
 function ProgressSquares({ count }: { count: number }) {
   return (
-    <div className={styles.progressSquares}>
-      {Array.from({ length: 4 }).map((_, index) => {
-        const key = `progress-${count}-${index}`;
-        return (
-          <span
-            key={key}
-            className={`${styles.progressSquare} ${
-              index < count ? styles.progressSquareFilled : styles.progressSquareEmpty
-            }`}
-          />
-        );
-      })}
+    <div className={styles.progressSquares} aria-hidden="true">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <span
+          key={`progress-${count}-${index}`}
+          className={`${styles.progressSquare} ${
+            index < count ? styles.progressSquareFilled : styles.progressSquareEmpty
+          }`}
+        />
+      ))}
     </div>
   );
 }
@@ -31,34 +28,29 @@ export function WorkTypesSection() {
     <section className={styles.section} id="vidy">
       <div className={styles.left}>
         <p className={styles.preheading}>
-          <em>(I)</em> ВИДЫ РАБОТ
+          <em>(I)</em> Виды работ
         </p>
       </div>
       <div className={styles.right}>
         <h2 className={styles.title}>
           Мастерская разрабатывает полный пакет чертежей, необходимых для
-          строительства загородного дома, в соответствии с действующими
-          нормативами.
+          строительства загородного дома, в соответствии с действующими нормативами.
         </h2>
-        <div className={styles.bodyWrapper}>
-          <p className={styles.body}>
-            Творческий подход к работе позволяет создать индивидуальный,
-            авторский проект дома. В своей работе мы учитываем современные
-            технологии, уделяем внимание вопросам энергосбережения в доме.
-          </p>
-          <div className={styles.sectionsWrapper}>
-            <h3 className={styles.sectionsTitle}>
-              Разделы проекта, которые мы выполняем:
-            </h3>
-            <ul className={styles.sectionsList}>
-              {PROJECT_SECTIONS.map((section) => (
-                <li key={section.label} className={styles.sectionItem}>
-                  <ProgressSquares count={section.filled} />
-                  <span>{section.label}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <p className={styles.body}>
+          Творческий подход к работе позволяет создать индивидуальный, авторский
+          проект дома. В своей работе мы учитываем современные технологии, уделяем
+          внимание вопросам энергосбережения в доме.
+        </p>
+        <div className={styles.sectionsBlock}>
+          <h3 className={styles.sectionsTitle}>Разделы проекта, которые мы выполняем:</h3>
+          <ul className={styles.sectionsList}>
+            {PROJECT_SECTIONS.map((section) => (
+              <li key={section.label} className={styles.sectionItem}>
+                <ProgressSquares count={section.filled} />
+                <span>{section.label}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
