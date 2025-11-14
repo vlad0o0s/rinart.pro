@@ -3,11 +3,14 @@
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import type ReCAPTCHAComponent from "react-google-recaptcha";
 import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
 import styles from "./admin.module.css";
 
-const ReCAPTCHA = dynamic(() => import("react-google-recaptcha"), { ssr: false });
+const ReCAPTCHA = dynamic(() => import("react-google-recaptcha"), {
+  ssr: false,
+}) as unknown as typeof ReCAPTCHAComponent;
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
 const LOGIN_ERROR_DEFAULT = "Не удалось войти. Проверьте данные и попробуйте снова.";
@@ -18,7 +21,7 @@ export function AdminLoginForm() {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  const recaptchaRef = useRef<import("react-google-recaptcha").ReCAPTCHA | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHAComponent | null>(null);
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
@@ -30,7 +33,8 @@ export function AdminLoginForm() {
       try {
         let recaptchaToken: string | undefined;
         if (RECAPTCHA_SITE_KEY) {
-          recaptchaToken = await recaptchaRef.current?.executeAsync();
+          const token = await recaptchaRef.current?.executeAsync();
+          recaptchaToken = token ?? undefined;
           recaptchaRef.current?.reset();
         }
 

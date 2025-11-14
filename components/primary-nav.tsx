@@ -2,7 +2,7 @@ import styles from "./primary-nav.module.css";
 
 const LINKS = [
   { href: "/", label: "RINART" },
-  { href: "/portfolio", label: "Портфолио" },
+  { href: "/#portfolio", label: "Портфолио" },
   { href: "/proektirovanie", label: "Проектирование" },
   { href: "/masterskaja", label: "Мастерская" },
   { href: "/kontakty", label: "Контакты" },
