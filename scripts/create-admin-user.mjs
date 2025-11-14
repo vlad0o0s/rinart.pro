@@ -41,7 +41,7 @@ function loadEnv(filePath) {
       acc[key.trim()] = value;
       return acc;
     }, {});
-  } catch (error) {
+  } catch {
     return {};
   }
 }

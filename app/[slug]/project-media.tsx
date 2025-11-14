@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import type { CSSProperties } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReveal } from "@/lib/use-reveal";
 import styles from "./page.module.css";
 
@@ -90,7 +91,9 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
   }, [activeIndex, closeModal, showNext, showPrev]);
 
   useEffect(() => {
-    setVisibleItems(mediaItems);
+    startTransition(() => {
+      setVisibleItems(mediaItems);
+    });
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = 0;
     }
@@ -124,10 +127,6 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
     };
   }, [activeIndex]);
 
-  if (!visibleItems.length) {
-    return null;
-  }
-
   const mediaRef = useReveal<HTMLDivElement>({ threshold: 0.15 });
   const combinedRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -136,6 +135,10 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
     },
     [mediaRef],
   );
+
+  if (!visibleItems.length) {
+    return null;
+  }
 
   const columnStyle = infoHeight
     ? ({ height: `${infoHeight}px`, maxHeight: `${infoHeight}px` } as CSSProperties)
@@ -157,11 +160,15 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
               className={styles.mediaFrame}
               style={{ "--media-index": index } as CSSProperties}
             >
-              <img
+              <Image
                 src={item.src}
                 alt={item.alt}
                 className={styles.mediaImage}
                 loading="lazy"
+                width={1600}
+                height={1000}
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                unoptimized
                 onClick={() => setActiveIndex(index % mediaItems.length)}
               />
               {item.type === "scheme" && item.caption ? (
@@ -187,7 +194,15 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
             &#10094;
           </button>
           <figure key={activeItem.src} className={styles.modalInner}>
-            <img src={activeItem.src} alt={activeItem.alt} className={styles.modalImage} />
+            <Image
+              src={activeItem.src}
+              alt={activeItem.alt}
+              className={styles.modalImage}
+              width={1920}
+              height={1200}
+              sizes="100vw"
+              unoptimized
+            />
             {activeItem.caption ? (
               <figcaption className={styles.modalCaption}>{activeItem.caption}</figcaption>
             ) : null}
