@@ -21,7 +21,10 @@ export function PageTransition({ enabled = true }: PageTransitionProps = {}) {
   if (!enabled) {
     return null;
   }
+  return <PageTransitionInner />;
+}
 
+function PageTransitionInner() {
   const router = useRouter();
   const pathname = usePathname();
   const [isActive, setIsActive] = useState(false);
@@ -66,7 +69,6 @@ export function PageTransition({ enabled = true }: PageTransitionProps = {}) {
 
   useEffect(() => {
     if (!isActive) {
-      setPhase("idle");
       return;
     }
 
@@ -160,17 +162,19 @@ export function PageTransition({ enabled = true }: PageTransitionProps = {}) {
       return;
     }
 
-    if (pendingPathRef.current && pathname === pendingPathRef.current) {
-      setPhase("open");
-      pendingPathRef.current = null;
-      return;
-    }
-
     waitTimerRef.current = setTimeout(() => {
       setPhase("open");
       pendingPathRef.current = null;
       waitTimerRef.current = null;
     }, MAX_WAIT_DURATION);
+
+    if (typeof window !== "undefined" && pendingPathRef.current && pathname === pendingPathRef.current) {
+      window.dispatchEvent(
+        new CustomEvent("rinart:route-ready", {
+          detail: { pathname },
+        }),
+      );
+    }
 
     return () => clearWaitTimer();
   }, [phase, pathname, clearWaitTimer]);

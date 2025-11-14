@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "../page.module.css";
@@ -169,11 +170,15 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
               >
                 <div className={styles.portfolioImageWrapper}>
                   {project.heroImageUrl ? (
-                    <img
+                    <Image
                       src={project.heroImageUrl}
                       alt={project.title}
                       className={styles.portfolioImage}
                       loading="lazy"
+                      width={1200}
+                      height={800}
+                      sizes="(max-width: 1024px) 100vw, 25vw"
+                      unoptimized
                     />
                   ) : (
                     <span className={styles.portfolioImageFallback} aria-hidden />

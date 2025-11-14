@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { SVGProps } from "react";
 import type { ChangeEvent as ReactChangeEvent, FormEvent as ReactFormEvent, MouseEvent as ReactMouseEvent } from "react";
-import { DndContext, PointerSensor, KeyboardSensor, DragOverlay, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  DragOverlay,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
+import Image from "next/image";
 import {
   SortableContext,
   useSortable,
@@ -207,6 +217,8 @@ type EditorState = {
   seoKeywords: string;
   seoOgImageUrl: string;
 };
+
+type EditorFieldChangeHandler = <K extends keyof EditorState>(field: K, value: EditorState[K]) => void;
 
 function convertBodyToHtml(body: string[]): string {
   if (!body || !body.length) return "";
@@ -1106,7 +1118,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     [reportError],
   );
 
-  const handleDragStart = useCallback((event: { active: { id: string | number } }) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveDragId(String(event.active.id));
   }, []);
 
@@ -1115,7 +1127,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   }, []);
 
   const handleDragOver = useCallback(
-    (event: any) => {
+    (event: DragOverEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) {
         return;
@@ -1134,7 +1146,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   );
 
   const handleDragEnd = useCallback(
-    (event: any) => {
+    (event: DragEndEvent) => {
       setActiveDragId(null);
 
       const { active, over } = event;
@@ -1175,9 +1187,12 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     [reportError],
   );
 
-  const updateEditorField = useCallback((field: keyof EditorState, value: any) => {
-    setEditorState((prev) => (prev ? { ...prev, [field]: value } : prev));
-  }, []);
+  const updateEditorField = useCallback(
+    <K extends keyof EditorState>(field: K, value: EditorState[K]) => {
+      setEditorState((prev) => (prev ? { ...prev, [field]: value } : prev));
+    },
+    [],
+  );
 
   const handleSeoSelect = useCallback((slug: string) => {
     setSelectedSeoSlug(slug);
@@ -1847,7 +1862,14 @@ function SeoEditorPanel({
         />
         <div className={styles.seoOgPreview}>
           {hasOgImage ? (
-            <img src={page.ogImageUrl} alt="OG-превью" className={styles.seoOgPreviewImage} />
+            <Image
+              src={page.ogImageUrl}
+              alt="OG-превью"
+              className={styles.seoOgPreviewImage}
+              width={640}
+              height={360}
+              unoptimized
+            />
           ) : (
             <div className={styles.seoOgEmpty}>Изображение не выбрано</div>
           )}
@@ -1904,13 +1926,10 @@ function CreateProjectModal({
   existingSlugs: Set<string>;
 }) {
   const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
-
-  useEffect(() => {
+  const slug = useMemo(() => {
     const base = slugifyTitle(title);
-    const unique = base ? ensureUniqueSlug(base, existingSlugs) : "";
-    setSlug(unique);
-  }, [title, existingSlugs]);
+    return base ? ensureUniqueSlug(base, existingSlugs) : "";
+  }, [existingSlugs, title]);
 
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
@@ -1929,7 +1948,6 @@ function CreateProjectModal({
     }
     await onCreate({ slug, title: title.trim() });
     setTitle("");
-    setSlug("");
   };
 
   return (
@@ -1990,7 +2008,7 @@ function ProjectEditor({
   onOpenOgImagePicker,
 }: {
   state: EditorState;
-  onFieldChange: (field: keyof EditorState, value: any) => void;
+  onFieldChange: EditorFieldChangeHandler;
   onToggleCategory: (category: string) => void;
   onSave: () => Promise<void>;
   saving: boolean;
@@ -2017,12 +2035,9 @@ function ProjectEditor({
     editorRef.current?.focus();
   };
 
-  const handleRichTextInput = useCallback(
-    (_event: React.FormEvent<HTMLDivElement>) => {
-      syncEditorHtml();
-    },
-    [syncEditorHtml],
-  );
+  const handleRichTextInput = useCallback(() => {
+    syncEditorHtml();
+  }, [syncEditorHtml]);
 
   const executeCommand = (command: string, value?: string) => {
     focusEditor();
@@ -2047,8 +2062,10 @@ function ProjectEditor({
     syncEditorHtml();
   };
 
-  const insertImage = useCallback(
-    (url: string) => {
+  const insertImageRef = useRef<(url: string) => void>(() => {});
+
+  useEffect(() => {
+    insertImageRef.current = (url: string) => {
       const trimmed = url.trim();
       if (!trimmed) {
         return;
@@ -2056,9 +2073,12 @@ function ProjectEditor({
       focusEditor();
       document.execCommand("insertImage", false, trimmed);
       syncEditorHtml();
-    },
-    [syncEditorHtml],
-  );
+    };
+  }, [syncEditorHtml]);
+
+  const insertImage = useCallback((url: string) => {
+    insertImageRef.current(url);
+  }, []);
 
   const handleImageButtonClick = () => {
     fileInputRef.current?.click();
@@ -2410,7 +2430,13 @@ function ProjectEditor({
                     >
                       <IconX aria-hidden="true" />
                     </button>
-                    <img src={state.seoOgImageUrl} alt="Предпросмотр OG" />
+                    <Image
+                      src={state.seoOgImageUrl}
+                      alt="Предпросмотр OG"
+                      width={640}
+                      height={360}
+                      unoptimized
+                    />
                   </div>
                   <code className={styles.mediaInfoValue}>{state.seoOgImageUrl}</code>
                 </div>
@@ -2429,6 +2455,9 @@ function ProjectEditor({
         <button className={styles.primaryButton} type="button" onClick={onSave} disabled={saving || deleting}>
           {saving ? "Сохранение..." : "Сохранить изменения"}
         </button>
+        <button className={styles.dangerButton} type="button" onClick={() => onDelete()} disabled={saving || deleting}>
+          {deleting ? "Удаление..." : "Удалить проект"}
+        </button>
       </div>
     </div>
   );
@@ -2441,7 +2470,7 @@ function MediaPanel({
   onOpenLibrary,
 }: {
   state: EditorState;
-  updateField: (field: keyof EditorState, value: any) => void;
+  updateField: EditorFieldChangeHandler;
   removeGalleryItem: (id: string) => void;
   onOpenLibrary: (mode: MediaLibraryMode, config?: { targetId?: string; initialSelection?: string[] }) => void;
 }) {
@@ -2480,7 +2509,7 @@ function MediaPanel({
               >
                 <IconX aria-hidden="true" />
               </button>
-              <img src={state.heroImageUrl} alt="Главное изображение проекта" />
+              <Image src={state.heroImageUrl} alt="Главное изображение проекта" width={640} height={400} unoptimized />
             </div>
           ) : (
             <div className={styles.heroPlaceholder}>Изображение не выбрано</div>
@@ -2537,7 +2566,13 @@ function MediaPanel({
                   aria-label="Заменить изображение из галереи"
                 >
                   {item.url ? (
-                    <img src={item.url} alt={item.caption || "Изображение галереи"} />
+                    <Image
+                      src={item.url}
+                      alt={item.caption || "Изображение галереи"}
+                      width={320}
+                      height={200}
+                      unoptimized
+                    />
                   ) : (
                     <span className={styles.galleryThumbPlaceholder}>Изображение не выбрано</span>
                   )}
@@ -2755,7 +2790,7 @@ function MediaLibraryModal({
                       }}
                     >
                       <div className={styles.mediaModalPreview}>
-                        <img src={asset.url} alt={asset.title} />
+                        <Image src={asset.url} alt={asset.title || "Медиа"} width={200} height={200} unoptimized />
                       </div>
                       <span className={styles.mediaModalItemTitle}>{asset.title}</span>
                     </button>
