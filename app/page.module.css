@@ -208,8 +208,8 @@
 
 .portfolioGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(16px, 1.5vw, 32px);
 }
 
 .portfolioSkeletonCard {
@@ -234,6 +234,22 @@
   display: block;
   text-decoration: none;
   color: inherit;
+  grid-column: span 3;
+}
+
+.portfolioLink:nth-of-type(6n + 1),
+.portfolioLink:nth-of-type(6n + 4) {
+  grid-column: span 5;
+}
+
+.portfolioLink:nth-of-type(6n + 2),
+.portfolioLink:nth-of-type(6n + 5) {
+  grid-column: span 3;
+}
+
+.portfolioLink:nth-of-type(6n + 3),
+.portfolioLink:nth-of-type(6n) {
+  grid-column: span 4;
 }
 
 .portfolioCard {
@@ -442,15 +458,64 @@
   }
 
   .categoryList {
-    display: none;
+    display: flex;
     flex-direction: column;
     gap: 14px;
-    padding-bottom: 12px;
     border-bottom: 1px solid rgba(37, 37, 37, 0.12);
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    padding-bottom: 0;
+    transform: translateY(-12px);
+    transition:
+      max-height 300ms cubic-bezier(0.33, 1, 0.68, 1),
+      opacity 250ms ease,
+      transform 280ms ease,
+      padding-bottom 250ms ease;
   }
 
   .categoryListOpen {
-    display: flex;
+    max-height: 380px;
+    opacity: 1;
+    padding-bottom: 12px;
+    transform: translateY(0);
+  }
+
+  .categoryList button {
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+      opacity 300ms ease,
+      transform 320ms ease;
+  }
+
+  .categoryListOpen button {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .categoryListOpen button:nth-child(1) {
+    transition-delay: 60ms;
+  }
+
+  .categoryListOpen button:nth-child(2) {
+    transition-delay: 110ms;
+  }
+
+  .categoryListOpen button:nth-child(3) {
+    transition-delay: 160ms;
+  }
+
+  .categoryListOpen button:nth-child(4) {
+    transition-delay: 210ms;
+  }
+
+  .categoryListOpen button:nth-child(5) {
+    transition-delay: 260ms;
+  }
+
+  .categoryListOpen button:nth-child(6) {
+    transition-delay: 310ms;
   }
 }
 
@@ -467,7 +532,11 @@
 
 @media (max-width: 1400px) {
   .portfolioGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+
+  .portfolioLink {
+    grid-column: span 4;
   }
 }
 
@@ -476,11 +545,19 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
   }
+
+  .portfolioLink {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 640px) {
   .portfolioGrid {
     grid-template-columns: 1fr;
+  }
+
+  .portfolioLink {
+    grid-column: 1 / -1 !important;
   }
 
   .portfolioMeta {

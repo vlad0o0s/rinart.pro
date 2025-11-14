@@ -433,6 +433,22 @@ function ensureUniqueSlug(base: string, existing: Set<string>): string {
   return candidate;
 }
 
+function isSlugConflictError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  const message = error.message ?? "";
+  try {
+    const parsed = JSON.parse(message);
+    if (typeof parsed?.error === "string") {
+      return parsed.error.toLowerCase().includes("slug");
+    }
+  } catch {
+    // ignore JSON parse errors
+  }
+  return message.toLowerCase().includes("slug");
+}
+
 function looksLikeUrl(value: string): boolean {
   if (!value) return false;
   try {
@@ -1378,39 +1394,60 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   }, [editorState, persistMedia, reportError, selectedSlug]);
 
   const handleCreateProject = useCallback(
-    async (payload: { slug: string; title: string }) => {
+    async ({ slug: requestedSlug, title }: { slug: string; title: string }) => {
+      setLoading(true);
+      const dynamicSlugs = new Set(existingSlugSet);
+      const baseSlug = requestedSlug || "project";
+      let candidateSlug = baseSlug;
+      let attempts = 0;
+
       try {
-        setLoading(true);
-        const response = await fetchJson<ProjectDetailResponse>("/api/admin/projects", {
-          method: "POST",
-          body: JSON.stringify({ ...payload, categories: [] }),
-        });
-        setProjects((prev) =>
-          [
-            ...prev,
-            {
-              id: response.project.id,
-              slug: response.project.slug,
-              title: response.project.title,
-              tagline: response.project.tagline,
-              heroImageUrl: response.project.heroImageUrl,
-              categories: (response.project.categories ?? []) as string[],
-              order: response.project.order,
-            },
-          ].sort((a, b) => a.order - b.order),
-        );
-        setSelectedSlug(response.project.slug);
-        setEditorState(mapProjectToEditor(response.project));
-        setStatus("Проект создан");
-        setLibraryAssets((prev) => mergeMediaAssets(prev, collectAssetsFromProjects([response.project])));
-        setCreateModalOpen(false);
+        while (attempts < 6) {
+          try {
+            const response = await fetchJson<ProjectDetailResponse>("/api/admin/projects", {
+              method: "POST",
+              body: JSON.stringify({ slug: candidateSlug, title, categories: [] }),
+            });
+
+            setProjects((prev) =>
+              [
+                ...prev,
+                {
+                  id: response.project.id,
+                  slug: response.project.slug,
+                  title: response.project.title,
+                  tagline: response.project.tagline,
+                  heroImageUrl: response.project.heroImageUrl,
+                  categories: (response.project.categories ?? []) as string[],
+                  order: response.project.order,
+                },
+              ].sort((a, b) => a.order - b.order),
+            );
+            setSelectedSlug(response.project.slug);
+            setEditorState(mapProjectToEditor(response.project));
+            setStatus("Проект создан");
+            setLibraryAssets((prev) => mergeMediaAssets(prev, collectAssetsFromProjects([response.project])));
+            setCreateModalOpen(false);
+            return;
+          } catch (error: unknown) {
+            if (isSlugConflictError(error)) {
+              attempts += 1;
+              dynamicSlugs.add(candidateSlug);
+              candidateSlug = ensureUniqueSlug(baseSlug, dynamicSlugs);
+              continue;
+            }
+            throw error;
+          }
+        }
+
+        throw new Error("Не удалось подобрать уникальный адрес проекта");
       } catch (error: unknown) {
         reportError(error, "Не удалось создать проект");
       } finally {
         setLoading(false);
       }
     },
-    [reportError],
+    [existingSlugSet, reportError],
   );
 
   const handleDeleteProject = useCallback(
