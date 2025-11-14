@@ -140,7 +140,8 @@
   }
 
   .title {
-    font-size: clamp(32px, 7.5vw, 44px);
+    font-size: clamp(16px, 5.5vw, 44px);
+    line-height: 1em;
   }
 
   .lead {

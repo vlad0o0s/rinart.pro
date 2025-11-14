@@ -163,7 +163,7 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
         {showSkeleton ? (
           <HomePortfolioSkeleton />
         ) : (
-          filteredProjects.map(({ project, isInactive }) => {
+          filteredProjects.map(({ project, isInactive }, index) => {
             const card = (
               <article
                 className={`${styles.portfolioCard} ${isInactive ? styles.portfolioCardDimmed : ""}`}
@@ -174,11 +174,12 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
                       src={project.heroImageUrl}
                       alt={project.title}
                       className={styles.portfolioImage}
-                      loading="lazy"
-                      width={1200}
-                      height={800}
-                      sizes="(max-width: 1024px) 100vw, 25vw"
-                      unoptimized
+                      loading={index === 0 ? "eager" : "lazy"}
+                      fetchPriority={index === 0 ? "high" : undefined}
+                      priority={index === 0}
+                      fill
+                      sizes="(max-width: 640px) 88vw, (max-width: 1200px) 40vw, 22vw"
+                      quality={70}
                     />
                   ) : (
                     <span className={styles.portfolioImageFallback} aria-hidden />

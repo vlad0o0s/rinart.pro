@@ -13,6 +13,8 @@ const NAV_LINKS = [
   { href: "/kontakty", label: "Контакты" },
 ];
 
+const ARCHITECT_WORD = "Архитектор";
+
 const PROEKTIR_SUBLINKS = [
   { href: "#vidy", label: "Виды работ" },
   { href: "#etap", label: "Этапы проектирования" },
@@ -81,6 +83,17 @@ export function SiteHeader({
 
   const showBreadcrumbs = !menuOpen && breadcrumbs.length > 0;
 
+  const renderBreadcrumbLabel = (label: string) => {
+    if (!label.startsWith(ARCHITECT_WORD)) {
+      return label;
+    }
+    const rest = label.slice(ARCHITECT_WORD.length).trimStart();
+    if (!rest) {
+      return <span className={styles.architect}>{ARCHITECT_WORD}</span>;
+    }
+    return rest;
+  };
+
   useEffect(() => {
     if (menuOpen) {
       const originalOverflow = document.body.style.overflow;
@@ -108,8 +121,8 @@ export function SiteHeader({
 
   return (
     <header className={`w-full bg-white ${styles.header}`}>
-      <div className={`${styles.wrapper} md:flex`}>
-        {showDesktopBrand ? (
+      {showDesktopBrand ? (
+        <div className={`${styles.wrapper} md:flex`}>
           <Link
             href="/"
             className={`inline-block w-auto max-w-none text-[12px] font-black uppercase leading-[12px] md:text-[clamp(18px,1.5vw,32px)] md:leading-[17px] ${styles.root} ${styles.desktopBrand}`}
@@ -118,43 +131,61 @@ export function SiteHeader({
             <span className={`${styles.architect} ${styles.architectBrand}`}>Архитектор</span>
             <span className={styles.accent}>РИНАТ ГИЛЬМУТДИНОВ</span>
           </Link>
-        ) : null}
 
-        {showDesktopNav ? (
-          <nav className={styles.desktopNav} aria-label="Основное меню">
-            <ul className={styles.desktopNavList}>
-              {NAV_LINKS.map((link) => (
-                <li key={link.href} className={styles.desktopNavItem}>
-                  <Link href={link.href}>{link.label}</Link>
+          {showDesktopNav ? (
+            <nav className={styles.desktopNav} aria-label="Основное меню">
+              <ul className={styles.desktopNavList}>
+                {NAV_LINKS.map((link) => (
+                  <li key={link.href} className={styles.desktopNavItem}>
+                    <Link href={link.href}>{link.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className={`${styles.mobileControls} md:hidden`}>
+        {showBreadcrumbs ? (
+          <nav className={styles.mobileBreadcrumbs} aria-label="Хлебные крошки">
+            <ol className={styles.mobileBreadcrumbsList}>
+              {breadcrumbs.map((crumb, index) => (
+                <li key={`${crumb.href}-${index}`} className={styles.mobileBreadcrumbsItem}>
+                  {index < breadcrumbs.length - 1 ? (
+                    <Link
+                      href={crumb.href}
+                      className={`${styles.mobileBreadcrumbsLink} ${crumb.className ?? ""}`}
+                    >
+                      {renderBreadcrumbLabel(crumb.label)}
+                    </Link>
+                  ) : (
+                    <span className={`${styles.mobileBreadcrumbsCurrent} ${crumb.className ?? ""}`}>
+                      {renderBreadcrumbLabel(crumb.label)}
+                    </span>
+                  )}
                 </li>
               ))}
-            </ul>
+            </ol>
           </nav>
-        ) : null}
+        ) : (
+          <div className={styles.mobileBreadcrumbs} aria-hidden="true" />
+        )}
+        <button
+          type="button"
+          className={`${styles.burger} ${styles.mobileBurger}`}
+          aria-label="Открыть меню"
+          aria-expanded={menuOpen}
+          data-active={menuOpen ? "true" : "false"}
+          onClick={toggleMenu}
+          ref={burgerButtonRef}
+        >
+          <span className={styles.burgerElement} />
+          <span className={styles.burgerElement} />
+          <span className={styles.burgerElement} />
+          <span className={styles.burgerElement} />
+        </button>
       </div>
-
-      {showBreadcrumbs ? (
-        <nav className={`${styles.mobileBreadcrumbs} md:hidden`} aria-label="Хлебные крошки">
-          <ol className={styles.mobileBreadcrumbsList}>
-            {breadcrumbs.map((crumb, index) => (
-              <li key={`${crumb.href}-${index}`} className={styles.mobileBreadcrumbsItem}>
-                {index < breadcrumbs.length - 1 ? (
-                  <Link
-                    href={crumb.href}
-                    className={`${styles.mobileBreadcrumbsLink} ${crumb.className ?? ""}`}
-                  >
-                    {crumb.label}
-                  </Link>
-                ) : (
-                  <span className={`${styles.mobileBreadcrumbsCurrent} ${crumb.className ?? ""}`}>
-                    {crumb.label}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ol>
-        </nav>
-      ) : null}
 
       {showDesktopNav && subLinks && subLinks.length ? (
         <nav className={styles.subnav} aria-label="Подразделы">
@@ -167,20 +198,6 @@ export function SiteHeader({
           </ul>
         </nav>
       ) : null}
-      <button
-        type="button"
-        className={styles.burger}
-        aria-label="Открыть меню"
-        aria-expanded={menuOpen}
-        data-active={menuOpen ? "true" : "false"}
-        onClick={toggleMenu}
-        ref={burgerButtonRef}
-      >
-        <span className={styles.burgerElement} />
-        <span className={styles.burgerElement} />
-        <span className={styles.burgerElement} />
-        <span className={styles.burgerElement} />
-      </button>
       <nav
         className={`${styles.menu} ${menuOpen ? styles.menuOpen : ""}`}
         aria-hidden={!menuOpen}

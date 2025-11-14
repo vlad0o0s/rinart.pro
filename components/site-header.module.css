@@ -1,3 +1,11 @@
+.mobileControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 10px 6px;
+  gap: 10px;
+}
 .root {
   font-family: var(--font-neue-haas), "Helvetica Neue", "Helvetica", Arial,
     sans-serif;
@@ -18,6 +26,22 @@
   display: block;
 }
 
+.mobileControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 6px;
+  min-height: var(--header-height, 78px);
+  gap: 10px;
+}
+
+.mobileBurger {
+  flex: 0 0 20%;
+  display: inline-flex;
+  justify-content: flex-end;
+}
+
 .header {
   position: fixed;
   top: 0;
@@ -25,7 +49,7 @@
   right: 0;
   z-index: 100;
   background-color: #ffffff;
-  --header-height: 110px;
+  --header-height: 78px;
   opacity: 0;
   transform: translateY(-16px);
   animation: headerReveal 0.6s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.1s;
@@ -34,7 +58,7 @@
 .wrapper {
   width: 100%;
   padding: 18px 10px 10px;
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 10px;
 }
@@ -98,26 +122,28 @@
 }
 
 .burger {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  z-index: 201;
-  display: grid;
-  place-content: center;
-  place-items: center;
-  grid-auto-flow: row;
-  grid-template-columns: repeat(2, 10px);
-  grid-template-rows: repeat(2, 10px);
-  grid-column-gap: 1px;
-  grid-row-gap: 1px;
-  width: 22px;
-  min-width: 22px;
-  height: 22px;
-  min-height: 22px;
-  padding: 0;
-  color: #5c5c5c;
-  cursor: pointer;
+    z-index: 201;
+    grid-column-gap: 1px;
+    grid-row-gap: 1px;
+    color: #5c5c5c;
+    cursor: pointer;
+    grid-template-rows: repeat(2, 10px);
+    grid-template-columns: repeat(2, 10px);
+    grid-auto-flow: row;
+    place-content: center;
+    place-items: center;
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+    min-height: 22px;
+    margin-left: auto;
+    padding: 0;
+    display: grid;
+    position: relative;
+    top: auto;
+    justify-content: end;
 }
+
 
 .burgerElement {
   width: 100%;
@@ -316,11 +342,11 @@
 }
 
 .mobileBreadcrumbs {
+  flex: 1 1 80%;
   display: flex;
   align-items: center;
-  width: 100%;
-  padding: 0 10px 6px;
-  font-family: var(--font-neue-haas), "Neue Haas Unica", sans-serif;
+  justify-content: flex-start;
+  font-family: var(--font-neue-haас), "Neue Haas Unica", sans-serif;
   text-transform: uppercase;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -371,6 +397,14 @@
 }
 
 @media (min-width: 768px) {
+  .mobileControls {
+    display: none;
+  }
+
+  .mobileBurger {
+    display: none;
+  }
+
   .burger {
     display: none;
   }
