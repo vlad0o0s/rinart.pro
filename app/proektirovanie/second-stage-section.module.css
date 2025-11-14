@@ -1,0 +1,185 @@
+.section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  padding: 80px 10px 0;
+  align-items: start;
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+.left {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+.number {
+  font-family: "Neue Haas Unica", sans-serif;
+  font-size: clamp(96px, 10vw, 180px);
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  color: #dcdcdc;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(22px);
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  opacity: 0;
+  transform: translateY(22px);
+}
+
+.title {
+  font-size: clamp(24px, 2.2vw, 38px);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.1;
+  color: #252525;
+  margin: 0;
+}
+
+.bodyRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+  opacity: 0;
+}
+
+.section[data-visible="true"] {
+  animation: stageTwoSection 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.15s;
+}
+
+.section[data-visible="true"] .left,
+.section[data-visible="true"] .right {
+  animation: stageTwoColumn 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.3s;
+}
+
+.section[data-visible="true"] .left {
+  animation-delay: 0.3s;
+}
+
+.section[data-visible="true"] .right {
+  animation-delay: 0.4s;
+}
+
+.section[data-visible="true"] .number {
+  animation: stageTwoNumber 1s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.35s;
+}
+
+.section[data-visible="true"] .bodyRow {
+  animation: stageTwoBody 1s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.5s;
+}
+
+.body {
+  font-size: clamp(16px, 1.3vw, 22px);
+  font-weight: 500;
+  line-height: 1.25;
+  color: #252525;
+  margin: 0;
+}
+
+@keyframes stageTwoSection {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stageTwoColumn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stageTwoNumber {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stageTwoBody {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1024px) {
+  .section {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .bodyRow {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .number {
+    font-size: clamp(72px, 18vw, 140px);
+  }
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 25px 10px;
+    gap: 24px;
+  }
+
+  .left {
+    justify-content: flex-start;
+  }
+
+  .number {
+    font-size: clamp(60px, 14vw, 120px);
+  }
+
+  .title {
+    font-size: 4.3vw;
+    line-height: 1;
+  }
+
+  .body {
+    font-size: 3.8vw;
+    line-height: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section,
+  .left,
+  .number,
+  .right,
+  .bodyRow {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,0 +1,80 @@
+[
+  {
+    "id": "mironcevo",
+    "order": "01",
+    "title": "Баня Миронцево",
+    "categories": ["other", "houses"]
+  },
+  {
+    "id": "ilichevka",
+    "order": "02",
+    "title": "Дом Ильичевка",
+    "categories": ["houses"]
+  },
+  {
+    "id": "terrace",
+    "order": "03",
+    "title": "Баня Терраса",
+    "categories": ["other"]
+  },
+  {
+    "id": "ozerskoe",
+    "order": "04",
+    "title": "Дом Озерское",
+    "categories": ["houses"]
+  },
+  {
+    "id": "idalgo",
+    "order": "05",
+    "title": "Дом Идальго",
+    "categories": ["houses"]
+  },
+  {
+    "id": "villa",
+    "order": "06",
+    "title": "Вилла",
+    "categories": ["interior"]
+  },
+  {
+    "id": "hill",
+    "order": "07",
+    "title": "Дом на холме",
+    "categories": ["houses"]
+  },
+  {
+    "id": "tower",
+    "order": "08",
+    "title": "Башня Вавилон",
+    "categories": ["art"]
+  },
+  {
+    "id": "petruhino",
+    "order": "09",
+    "title": "Петрухино",
+    "categories": ["houses"]
+  },
+  {
+    "id": "reconstruction",
+    "order": "10",
+    "title": "Реконструкция",
+    "categories": ["houses"]
+  },
+  {
+    "id": "aznakaevo",
+    "order": "11",
+    "title": "Азнакаево",
+    "categories": ["houses"]
+  },
+  {
+    "id": "tandem",
+    "order": "12",
+    "title": "Дом Тандем",
+    "categories": ["houses"]
+  },
+  {
+    "id": "voronovo",
+    "order": "13",
+    "title": "Интерьер Вороново",
+    "categories": ["interior"]
+  }
+]

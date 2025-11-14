@@ -1,0 +1,489 @@
+.page {
+  min-height: 100vh;
+  background-color: #fefefe;
+  color: #252525;
+  font-family: "Neue Haas Unica", "Helvetica Neue", Arial, sans-serif;
+  padding: 140px 0 120px;
+}
+
+.pageShell {
+  position: relative;
+}
+
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.stageLayer {
+  position: relative;
+  opacity: 0;
+  transform: translateY(35px);
+  animation: stageFade 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.stageLayer[data-stage="nav"] {
+  z-index: 3;
+}
+
+.stageLayer[data-stage="portfolio"] {
+  z-index: 1;
+}
+
+.stageLayer[data-stage="hero"] {
+  animation-delay: 0.15s;
+}
+
+.stageLayer[data-stage="nav"] {
+  animation-delay: 0.5s;
+}
+
+.stageLayer[data-stage="portfolio"] {
+  animation-delay: 0.8s;
+}
+
+.stageLayer[data-stage="footer"] {
+  animation-delay: 1.1s;
+}
+
+.stageLayer::after {
+  content: "";
+  display: block;
+}
+
+@keyframes stageFade {
+  from {
+    opacity: 0;
+    transform: translateY(35px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stageLayer[data-stage="portfolio"] {
+  position: relative;
+}
+
+.stageLayer[data-stage="portfolio"]::before {
+  content: "";
+  position: absolute;
+  inset: -40px 0 auto;
+  height: 80px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0));
+  opacity: 0;
+  z-index: 0;
+  animation: revealHighlight 1s ease forwards 0.85s;
+}
+
+@keyframes revealHighlight {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stageLayer[data-stage="portfolio"]::after {
+  content: "";
+  display: block;
+  height: 1px;
+  margin: clamp(32px, 6vw, 52px) auto clamp(20px, 5vw, 38px);
+  width: min(320px, 40%);
+  background: linear-gradient(90deg, rgba(37, 37, 37, 0) 0%, rgba(37, 37, 37, 0.22) 50%, rgba(37, 37, 37, 0) 100%);
+  opacity: 0;
+  pointer-events: none;
+  animation: dividerFade 1.1s ease forwards 1.1s;
+}
+
+@keyframes dividerFade {
+  from {
+    opacity: 0;
+    transform: scaleX(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.stageLayer[data-stage="footer"] {
+  position: relative;
+}
+
+.stageLayer[data-stage="footer"]::before {
+  content: "";
+  position: absolute;
+  inset: -100px 0 auto;
+  height: 100px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+  opacity: 0;
+  pointer-events: none;
+  animation: footerGlow 0.9s ease forwards 1.05s;
+}
+
+@keyframes footerGlow {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.heroBrand {
+  margin: 0;
+  font-size: clamp(18px, 1.6vw, 32px);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.heroBrand span {
+  color: rgba(37, 37, 37, 0.5);
+}
+
+.heroNav {
+  width: 100%;
+}
+
+.heroNavList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+
+.heroNavItem a {
+  display: inline-flex;
+  align-items: center;
+  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgba(37, 37, 37, 0.45);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.heroNavItem a:hover,
+.heroNavItem a:focus-visible {
+  color: rgba(37, 37, 37, 0.85);
+}
+
+.portfolioSection {
+  width: 100%;
+  max-width: 1920px;
+  margin: clamp(48px, 6vw, 50px) auto 0;
+  padding: 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.portfolioGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.portfolioSkeletonCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.portfolioSkeletonImage {
+  width: 100%;
+  padding-top: 70%;
+  border-radius: 18px;
+}
+
+.portfolioSkeletonTitle {
+  width: 60%;
+  height: 16px;
+  border-radius: 8px;
+}
+
+.portfolioLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.portfolioCard {
+  position: relative;
+  display: flex;
+  min-height: 100%;
+  transition: opacity 0.3s ease;
+}
+
+.portfolioCardDimmed {
+  opacity: 0.2;
+}
+
+.portfolioImageWrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 68%;
+  overflow: hidden;
+}
+
+.portfolioImage,
+.portfolioImageFallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.portfolioImage {
+  object-fit: cover;
+  filter: grayscale(1);
+  opacity: 0.9;
+  transition: filter 0.4s ease, opacity 0.4s ease, transform 0.4s ease;
+}
+
+.portfolioLink:hover .portfolioImage,
+.portfolioLink:focus-visible .portfolioImage {
+  filter: grayscale(0);
+  opacity: 1;
+}
+
+.portfolioImageFallback {
+  background: linear-gradient(135deg, rgba(37, 37, 37, 0.1) 0%, rgba(255, 255, 255, 0.85) 100%);
+}
+
+.portfolioTitle {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: rgba(37, 37, 37, 0.95);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 1));
+}
+
+.categoryHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(232, 235, 244, 0.78);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, rgba(232, 235, 244, 0) 0%, rgba(255, 255, 255, 0.65) 50%, rgba(232, 235, 244, 0) 100%);
+  animation: homeSkeletonShimmer 1.3s ease-in-out infinite;
+}
+
+@keyframes homeSkeletonShimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.categorySkeletonMobile {
+  display: none;
+}
+
+.categorySkeletonButton {
+  display: block;
+  width: 100%;
+  height: 44px;
+  border-radius: 10px;
+}
+
+.categorySkeletonList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+
+.categorySkeletonChip {
+  width: 90px;
+  height: 18px;
+  border-radius: 999px;
+}
+
+.mobileCategoryButton {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 0;
+  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgba(37, 37, 37, 0.68);
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(37, 37, 37, 0.12);
+}
+
+.mobileCategoryIcon {
+  position: relative;
+  width: 24px;
+  height: 10px;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.mobileCategoryIcon span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: rgba(37, 37, 37, 0.5);
+  transition: transform 0.3s ease;
+}
+
+.categoryList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.categoryListOpen {
+  display: flex;
+}
+
+.categoryButton {
+  position: relative;
+  border: none;
+  background: none;
+  padding: 0;
+  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgba(37, 37, 37, 0.5);
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+
+.categoryButton sup {
+  font-size: 0.65em;
+  margin-left: 4px;
+}
+
+.categoryButton:hover,
+.categoryButton:focus-visible {
+  color: rgba(37, 37, 37, 0.78);
+}
+
+.categoryButtonActive {
+  color: rgba(37, 37, 37, 1);
+}
+
+@media (max-width: 1024px) {
+  .page {
+    padding-top: 120px;
+    padding-bottom: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    gap: 20px;
+  }
+
+  .heroNavList {
+    gap: 10px 18px;
+  }
+
+  .mobileCategoryButton {
+    display: flex;
+  }
+
+  .categorySkeletonMobile {
+    display: block;
+  }
+
+  .categorySkeletonList {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .categoryList {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(37, 37, 37, 0.12);
+  }
+
+  .categoryListOpen {
+    display: flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding-top: 110px;
+    padding-bottom: 64px;
+  }
+
+  .stageLayer[data-stage="portfolio"]::after {
+    width: 60%;
+  }
+}
+
+@media (max-width: 1400px) {
+  .portfolioGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .portfolioGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .portfolioGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolioMeta {
+    font-size: 11px;
+  }
+}

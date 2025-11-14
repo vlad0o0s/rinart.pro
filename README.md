@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RINART Frontend
 
-## Getting Started
+## Запуск проекта
 
-First, run the development server:
+1. Установите зависимости:
+   ```bash
+   npm install
+   ```
+2. Создайте файл `.env.local` в корне проекта и добавьте настройки (символ `&` закодирован как `%26`):
+   ```env
+   NEXT_PUBLIC_RECAPTCHA_SITE_KEY="ваш_site_key"
+   RECAPTCHA_SECRET_KEY="ваш_secret_key"
+   ```
+3. Примените SQL-схему к базе данных (однократно):
+   ```bash
+   mysql -h <host> -u <user> -p <dbname> < sql/schema.sql
+   ```
+   Замените `<host>`, `<user>` и `<dbname>` на свои значения. Команда создаст таблицы `Project`, `ProjectMedia` и `ProjectScheme`.
+4. Создайте администратора:
+   ```bash
+   npm run create-admin -- --login admin --password "сложный_пароль"
+   ```
+   Скрипт записывает пользователя в таблицу `AdminUser` и хеширует пароль через bcrypt.
+5. (Опционально) заполните базу демонстрационными данными из JSON:
+   ```bash
+   npm run seed
+   ```
+   Скрипт использует `DATABASE_URL`, читает `public/data/projects.json` и `data/project-details.json` и переносит их в MySQL.
+6. Запустите dev-сервер:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Приложение доступно по адресу [http://localhost:3000](http://localhost:3000).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Админка
+- Страница: `/admin` (требует активной сессии).
+- Страница входа: `/admin/login` — логин и пароль администратора.
+- Возможности: быстрый поиск и сортировка проектов (drag&drop), улучшенные карточки редактирования, визуальная медиа-библиотека в духе WordPress, управление галереями и схемами, rich-text редактор описания.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Технологии
+- Next.js App Router
+- MySQL (`mysql2/promise`)
+- bcryptjs для хранения паролей
+- DnD: `@dnd-kit`
+- Styled components через CSS Modules

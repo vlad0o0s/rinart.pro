@@ -1,0 +1,161 @@
+.section {
+  padding: 120px 0 140px;
+  background-color: #ffffff;
+  color: #252525;
+  font-family: "Neue Haas Unica", "Helvetica Neue", Arial, sans-serif;
+  opacity: 0;
+  transform: translateY(36px);
+}
+
+.wrapper {
+  max-width: none;
+  margin: 0;
+  padding: 0 10px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  align-items: start;
+  opacity: 0;
+  transform: translateY(22px);
+}
+
+.marker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.markerLabel {
+  margin: 0;
+  font-size: clamp(24px, 3.1vw, 48px);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.markerLabel em {
+  font-style: italic;
+  font-weight: inherit;
+}
+
+.list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2vw, 20px);
+  font-size: clamp(14px, 1vw, 18px);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1.1;
+  opacity: 0;
+}
+
+.section[data-visible="true"] {
+  animation: publishSectionFade 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.1s;
+}
+
+.section[data-visible="true"] .wrapper {
+  animation: publishWrapperRise 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.2s;
+}
+
+.section[data-visible="true"] .marker {
+  animation: publishMarkerSlide 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.32s;
+}
+
+.section[data-visible="true"] .list {
+  animation: publishListFade 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.42s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section,
+  .wrapper,
+  .marker,
+  .list {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes publishSectionFade {
+  from {
+    opacity: 0;
+    transform: translateY(36px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes publishWrapperRise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes publishMarkerSlide {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes publishListFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.list li {
+  color: rgba(37, 37, 37, 0.85);
+}
+
+.list li::marker {
+  color: rgba(37, 37, 37, 0.35);
+}
+
+@media (max-width: 960px) {
+  .wrapper {
+    grid-template-columns: 1fr;
+    gap: clamp(20px, 5vw, 32px);
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding: 80px 0 64px;
+  }
+
+  .wrapper {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 0 10px;
+  }
+
+  .list {
+    font-size: clamp(14px, 3.2vw, 18px);
+  }
+}
+

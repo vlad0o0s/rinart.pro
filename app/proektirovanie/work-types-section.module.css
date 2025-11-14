@@ -1,0 +1,208 @@
+.section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  padding: 140px 10px 0;
+  align-items: start;
+  opacity: 0;
+  transform: translateY(32px);
+}
+
+.left,
+.right {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  opacity: 0;
+  transform: translateY(22px);
+}
+
+.preheading {
+  font-size: clamp(28px, 3.2vw, 52px);
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  color: #252525;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: "Neue Haas Unica", sans-serif;
+  font-size: clamp(28px, 2.1vw, 48px);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1;
+  color: #252525;
+  margin: 0 0 32px;
+}
+
+.body {
+  font-size: clamp(18px, 1.4vw, 24px);
+  font-weight: 500;
+  line-height: 1.25;
+  color: #252525;
+  margin: 0 0 40px;
+}
+
+.sectionsTitle {
+  font-size: clamp(18px, 1.6vw, 22px);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #252525;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin: 0 0 24px;
+}
+
+.sectionsBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.sectionsBlock {
+  gap: 24px;
+}
+
+.sectionsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  opacity: 0;
+}
+
+.section[data-visible="true"] {
+  animation: workTypesSection 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.15s;
+}
+
+.section[data-visible="true"] .left,
+.section[data-visible="true"] .right {
+  animation: workTypesColumn 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.3s;
+}
+
+.section[data-visible="true"] .left {
+  animation-delay: 0.3s;
+}
+
+.section[data-visible="true"] .right {
+  animation-delay: 0.38s;
+}
+
+.section[data-visible="true"] .sectionsList {
+  animation: workTypesList 1s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.5s;
+}
+
+.sectionItem {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: clamp(16px, 1.2vw, 20px);
+  font-weight: 600;
+  color: #252525;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #252525;
+}
+
+.progressSquares {
+  display: grid;
+  grid-template-columns: repeat(2, 10px);
+  grid-template-rows: repeat(2, 10px);
+  gap: 1px;
+}
+
+.progressSquare {
+  width: 10px;
+  height: 10px;
+  border: 1px solid #252525;
+}
+
+.progressSquareFilled {
+  background-color: #252525;
+}
+
+.progressSquareEmpty {
+  background-color: transparent;
+}
+
+@keyframes workTypesSection {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes workTypesColumn {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes workTypesList {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1024px) {
+  .section {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .title {
+    margin-bottom: 24px;
+  }
+
+  .body {
+    margin-bottom: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 25px 10px;
+    gap: 24px;
+  }
+
+  .preheading,
+  .title,
+  .sectionsTitle {
+    font-size: 4.3vw;
+    line-height: 1;
+  }
+
+  .body,
+  .sectionItem {
+    font-size: 3.8vw;
+    line-height: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section,
+  .left,
+  .right,
+  .sectionsList {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
