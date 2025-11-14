@@ -3,16 +3,24 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { findAdminUserByLogin, createAdminSession, deleteExpiredAdminSessions } from "@/lib/admin-repository";
 import { applyAdminSessionCookie, getSessionMaxAgeSeconds } from "@/lib/admin-auth";
+import { verifyRecaptchaToken } from "@/lib/recaptcha";
 
 export async function POST(request: NextRequest) {
   try {
-    const { login, password } = (await request.json().catch(() => ({}))) as {
+    const { login, password, recaptchaToken } = (await request.json().catch(() => ({}))) as {
       login?: string;
       password?: string;
+      recaptchaToken?: string;
     };
 
     if (!login || !password) {
       return NextResponse.json({ error: "Введите логин и пароль" }, { status: 400 });
+    }
+
+    const remoteIp = request.headers.get("x-forwarded-for") ?? request.ip ?? undefined;
+    const isRecaptchaValid = await verifyRecaptchaToken(recaptchaToken, remoteIp);
+    if (!isRecaptchaValid) {
+      return NextResponse.json({ error: "Подтвердите, что вы не робот" }, { status: 400 });
     }
 
     await deleteExpiredAdminSessions();
