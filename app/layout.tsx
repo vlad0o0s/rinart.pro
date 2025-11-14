@@ -90,6 +90,7 @@ export default async function RootLayout({
         </Script>
         <noscript>
           <div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="https://mc.yandex.ru/watch/105324096"
               style={{ position: "absolute", left: "-9999px" }}
