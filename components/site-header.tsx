@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import styles from "./site-header.module.css";
 
 const NAV_LINKS = [
@@ -18,18 +19,67 @@ const PROEKTIR_SUBLINKS = [
   { href: "#price", label: "Стоимость проектирования" },
 ];
 
+const MASTERSKAJA_SUBLINKS = [
+  { href: "#founder", label: "Основатель" },
+  { href: "#team", label: "Команда" },
+  { href: "#publications", label: "Публикации" },
+];
+
 export type SiteHeaderProps = {
   showDesktopNav?: boolean;
-  showBrand?: boolean;
+  showDesktopBrand?: boolean;
+  showMobileBrand?: boolean;
   subLinks?: { href: string; label: string }[];
 };
 
 export function SiteHeader({
   showDesktopNav = false,
-  showBrand = true,
+  showDesktopBrand = true,
+  showMobileBrand = true,
   subLinks,
 }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const burgerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLElement | null>(null);
+
+  const breadcrumbs = useMemo<{ href: string; label: string; className?: string }[]>(() => {
+    if (!pathname) {
+      return [];
+    }
+
+    const labels: Record<string, string> = {
+      "/": "",
+      "/proektirovanie": "Проектирование",
+      "/masterskaja": "Мастерская",
+      "/kontakty": "Контакты",
+    };
+
+    const segments = pathname.split("/").filter(Boolean);
+    const fallbackSegment = segments.length
+      ? decodeURIComponent(segments[segments.length - 1])
+          .replace(/-/g, " ")
+          .replace(/\s+/g, " ")
+      : "";
+
+    const fallbackLabel = fallbackSegment.length ? fallbackSegment : "Главная";
+    const currentLabel = labels[pathname] ?? fallbackLabel;
+
+    if (pathname !== "/" && !currentLabel) {
+      return [];
+    }
+
+    const secondLabel = currentLabel
+      ? `Архитектор Ринат Гильмутдинов / ${currentLabel}`
+      : "Архитектор Ринат Гильмутдинов";
+
+    return [
+      { href: "/", label: "Архитектор", className: styles.architect },
+      { href: pathname || "/", label: secondLabel },
+    ];
+  }, [pathname]);
+
+  const showBreadcrumbs = !menuOpen && breadcrumbs.length > 0;
 
   useEffect(() => {
     if (menuOpen) {
@@ -49,16 +99,26 @@ export function SiteHeader({
     setMenuOpen((prev) => !prev);
   };
 
-  const closeMenu = () => setMenuOpen(false);
+  const closeMenu = () => {
+    setMenuOpen(false);
+    if (menuRef.current?.contains(document.activeElement)) {
+      burgerButtonRef.current?.focus();
+    }
+  };
 
   return (
     <header className={`w-full bg-white ${styles.header}`}>
       <div className={`${styles.wrapper} md:flex`}>
-        <p
-          className={`inline-block w-auto max-w-none text-[12px] font-black uppercase leading-[12px] md:text-[clamp(18px,1.5vw,32px)] md:leading-[17px] ${styles.root} ${styles.desktopBrand}`}
-        >
-          Архитектор <span className={styles.accent}>РИНАТ ГИЛЬМУТДИНОВ</span>
-        </p>
+        {showDesktopBrand ? (
+          <Link
+            href="/"
+            className={`inline-block w-auto max-w-none text-[12px] font-black uppercase leading-[12px] md:text-[clamp(18px,1.5vw,32px)] md:leading-[17px] ${styles.root} ${styles.desktopBrand}`}
+            aria-label="Перейти на главную"
+          >
+            <span className={`${styles.architect} ${styles.architectBrand}`}>Архитектор</span>
+            <span className={styles.accent}>РИНАТ ГИЛЬМУТДИНОВ</span>
+          </Link>
+        ) : null}
 
         {showDesktopNav ? (
           <nav className={styles.desktopNav} aria-label="Основное меню">
@@ -72,6 +132,29 @@ export function SiteHeader({
           </nav>
         ) : null}
       </div>
+
+      {showBreadcrumbs ? (
+        <nav className={`${styles.mobileBreadcrumbs} md:hidden`} aria-label="Хлебные крошки">
+          <ol className={styles.mobileBreadcrumbsList}>
+            {breadcrumbs.map((crumb, index) => (
+              <li key={`${crumb.href}-${index}`} className={styles.mobileBreadcrumbsItem}>
+                {index < breadcrumbs.length - 1 ? (
+                  <Link
+                    href={crumb.href}
+                    className={`${styles.mobileBreadcrumbsLink} ${crumb.className ?? ""}`}
+                  >
+                    {crumb.label}
+                  </Link>
+                ) : (
+                  <span className={`${styles.mobileBreadcrumbsCurrent} ${crumb.className ?? ""}`}>
+                    {crumb.label}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
+      ) : null}
 
       {showDesktopNav && subLinks && subLinks.length ? (
         <nav className={styles.subnav} aria-label="Подразделы">
@@ -91,6 +174,7 @@ export function SiteHeader({
         aria-expanded={menuOpen}
         data-active={menuOpen ? "true" : "false"}
         onClick={toggleMenu}
+        ref={burgerButtonRef}
       >
         <span className={styles.burgerElement} />
         <span className={styles.burgerElement} />
@@ -100,12 +184,19 @@ export function SiteHeader({
       <nav
         className={`${styles.menu} ${menuOpen ? styles.menuOpen : ""}`}
         aria-hidden={!menuOpen}
+        ref={menuRef}
       >
-        <p
-          className={`inline-block w-auto max-w-none text-[12px] font-black uppercase leading-[12px] md:hidden ${styles.root} ${styles.mobileBrand}`}
-        >
-          Архитектор <span className={styles.accent}>РИНАТ ГИЛЬМУТДИНОВ</span>
-        </p>
+        {showMobileBrand ? (
+          <Link
+            href="/"
+            className={`inline-block w-auto max-w-none text-[12px] font-black uppercase leading-[12px] md:hidden ${styles.root} ${styles.mobileBrand}`}
+            aria-label="Перейти на главную"
+            onClick={closeMenu}
+          >
+            <span className={`${styles.architect} ${styles.architectBrand}`}>Архитектор</span>
+            <span className={styles.accent}>РИНАТ ГИЛЬМУТДИНОВ</span>
+          </Link>
+        ) : null}
         <ul className={styles.menuList}>
           {NAV_LINKS.map((link) => (
             <li key={`${link.href}-mobile`} className={styles.menuItem}>
@@ -154,5 +245,5 @@ export function SiteHeader({
   );
 }
 
-export { PROEKTIR_SUBLINKS };
+export { PROEKTIR_SUBLINKS, MASTERSKAJA_SUBLINKS };
 

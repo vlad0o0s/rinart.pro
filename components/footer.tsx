@@ -28,7 +28,7 @@ export function Footer() {
             <div className={styles.socials}>
               <a
                 className={styles.socialLink}
-                href="https://www.instagram.com/rinartburo"
+                href="https://www.instagram.com/rinart.buro/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram RINART"

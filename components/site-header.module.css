@@ -10,6 +10,14 @@
   color: rgba(37, 37, 37, 0.5);
 }
 
+.architect {
+  color: #252525bf;
+}
+
+.architectBrand {
+  display: block;
+}
+
 .header {
   position: fixed;
   top: 0;
@@ -18,6 +26,9 @@
   z-index: 100;
   background-color: #ffffff;
   --header-height: 110px;
+  opacity: 0;
+  transform: translateY(-16px);
+  animation: headerReveal 0.6s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.1s;
 }
 
 .wrapper {
@@ -83,14 +94,14 @@
   margin: 0;
   appearance: none;
   cursor: pointer;
-  z-index: 97;
+  z-index: 199;
 }
 
 .burger {
   position: fixed;
   top: 10px;
   right: 10px;
-  z-index: 99;
+  z-index: 201;
   display: grid;
   place-content: center;
   place-items: center;
@@ -136,21 +147,24 @@
 .menu {
   position: fixed;
   inset: 0;
+  min-height: 100vh;
+  width: 100vw;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 48px;
-  padding: 120px 32px 64px;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(12px);
+  padding: 110px 24px 64px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
   opacity: 0;
   transform: translateY(-24px);
   pointer-events: none;
   transition:
     opacity 0.45s ease,
     transform 0.45s ease;
-  z-index: 98;
+  z-index: 200;
+  overflow-y: auto;
 }
 
 .menuOpen {
@@ -245,7 +259,7 @@
 }
 
 .desktopBrand {
-  display: inline-block;
+  display: none;
 }
 
 .iconPinterest {
@@ -301,6 +315,61 @@
   background-size: 100% 2px;
 }
 
+.mobileBreadcrumbs {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 10px 6px;
+  font-family: var(--font-neue-haas), "Neue Haas Unica", sans-serif;
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(37, 37, 37, 0.55);
+}
+
+.mobileBreadcrumbsList {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mobileBreadcrumbsItem {
+  display: block;
+}
+
+.mobileBreadcrumbsLink,
+.mobileBreadcrumbsCurrent {
+  display: block;
+  font-size: 12px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  font-family: var(--font-neue-haas), "Neue Haas Unica", sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.mobileBreadcrumbsLink {
+  color: rgba(37, 37, 37, 0.55);
+  text-decoration: none;
+}
+
+.mobileBreadcrumbsLink:hover,
+.mobileBreadcrumbsLink:focus-visible {
+  color: rgba(37, 37, 37, 0.8);
+}
+
+.mobileBreadcrumbsCurrent {
+  color: rgba(37, 37, 37, 0.85);
+}
+
+.mobileBreadcrumbsSeparator {
+  color: rgba(37, 37, 37, 0.35);
+}
+
 @media (min-width: 768px) {
   .burger {
     display: none;
@@ -337,7 +406,11 @@
   }
 
   .desktopBrand {
-    display: none;
+    display: inline-block;
+  }
+
+  .architectBrand {
+    display: inline;
   }
 
   .desktopNavItem:nth-child(1) {
@@ -367,6 +440,10 @@
   .subnavList {
     margin-top: 20px;
   }
+
+  .mobileBreadcrumbs {
+    display: none;
+  }
 }
 
 @keyframes headerNavFade {
@@ -393,6 +470,18 @@
   }
 }
 
+@keyframes headerReveal {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .desktopNav,
   .desktopNavItem {
@@ -404,6 +493,12 @@
   .subnavItem a {
     transition: none;
     background-size: 0;
+  }
+
+  .header {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
 

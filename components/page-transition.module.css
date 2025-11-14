@@ -1,0 +1,113 @@
+.wrapper {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 9999;
+}
+
+.wrapperActive {
+  display: block;
+}
+
+.bigColor {
+  position: absolute;
+  inset: 0;
+  background-color: #252525;
+  transform: translateX(0);
+  transition: transform 1s ease;
+}
+
+.wrapper.phaseBig .bigColor,
+.wrapper.phaseClose .bigColor,
+.wrapper.phaseLine .bigColor,
+.wrapper.phaseOpen .bigColor {
+  transform: translateX(100%);
+}
+
+.panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background-color: #252525;
+  transform: translateY(-100%);
+  transition: transform 0.8s cubic-bezier(0.33, 1, 0.68, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panelBottom {
+  top: auto;
+  bottom: 0;
+  transform: translateY(100%);
+}
+
+.wrapper.phaseClose .panelTop,
+.wrapper.phaseLine .panelTop,
+.wrapper.phaseClose .panelBottom,
+.wrapper.phaseLine .panelBottom {
+  transform: translateY(0);
+}
+
+.wrapper.phaseOpen .panelTop {
+  transform: translateY(-100%);
+}
+
+.wrapper.phaseOpen .panelBottom {
+  transform: translateY(100%);
+}
+
+.logoLineWrapper {
+  position: absolute;
+  inset: 0;
+  background-image: url("https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png");
+  background-repeat: no-repeat;
+  background-position: 50% 100%;
+  background-size: 20%;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.wrapper.phaseLine .logoLineWrapper,
+.wrapper.phaseOpen .logoLineWrapper {
+  opacity: 1;
+}
+
+.wrapper.phaseOpen .logoLineWrapper {
+  opacity: 0;
+}
+
+.line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #ffffff;
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.wrapper.phaseLine .line,
+.wrapper.phaseOpen .line {
+  transform: scaleX(1);
+}
+
+.wrapper.phaseOpen .line {
+  transition: opacity 0.4s ease;
+  opacity: 0;
+}
+
+@media (max-width: 1024px) {
+  .logoLineWrapper {
+    background-size: 20%;
+  }
+}
+
+@media (max-width: 639px) {
+  .logoLineWrapper {
+    background-size: 20%;
+  }
+}

@@ -4,6 +4,8 @@
   gap: 0;
   padding: 160px 10px 0;
   align-items: start;
+  opacity: 0;
+  transform: translateY(32px);
 }
 
 .left {
@@ -11,12 +13,16 @@
   justify-content: flex-start;
   align-items: flex-start;
   flex-direction: column;
+  opacity: 0;
+  transform: translateY(22px);
 }
 
 .right {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  opacity: 0;
+  transform: translateY(24px);
 }
 
 .content {
@@ -25,6 +31,7 @@
   gap: 32px;
   margin-left: 0;
   width: 100%;
+  opacity: 0;
 }
 
 .preheading {
@@ -48,6 +55,32 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 32px;
+  opacity: 0;
+}
+
+.section[data-visible="true"] {
+  animation: stagesSection 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.15s;
+}
+
+.section[data-visible="true"] .left,
+.section[data-visible="true"] .right {
+  animation: stagesColumn 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.3s;
+}
+
+.section[data-visible="true"] .left {
+  animation-delay: 0.3s;
+}
+
+.section[data-visible="true"] .right {
+  animation-delay: 0.35s;
+}
+
+.section[data-visible="true"] .content {
+  animation: stagesContent 1s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.45s;
+}
+
+.section[data-visible="true"] .descriptionsRow {
+  animation: stagesRow 1s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.55s;
 }
 
 .body {
@@ -56,6 +89,50 @@
   line-height: 1.2;
   color: #252525;
   margin: 0;
+}
+
+@keyframes stagesSection {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stagesColumn {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stagesContent {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes stagesRow {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -85,6 +162,18 @@
   .body {
     font-size: 3.8vw;
     line-height: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section,
+  .left,
+  .right,
+  .content,
+  .descriptionsRow {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
 

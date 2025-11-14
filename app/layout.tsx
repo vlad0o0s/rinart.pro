@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import localFont from "next/font/local";
 import "./globals.css";
+import { PageTransition } from "@/components/page-transition";
+import { JsonLd } from "@/components/json-ld";
+import { isBotUserAgent } from "@/lib/is-bot";
+import { organizationSchema, webSiteSchema } from "@/lib/seo/schema";
+import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 
 const neueHaasUnica = localFont({
   variable: "--font-neue-haas",
@@ -53,15 +59,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const userAgent = headersList.get("user-agent") ?? "";
+  const isBot = isBotUserAgent(userAgent);
+
   return (
-    <html lang="ru">
+    <html lang="ru" data-scroll-behavior="smooth">
       <body className={`${neueHaasUnica.variable} antialiased`}>
-        {children}
+        <div className="site-shell">
+          <PageTransition enabled={!isBot} />
+          <RouteReadyAnnouncer />
+          <JsonLd schema={[organizationSchema(), webSiteSchema()]} />
+          {children}
+        </div>
       </body>
     </html>
   );

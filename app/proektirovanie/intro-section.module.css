@@ -4,6 +4,8 @@
   gap: 0;
   padding: 0 10px;
   align-items: start;
+  opacity: 0;
+  transform: translateY(24px);
 }
 
 .left {
@@ -15,6 +17,8 @@
   flex-direction: column;
   gap: 0;
   align-items: flex-end;
+  opacity: 0;
+  transform: translateY(18px);
 }
 
 .title {
@@ -25,6 +29,8 @@
   color: #252525;
   text-align: left;
   width: 100%;
+  opacity: 0;
+  transform: translateY(12px);
 }
 
 .bodyGrid {
@@ -32,6 +38,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   align-self: stretch;
+  opacity: 0;
 }
 
 .bodyGrid .body:nth-child(2) {
@@ -60,10 +67,90 @@
   align-self: flex-end;
   overflow: hidden;
   margin-top: 100px;
+  opacity: 0;
+  transform: scale(1.02);
 }
 
 .image {
   object-fit: cover;
+}
+
+.section[data-visible="true"] {
+  animation: introSection 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.15s;
+}
+
+.section[data-visible="true"] .right {
+  animation: introContent 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.3s;
+}
+
+.section[data-visible="true"] .title {
+  animation: introTitle 1s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.35s;
+}
+
+.section[data-visible="true"] .bodyGrid {
+  animation: introBody 1s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.45s;
+}
+
+.section[data-visible="true"] .media {
+  animation: introMedia 1.2s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.5s;
+}
+
+@keyframes introSection {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes introContent {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes introTitle {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes introBody {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes introMedia {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @media (max-width: 768px) {
@@ -94,6 +181,18 @@
   .body {
     font-size: 3.8vw;
     line-height: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section,
+  .right,
+  .title,
+  .bodyGrid,
+  .media {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
 

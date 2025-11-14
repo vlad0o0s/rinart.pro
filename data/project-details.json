@@ -1,0 +1,272 @@
+[
+  {
+    "slug": "mironcevo",
+    "title": "Баня Миронцево",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2024/08/mironcevo-b-2-1024x804.jpg",
+    "location": "Московская область, СНТ Миронцево",
+    "year": "2024",
+    "area": "260 м²",
+    "scope": "Архитектура, интерьер, авторский надзор",
+    "tagline": "Лаконичная баня для загородной резиденции, построенная вокруг вида на хвойный лес",
+    "description": [
+      "Проект разрабатывался для семьи, которая проводит большую часть времени за городом. Главная задача — создать пространство для неспешного отдыха, сбалансированное между приватностью и открытостью природе.",
+      "Планировочная логика строится на трёх объемах: общественной зоне с гостиной и столовой, тёплом блоке с парной и моечной и приватном крыле с комнатами отдыха. Объёмы соединены стеклянной галереей, которая визуально растворяет границу между интерьером и садом.",
+      "Для отделки фасадов выбран термообработанный ясен и кирпич в тёплом оттенке. Материалы сохраняют тактильность и красиво стареют, подчеркивая ручную работу и естественность проекта."],
+    "facts": [
+      { "label": "Высота потолков", "value": "3.4 м" },
+      { "label": "Парная", "value": "Ферментируемая липа, влажный режим" },
+      { "label": "Конструктив", "value": "Моноолитная плита + клеёный каркас" }
+    ],
+    "schemes": [
+      {
+        "title": "План первого уровня",
+        "image": "https://rinart.pro/wp-content/uploads/2024/09/plan-1-1200x857.jpg"
+      },
+      {
+        "title": "Разрез по галерее",
+        "image": "https://rinart.pro/wp-content/uploads/2024/09/section-2-1200x857.jpg"
+      }
+    ],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2024/08/mironcevo-b-3.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/08/mironcevo-b-5.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/08/mironcevo-b-6.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/08/mironcevo-b-8.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/08/mironcevo-b-9.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/08/mironcevo-b-10.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/08/mironcevo-b-11.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/08/mironcevo-b-13.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/08/mironcevo-b-24.jpg"
+    ]
+  },
+  {
+    "slug": "ilichevka",
+    "title": "Дом Ильичевка",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2024/08/7b65741ccea4bae5630184d838bef4d9-1920x928.webp",
+    "location": "Ильичевка, Московская область",
+    "year": "2023",
+    "area": "420 м²",
+    "scope": "Архитектура, благоустройство",
+    "tagline": "Современный дом с развитой террасой и глубокой кровлей",
+    "description": [
+      "Планировка разделена на два уровня: общественный блок с двусветной гостиной и приватный объём с мастер-спальней и спальнями для гостей.",
+      "Внешняя отделка сочетает кирпич ручной формовки и крупноформатные панели в оттенке графит. Большие свесы кровли защищают панорамное остекление и формируют укрытые открытые площадки.",
+      "Все основные помещения ориентированы на юг, что гарантирует естественное освещение в течение дня."],
+    "facts": [
+      { "label": "Конструкция", "value": "Монолитный железобетон + кирпич" },
+      { "label": "Инженерия", "value": "Приточно-вытяжная вентиляция с рекуперацией" },
+      { "label": "Терраса", "value": "80 м², тёплый пол" }
+    ],
+    "schemes": [
+      {
+        "title": "Генплан",
+        "image": "https://rinart.pro/wp-content/uploads/2024/09/plan-dom-1200x750.jpg"
+      }
+    ],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2024/08/7b65741ccea4bae5630184d838bef4d9-1920x928.webp",
+      "https://rinart.pro/wp-content/uploads/2024/09/1-1-2048x1239.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/1-768x465.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/barn-4-1-1-1536x1206.jpg"
+    ]
+  },
+  {
+    "slug": "terrace",
+    "title": "Баня Терраса",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2024/08/gennadij3pg-1-1024x804.jpg",
+    "location": "Подмосковье",
+    "year": "2022",
+    "area": "190 м²",
+    "scope": "Архитектура, инженерия",
+    "tagline": "Функциональная баня с террасой и уличным камином",
+    "description": [
+      "Главный фасад развёрнут к лесу, открывая вид из гостиной и зоны отдыха. Парная с панорамным стеклом выводит взгляд в сад и визуально расширяет пространство.",
+      "Внутри использованы контрастные материалы: термоабаш в парной, каменные облицовки в зоне SPA и текстильные панелы в комнате отдыха."],
+    "facts": [
+      { "label": "Терраса", "value": "40 м² с камином" },
+      { "label": "Финиш", "value": "Комбинация термодерева и металла" }
+    ],
+    "schemes": [],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2024/08/gennadij3pg-1-1024x804.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/5-kopija-1536x794.jpg",
+      "https://rinart.pro/wp-content/uploads/2025/10/kabin9-1-2048x1536.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/5-kopija-1024x530.jpg"
+    ]
+  },
+  {
+    "slug": "ozerskoe",
+    "title": "Дом Озерское",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2024/08/11-oz-1024x804.jpg",
+    "location": "Озерское",
+    "year": "2021",
+    "area": "360 м²",
+    "scope": "Архитектура, ландшафт",
+    "tagline": "Дом с двусветной гостиной и галереей вокруг внутреннего дворика",
+    "description": [
+      "Композиция дома строится вокруг внутреннего дворика с зеркалом воды. На первом уровне расположены гостевые и хозяйственные помещения, на втором — приватные спальни.",
+      "Тёплая гамма кирпича и фактурного дерева создаёт дружелюбный образ, а вертикальные ламели на фасаде обеспечивают защиту от солнца."],
+    "facts": [
+      { "label": "План", "value": "U-образная схема" },
+      { "label": "Высота", "value": "6.2 м в гостиной" }
+    ],
+    "schemes": [
+      {
+        "title": "Фасад восточный",
+        "image": "https://rinart.pro/wp-content/uploads/2024/09/facade-1200x700.jpg"
+      }
+    ],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2024/08/11-oz-1024x804.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/1-1-2048x1239.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/1-1024x1024.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/01_gostinaja_vid-1_f-2048x1313.jpg"
+    ]
+  },
+  {
+    "slug": "idalgo",
+    "title": "Дом Идальго",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2024/09/barn-4-1-1-1024x804.jpg",
+    "location": "Тульская область",
+    "year": "2024",
+    "area": "410 м²",
+    "scope": "Архитектура, авторский надзор",
+    "tagline": "Графичный дом с высокими порталами и продуманной террасой",
+    "description": [
+      "Проект вдохновлён архитектурой американских барнов, но адаптирован к российскому климату. Двусветная гостиная с камином связывает дом с садом."],
+    "facts": [
+      { "label": "Материалы", "value": "Металл, кирпич, лиственница" }
+    ],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2024/09/barn-4-1-1-1536x1206.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/barn-4-1-1.jpg"
+    ]
+  },
+  {
+    "slug": "villa",
+    "title": "Вилла",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2025/10/kabin9-1-2048x1536.jpg",
+    "location": "Казань",
+    "year": "2025",
+    "area": "520 м²",
+    "scope": "Архитектура, интерьер",
+    "tagline": "Вилла для молодой семьи с камерным двором",
+    "description": [
+      "Ключевым элементом проекта стала внутренняя галерея с потолочным светом. В интерьерах преобладают естественные материалы и спокойная палитра."],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2025/10/kabin9-1-1024x768.jpg",
+      "https://rinart.pro/wp-content/uploads/2025/10/kabin9-1-2048x1536.jpg"
+    ]
+  },
+  {
+    "slug": "hill",
+    "title": "Дом на холме",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2024/09/1-1-2048x1239.jpg",
+    "location": "Республика Татарстан",
+    "year": "2023",
+    "area": "350 м²",
+    "scope": "Архитектура",
+    "tagline": "Дом, раскрытый к панораме на долину",
+    "description": [
+      "Дом поднимается над рельефом, поэтому даже приватные комнаты получают панорамные виды. Терраса врезана в тело дома и защищена от ветра."],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2024/09/1-1-2048x1239.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/1-1-1024x619.jpg"
+    ]
+  },
+  {
+    "slug": "tower",
+    "title": "Башня Вавилон",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2024/09/1-1024x1024.jpg",
+    "location": "Москва",
+    "year": "2022",
+    "area": "Проект-концепция",
+    "scope": "Концепция общественного пространства",
+    "tagline": "Архитектурная интервенция в формате городской башни",
+    "description": [
+      "Концепт предусматривает использование модульных элементов, которые позволяют трансформировать башню под выставки и городские события."],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2024/09/1-1024x1024.jpg"
+    ]
+  },
+  {
+    "slug": "petruhino",
+    "title": "Петрухино",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2024/09/petruhino-zast-1024x804.jpg",
+    "location": "Петрухино",
+    "year": "2023",
+    "area": "280 м²",
+    "scope": "Архитектура, интерьер",
+    "tagline": "Дом из клинкерного кирпича с продуманной геометрией",
+    "description": [
+      "Дом собран из чередования глухих и прозрачных объёмов. Панорамные окна выходят в сад, а монолитные вставки задают приватность."],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2024/09/petruhino-zast-1024x804.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/petruhino-zast-1536x1206.jpg"
+    ]
+  },
+  {
+    "slug": "reconstruction",
+    "title": "Реконструкция",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2024/09/rekonstrukcija-3-1-1024x804.jpg",
+    "location": "Нижегородская область",
+    "year": "2021",
+    "area": "240 м²",
+    "scope": "Реконструкция коттеджа",
+    "tagline": "Полное обновление образа дома без расширения пятна застройки",
+    "description": [
+      "Мы сохранили несущую структуру, но полностью переосмыслили фасады, входной узел и интерьерное зонирование."],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2024/09/rekonstrukcija-3-1-1024x804.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/rekonstrukcija-3-1-1536x1206.jpg"
+    ]
+  },
+  {
+    "slug": "aznakaevo",
+    "title": "Азнакаево",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2024/09/5-kopija-1536x794.jpg",
+    "location": "Азнакаево",
+    "year": "2025",
+    "area": "230 м²",
+    "scope": "Архитектура",
+    "tagline": "Дом со вторым светом и фронтальной террасой",
+    "description": [
+      "Проект выполнен для молодой семьи. Второй свет в гостиной объединяет два уровня и наполняет интерьеры светом."],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2024/09/5-kopija-1536x794.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/5-kopija-2048x1059.jpg"
+    ]
+  },
+  {
+    "slug": "tandem",
+    "title": "Дом Тандем",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2025/10/250-dom-2-1536x1206.jpg",
+    "location": "Свердловская область",
+    "year": "2025",
+    "area": "340 м²",
+    "scope": "Архитектура",
+    "tagline": "Современный дом с двухсветной гостиной и мастер-блоком",
+    "description": [
+      "Дом решён в горизонтальной пластике. Главный фасад раскрывается в сторону леса, на юг выходит спальня хозяев."],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2025/10/250-dom-2-1024x804.jpg",
+      "https://rinart.pro/wp-content/uploads/2025/10/250-dom-2-1536x1206.jpg"
+    ]
+  },
+  {
+    "slug": "voronovo",
+    "title": "Интерьер Вороново",
+    "heroImage": "https://rinart.pro/wp-content/uploads/2024/09/01_gostinaja_vid-1_f-2048x1313.jpg",
+    "location": "Вороново",
+    "year": "2023",
+    "area": "280 м²",
+    "scope": "Интерьер",
+    "tagline": "Интерьер загородного дома в светлой палитре",
+    "description": [
+      "Пространство строится на сочетании природного камня, тёплого дерева и матового стекла. Большие окна связывают интерьер с садом."],
+    "gallery": [
+      "https://rinart.pro/wp-content/uploads/2024/09/01_gostinaja_vid-1_f-1024x657.jpg",
+      "https://rinart.pro/wp-content/uploads/2024/09/01_gostinaja_vid-1_f-2048x1313.jpg"
+    ]
+  }
+]

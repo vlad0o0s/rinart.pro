@@ -1,6 +1,8 @@
 .section {
-  padding: 120px 10px 0;
+  padding: 120px 10px 50px;
   background-color: #ffffff;
+  opacity: 0;
+  transform: translateY(32px);
 }
 
 .header {
@@ -28,6 +30,8 @@
   padding: 0 clamp(16px, 6vw, 120px);
   position: relative;
   overflow: hidden;
+  opacity: 0;
+  transform: translateY(24px);
 }
 
 .topRow,
@@ -155,6 +159,19 @@
   padding: 0 clamp(12px, 5vw, 24px);
   box-sizing: border-box;
   padding-bottom: 50px;
+  opacity: 0;
+}
+
+.section[data-visible="true"] {
+  animation: pricingSection 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.15s;
+}
+
+.section[data-visible="true"] .branch {
+  animation: pricingBranch 1s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.35s;
+}
+
+.section[data-visible="true"] .mobileTimeline {
+  animation: pricingMobile 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.2s;
 }
 
 .mobileTimeline::before {
@@ -352,6 +369,50 @@
 
   .mobileCopy p {
     word-break: break-word;
+  }
+}
+
+@keyframes pricingSection {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pricingBranch {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pricingMobile {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section,
+  .branch,
+  .mobileTimeline {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
 

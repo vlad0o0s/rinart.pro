@@ -2,8 +2,8 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-  --color-primary: #252525bf;
+  --foreground: #252525;
+  --color-primary: #252525;
 }
 
 @theme inline {
@@ -17,8 +17,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #252525;
   }
 }
 
@@ -27,11 +27,17 @@ body {
   color: var(--foreground);
   font-family: var(--font-neue-haas), "Helvetica Neue", Helvetica, Arial,
     sans-serif;
-  transition: opacity 0.6s ease;
+  margin: 0;
+  overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.site-shell {
+  width: min(100%, 1920px);
 }
 
 html {
-  scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 cite,

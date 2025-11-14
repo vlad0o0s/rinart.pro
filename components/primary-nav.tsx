@@ -4,7 +4,7 @@ const LINKS = [
   { href: "/", label: "RINART" },
   { href: "/portfolio", label: "Портфолио" },
   { href: "/proektirovanie", label: "Проектирование" },
-  { href: "/masterskaya", label: "Мастерская" },
+  { href: "/masterskaja", label: "Мастерская" },
   { href: "/kontakty", label: "Контакты" },
 ];
 

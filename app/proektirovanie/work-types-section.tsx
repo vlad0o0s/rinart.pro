@@ -1,3 +1,6 @@
+'use client';
+
+import { useReveal } from "@/lib/use-reveal";
 import styles from "./work-types-section.module.css";
 
 const PROJECT_SECTIONS = [
@@ -24,8 +27,10 @@ function ProgressSquares({ count }: { count: number }) {
 }
 
 export function WorkTypesSection() {
+  const sectionRef = useReveal<HTMLElement>();
+
   return (
-    <section className={styles.section} id="vidy">
+    <section ref={sectionRef} className={styles.section} id="vidy" data-visible="false">
       <div className={styles.left}>
         <p className={styles.preheading}>
           <em>(I)</em> Виды работ

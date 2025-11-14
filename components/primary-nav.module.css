@@ -3,7 +3,7 @@
   padding: 10px;
   background-color: #ffffff;
   opacity: 0;
-  animation: navFade 0.8s ease-out forwards 0.4s;
+  animation: navFade 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.4s;
 }
 
 .list {
@@ -22,7 +22,7 @@
   display: flex;
   justify-content: center;
   opacity: 0;
-  animation: navItem 0.8s ease-out forwards;
+  animation: navItem 0.7s cubic-bezier(0.33, 1, 0.68, 1) forwards;
 }
 
 .item a {
@@ -58,23 +58,23 @@
 }
 
 .item:nth-child(1) {
-  animation-delay: 0.5s;
+  animation-delay: 0.55s;
 }
 
 .item:nth-child(2) {
-  animation-delay: 0.6s;
+  animation-delay: 0.62s;
 }
 
 .item:nth-child(3) {
-  animation-delay: 0.7s;
+  animation-delay: 0.69s;
 }
 
 .item:nth-child(4) {
-  animation-delay: 0.8s;
+  animation-delay: 0.76s;
 }
 
 .item:nth-child(5) {
-  animation-delay: 0.9s;
+  animation-delay: 0.83s;
 }
 
 @keyframes navFade {

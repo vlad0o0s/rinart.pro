@@ -4,6 +4,8 @@
   gap: 0;
   padding: 140px 10px 0;
   align-items: start;
+  opacity: 0;
+  transform: translateY(32px);
 }
 
 .left,
@@ -11,6 +13,8 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  opacity: 0;
+  transform: translateY(22px);
 }
 
 .preheading {
@@ -66,6 +70,28 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  opacity: 0;
+}
+
+.section[data-visible="true"] {
+  animation: workTypesSection 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.15s;
+}
+
+.section[data-visible="true"] .left,
+.section[data-visible="true"] .right {
+  animation: workTypesColumn 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.3s;
+}
+
+.section[data-visible="true"] .left {
+  animation-delay: 0.3s;
+}
+
+.section[data-visible="true"] .right {
+  animation-delay: 0.38s;
+}
+
+.section[data-visible="true"] .sectionsList {
+  animation: workTypesList 1s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.5s;
 }
 
 .sectionItem {
@@ -100,6 +126,40 @@
   background-color: transparent;
 }
 
+@keyframes workTypesSection {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes workTypesColumn {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes workTypesList {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 1024px) {
   .section {
     grid-template-columns: 1fr;
@@ -132,6 +192,17 @@
   .sectionItem {
     font-size: 3.8vw;
     line-height: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section,
+  .left,
+  .right,
+  .sectionsList {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
 

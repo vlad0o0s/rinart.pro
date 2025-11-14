@@ -1,8 +1,13 @@
+'use client';
+
+import { useReveal } from "@/lib/use-reveal";
 import styles from "./second-stage-section.module.css";
 
 export function SecondStageSection() {
+  const sectionRef = useReveal<HTMLElement>();
+
   return (
-    <section className={styles.section} id="stage-2">
+    <section ref={sectionRef} className={styles.section} id="stage-2" data-visible="false">
       <div className={styles.left}>
         <p className={styles.number}>2</p>
       </div>

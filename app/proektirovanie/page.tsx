@@ -10,29 +10,31 @@ import { WorkTypesSection } from "./work-types-section";
 import { StagesSection } from "./stages-section";
 import { SecondStageSection } from "./second-stage-section";
 import { ThirdStageSection } from "./third-stage-section";
+import { JsonLd } from "@/components/json-ld";
+import { proektirovaniePageSchema } from "@/lib/seo/schema";
+import { buildPageMetadata } from "@/lib/page-seo";
 
-export const metadata: Metadata = {
-  title: "Проектирование — RINART",
-  description:
-    "Проектирование частных домов и сопровождающих объектов. Скоро на этой странице появится подробная информация о процессах и стоимости.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata("proektirovanie");
+}
 
 export default function ProektirovaniePage() {
   return (
     <>
-      <SiteHeader showDesktopNav subLinks={PROEKTIR_SUBLINKS} />
+      <SiteHeader showDesktopNav showDesktopBrand={false} subLinks={PROEKTIR_SUBLINKS} />
       <main className="min-h-screen bg-white text-neutral-900 antialiased">
         <HeroSection />
         <IntroSection />
-        <ConceptSection />
         <WorkTypesSection />
         <StagesSection />
+        <ConceptSection />
         <ProjectDiagram />
         <SecondStageSection />
         <ThirdStageSection />
         <PricingTimeline />
       </main>
       <Footer />
+      <JsonLd schema={proektirovaniePageSchema()} />
     </>
   );
 }

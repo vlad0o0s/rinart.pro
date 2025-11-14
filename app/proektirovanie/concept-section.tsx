@@ -1,3 +1,6 @@
+'use client';
+
+import { useReveal } from "@/lib/use-reveal";
 import styles from "./concept-section.module.css";
 
 const QUESTIONS = [
@@ -10,8 +13,10 @@ const QUESTIONS = [
 ];
 
 export function ConceptSection() {
+  const sectionRef = useReveal<HTMLElement>();
+
   return (
-    <section className={styles.section} id="concept">
+    <section ref={sectionRef} className={styles.section} id="concept" data-visible="false">
       <div className={styles.left}>
         <p className={styles.number}>
           <em>1</em>

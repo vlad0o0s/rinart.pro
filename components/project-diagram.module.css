@@ -2,6 +2,8 @@
   position: relative;
   padding: 120px 10px;
   background-color: #ffffff;
+  opacity: 0;
+  transform: translateY(32px);
 }
 
 .diagramWrapper {
@@ -12,6 +14,8 @@
   max-width: 1189px;
   margin: 0 auto;
   width: 100%;
+  opacity: 0;
+  transform: translateY(18px);
 }
 
 .image {
@@ -45,6 +49,24 @@
   font-weight: 600;
   color: #252525;
   max-width: clamp(220px, 20vw, 300px);
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.labelsRowTop .label:nth-child(1) {
+  animation-delay: 0.4s;
+}
+
+.labelsRowTop .label:nth-child(2) {
+  animation-delay: 0.48s;
+}
+
+.labelsRowBottom .label:nth-child(1) {
+  animation-delay: 0.56s;
+}
+
+.labelsRowBottom .label:nth-child(2) {
+  animation-delay: 0.64s;
 }
 
 .label_topLeft,
@@ -80,6 +102,18 @@
 
 .labelText {
   max-width: 260px;
+}
+
+.section[data-visible="true"] {
+  animation: diagramSection 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.15s;
+}
+
+.section[data-visible="true"] .diagramWrapper {
+  animation: diagramWrapper 1s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.3s;
+}
+
+.section[data-visible="true"] .label {
+  animation: diagramLabel 0.8s cubic-bezier(0.33, 1, 0.68, 1) forwards;
 }
 
 @media (max-width: 1024px) {
@@ -154,5 +188,49 @@
 
   .label {
     font-size: 3.6vw;
+  }
+}
+
+@keyframes diagramSection {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes diagramWrapper {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes diagramLabel {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section,
+  .diagramWrapper,
+  .label {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }

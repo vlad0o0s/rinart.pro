@@ -1,9 +1,14 @@
+'use client';
+
 import Image from "next/image";
+import { useReveal } from "@/lib/use-reveal";
 import styles from "./intro-section.module.css";
 
 export function IntroSection() {
+  const sectionRef = useReveal<HTMLElement>({ threshold: 0.15 });
+
   return (
-    <section className={styles.section}>
+    <section ref={sectionRef} className={styles.section} data-visible="false">
       <div className={styles.left} />
       <div className={styles.right}>
         <h2 className={styles.title}>

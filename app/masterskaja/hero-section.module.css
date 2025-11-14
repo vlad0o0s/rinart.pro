@@ -1,0 +1,257 @@
+.section {
+  padding: 120px 0 50px;
+  background-color: #ffffff;
+  color: #252525;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  font-family: "Neue Haas Unica", "Helvetica Neue", Arial, sans-serif;
+  opacity: 0;
+  transform: translateY(36px);
+}
+
+.inner {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.headingRow {
+  display: grid;
+  grid-template-columns: 60% 40%;
+  gap: 16px;
+  align-items: end;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.headingRow > * {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(36px, 4vw, 60px);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1em;
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.lead {
+  margin: 0;
+  font-size: clamp(16px, 3.6vw, 20px);
+  font-weight: 500;
+  line-height: 1.2;
+  color: #252525;
+  max-width: none;
+  overflow-wrap: anywhere;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.imageContainer {
+  width: 100%;
+  margin: 0;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  min-height: 431px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.image {
+  object-fit: cover;
+  filter: grayscale(100%);
+  transform: scale(1.08);
+}
+
+.section[data-visible="true"] {
+  animation: heroSectionFade 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.1s;
+}
+
+.section[data-visible="true"] .headingRow {
+  animation: heroHeadingRise 0.9s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.2s;
+}
+
+.section[data-visible="true"] .title {
+  animation: heroTitleSlide 0.95s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.32s;
+}
+
+.section[data-visible="true"] .lead {
+  animation: heroLeadSlide 0.95s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.38s;
+}
+
+.section[data-visible="true"] .imageWrapper {
+  animation: heroImageReveal 1.05s cubic-bezier(0.33, 1, 0.68, 1) forwards 0.4s;
+}
+
+.section[data-visible="true"] .image {
+  animation: heroImageZoom 1.4s cubic-bezier(0.4, 0.85, 0.35, 1) forwards 0.5s;
+}
+
+@media (max-width: 1024px) {
+  .section {
+    padding: 100px 0 36px;
+  }
+
+  .headingRow {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .lead {
+    max-width: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .inner {
+    gap: 22px;
+  }
+
+  .imageContainer {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0 10px;
+    overflow: hidden;
+  }
+
+  .mobileBrand {
+    display: block;
+  }
+
+  .headingRow {
+    gap: 16px;
+  }
+
+  .title {
+    font-size: clamp(32px, 7.5vw, 44px);
+  }
+
+  .lead {
+    font-size: clamp(16px, 3.6vw, 20px);
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  .imageWrapper {
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 639px) {
+  .section {
+    padding: 80px 0 24px;
+  }
+
+  .mobileBrand {
+    font-size: 2.9vw;
+    line-height: 1;
+  }
+
+  .imageWrapper {
+    min-height: 260px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image {
+    transform: none;
+  }
+
+  .section,
+  .headingRow,
+  .title,
+  .lead,
+  .imageWrapper {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes heroSectionFade {
+  from {
+    opacity: 0;
+    transform: translateY(36px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroHeadingRise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroTitleSlide {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroLeadSlide {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroImageReveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroImageZoom {
+  from {
+    transform: scale(1.08);
+  }
+
+  to {
+    transform: scale(1.02);
+  }
+}
+

@@ -1,4 +1,7 @@
+'use client';
+
 import type { CSSProperties } from "react";
+import { useReveal } from "@/lib/use-reveal";
 import styles from "./pricing-timeline.module.css";
 
 type PricingItem = {
@@ -129,8 +132,10 @@ function DesktopPricingItem({
 }
 
 export function PricingTimeline() {
+  const sectionRef = useReveal<HTMLElement>({ threshold: 0.1 });
+
   return (
-    <section className={styles.section} id="price">
+    <section ref={sectionRef} className={styles.section} id="price" data-visible="false">
       <h2 className={styles.header}>
         <em>(III)</em> Стоимость проектирования
       </h2>

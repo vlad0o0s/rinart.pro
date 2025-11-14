@@ -1,4 +1,7 @@
+'use client';
+
 import Image from "next/image";
+import { useReveal } from "@/lib/use-reveal";
 import styles from "./project-diagram.module.css";
 
 const TOP_LABELS = [
@@ -12,8 +15,15 @@ const BOTTOM_LABELS = [
 ];
 
 export function ProjectDiagram() {
+  const sectionRef = useReveal<HTMLElement>({ threshold: 0.1 });
+
   return (
-    <section className={styles.section} aria-labelledby="project-diagram-title">
+    <section
+      ref={sectionRef}
+      className={styles.section}
+      aria-labelledby="project-diagram-title"
+      data-visible="false"
+    >
       <h2 id="project-diagram-title" className="sr-only">
         Основные параметры и габариты проекта дома
       </h2>
@@ -44,6 +54,7 @@ export function ProjectDiagram() {
           width={1189}
           height={768}
           className={styles.image}
+          style={{ height: "auto" }}
           priority
         />
         <div className={`${styles.labelsRow} ${styles.labelsRowBottom}`}>

@@ -1,8 +1,13 @@
+'use client';
+
+import { useReveal } from "@/lib/use-reveal";
 import styles from "./stages-section.module.css";
 
 export function StagesSection() {
+  const sectionRef = useReveal<HTMLElement>();
+
   return (
-    <section className={styles.section} id="etap">
+    <section ref={sectionRef} className={styles.section} id="etap" data-visible="false">
       <div className={styles.left}>
         <p className={styles.preheading}>
           <em>(II)</em> ЭТАПЫ ПРОЕКТИРОВАНИЯ
