@@ -418,6 +418,10 @@
   grid-template-columns: minmax(340px, 420px) minmax(540px, 1fr);
 }
 
+.adminContent[data-view="settings"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .projectColumn,
 .editorColumn,
 .mediaColumn {
@@ -868,6 +872,15 @@
   max-width: 360px;
 }
 
+.sectionEyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, 0.5);
+}
+
 .sectionActions {
   display: flex;
   align-items: center;
@@ -888,6 +901,286 @@
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
+.settingsTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 0 4px;
+}
+
+.settingsHub {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+}
+
+.settingsIntro {
+  padding: 0 4px;
+}
+
+.settingsLayout {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  gap: clamp(20px, 4vw, 40px);
+  align-items: start;
+  width: 100%;
+}
+
+.settingsNav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: sticky;
+  top: 140px;
+}
+
+.settingsNavButton {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 20px;
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.9);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.settingsNavButton[data-active="true"] {
+  border-color: rgba(15, 23, 42, 0.24);
+  background: #0f172a;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+}
+
+.settingsNavButton[data-active="true"] .settingsNavLabel,
+.settingsNavButton[data-active="true"] .settingsNavDescription {
+  color: #ffffff;
+}
+
+.settingsNavLabel {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0f172a;
+}
+
+.settingsNavDescription {
+  font-size: 13px;
+  color: rgba(15, 23, 42, 0.65);
+}
+
+.settingsContent {
+  min-width: 0;
+  width: 100%;
+}
+
+.settingsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.settingsActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.settingsPanels {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.settingsSection {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 32px;
+  align-items: start;
+}
+
+.teamSectionWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.teamSectionCard {
+  border-radius: 28px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+  padding: clamp(20px, 4vw, 32px);
+}
+
+@media (max-width: 1280px) {
+  .settingsSection {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .settingsLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .settingsNav {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .settingsNavButton {
+    flex: 1 1 220px;
+  }
+}
+
+.settingsCard {
+  border-radius: 28px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+  padding: clamp(20px, 4vw, 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.socialGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+.socialCard {
+  border: 1px dashed rgba(15, 23, 42, 0.12);
+  border-radius: 20px;
+  padding: 16px;
+  background: rgba(248, 250, 252, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.socialCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.socialIconPreview {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.socialIconBadge {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  background-color: #111827;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.socialPlatformMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.socialPlatformLabel {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0f172a;
+}
+
+.socialPlatformHint {
+  font-size: 11px;
+  color: rgba(15, 23, 42, 0.5);
+  letter-spacing: 0.02em;
+}
+
+.socialIconInstagram {
+  mask-image: url("/icons/instagram.svg");
+  -webkit-mask-image: url("/icons/instagram.svg");
+}
+
+.socialIconTelegram {
+  mask-image: url("/icons/telegram.svg");
+  -webkit-mask-image: url("/icons/telegram.svg");
+}
+
+.socialIconVk {
+  mask-image: url("/icons/vk.svg");
+  -webkit-mask-image: url("/icons/vk.svg");
+}
+
+.socialIconPinterest {
+  mask-image: url("/icons/pinterest.svg");
+  -webkit-mask-image: url("/icons/pinterest.svg");
+}
+
+.socialFields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.appearanceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.appearanceItem {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.appearancePreview {
+  position: relative;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(248, 250, 252, 0.8);
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.appearancePreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.appearancePlaceholder {
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.45);
+  text-align: center;
+  padding: 16px;
+}
+
 .inputGroup {
   display: flex;
   flex-direction: column;
@@ -899,6 +1192,24 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+.textButton {
+  border: none;
+  background: none;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #0f172a;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.textButton:hover,
+.textButton:focus-visible {
+  color: rgba(15, 23, 42, 0.6);
 }
 
 .fieldHint {
@@ -1885,6 +2196,12 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
+}
+
+.captchaWrapper {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 4px;
 }
 
 .statusBar {

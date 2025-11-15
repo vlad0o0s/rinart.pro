@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ContactsHero, { type ContactItem } from "./contacts-hero";
+import ContactsHero from "./contacts-hero";
 import { Footer } from "@/components/footer";
 import { SiteHeader } from "@/components/site-header";
 import styles from "./page.module.css";
@@ -7,27 +7,20 @@ import { JsonLd } from "@/components/json-ld";
 import { contactPageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
-
-const contacts = [
-  { type: "title", label: "Контактная информация" },
-  { type: "link", label: "+7 903 147-44-30", href: "tel:+79031474430" },
-  { type: "link", label: "rinartburo@mail.ru", href: "mailto:rinartburo@mail.ru" },
-  { type: "link", label: "VK: rinart_buro", href: "https://vk.com/rinart_buro" },
-  { type: "link", label: "TG: rinart_buro", href: "https://t.me/rinart_buro" },
-  { type: "link", label: "INST: rinart.buro", href: "https://www.instagram.com/rinart.buro/" },
-  { type: "plain", label: "Москва, Российская Федерация" },
-] satisfies ContactItem[];
+import { getContactSettings, getSocialLinks } from "@/lib/site-settings";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("kontakty");
 }
 
-export default function KontaktyPage() {
+export default async function KontaktyPage() {
+  const [contactSettings, socialLinks] = await Promise.all([getContactSettings(), getSocialLinks()]);
+
   return (
     <>
-      <SiteHeader showDesktopNav />
+      <SiteHeader showDesktopNav socialLinks={socialLinks} />
       <main className={styles.page}>
-        <ContactsHero contacts={contacts} />
+        <ContactsHero contact={contactSettings} socials={socialLinks} />
       </main>
       <Footer />
       <JsonLd schema={contactPageSchema()} />

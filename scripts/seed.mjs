@@ -33,9 +33,24 @@ function getRequiredEnv(name, fallbackEnv) {
   return value;
 }
 
+function stripWrappingQuotes(value) {
+  if (typeof value !== "string") {
+    return value;
+  }
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+}
+
 function parseDatabaseUrl(databaseUrl) {
   try {
-    const parsed = new URL(databaseUrl);
+    const normalizedUrl = stripWrappingQuotes(databaseUrl);
+    const parsed = new URL(normalizedUrl);
     const database = parsed.pathname.replace(/^\//, "");
     if (!database) {
       throw new Error("Database name is missing in DATABASE_URL");
@@ -108,6 +123,7 @@ try {
   await connection.execute("TRUNCATE TABLE ProjectMedia");
   await connection.execute("TRUNCATE TABLE ProjectScheme");
   await connection.execute("TRUNCATE TABLE Project");
+  await connection.execute("TRUNCATE TABLE TeamMember");
   await connection.execute("SET FOREIGN_KEY_CHECKS = 1");
 
   const summaries = readJson("public/data/projects.json");
@@ -190,6 +206,28 @@ try {
       await connection.execute(
         "INSERT INTO ProjectScheme (projectId, title, url, `order`) VALUES (?, ?, ?, ?)",
         [projectId, title, schemeUrl, index],
+      );
+    }
+  }
+
+  const teamMembers = readJson("data/team-members.json");
+  if (Array.isArray(teamMembers) && teamMembers.length) {
+    console.log("Seeding team members...");
+    for (let index = 0; index < teamMembers.length; index += 1) {
+      const member = teamMembers[index] ?? {};
+      const orderValue = Number.isFinite(member.order) ? Number(member.order) : index;
+      await connection.execute(
+        `INSERT INTO TeamMember (name, role, label, imageUrl, mobileImageUrl, isFeatured, \`order\`)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          normaliseString(member.name) ?? `Участник ${index + 1}`,
+          normaliseString(member.role),
+          normaliseString(member.label),
+          normaliseString(member.imageUrl),
+          normaliseString(member.mobileImageUrl),
+          member.isFeatured ? 1 : 0,
+          orderValue,
+        ],
       );
     }
   }

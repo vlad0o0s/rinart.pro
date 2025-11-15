@@ -1,48 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useReveal } from "@/lib/use-reveal";
+import type { TeamMember } from "@/types/site";
 import styles from "./team-section.module.css";
 
-const MOBILE_MEMBERS = [
-  {
-    name: "Ринат Гильмутдинов",
-    role: "Архитектор. Руководитель мастерской",
-    image: "/img/team-rinat.webp",
-  },
-  {
-    name: "Вадим Надршин",
-    role: "Дизайнер",
-    image: "/img/team-vadim.jpg",
-  },
-];
+type TeamSectionProps = {
+  members: TeamMember[];
+};
 
-const DESKTOP_MEMBERS = [
-  {
-    id: "rinat-gilmutdinov",
-    label: "руководитель мастерской",
-    name: "Ринат Гильмутдинов",
-    image: "/img/team-rinat.webp",
-    imageClassName: styles.profileImagePrimary,
-  },
-  {
-    id: "vadim-nadrshin",
-    label: "Дизайнер",
-    name: "Вадим Надршин",
-    image: "/img/team-vadim-alt.jpg",
-    imageClassName: styles.profileImageSecondary,
-  },
-];
+type DisplayMember = TeamMember & { clientId: string; order: number };
 
-const DEFAULT_MEMBER_ID = DESKTOP_MEMBERS[0]?.id ?? null;
-
-export function TeamSection() {
-  const [hoveredId, setHoveredId] = useState<string | null>(DEFAULT_MEMBER_ID);
+export function TeamSection({ members }: TeamSectionProps) {
   const sectionRef = useReveal<HTMLElement>({ threshold: 0.2 });
+  const normalizedMembers = useMemo<DisplayMember[]>(() => {
+    const source = Array.isArray(members) ? members : [];
+    const prepared = source.map((member, index) => ({
+      ...member,
+      order: typeof member.order === "number" ? member.order : index,
+      clientId: String(member.id ?? index),
+    })) as DisplayMember[];
+    return prepared.sort((a, b) => a.order - b.order);
+  }, [members]);
+
+  if (!normalizedMembers.length) {
+    return null;
+  }
+
+  const defaultMemberId = normalizedMembers[0]?.clientId ?? null;
+  const [hoveredId, setHoveredId] = useState<string | null>(defaultMemberId);
 
   const handleActivate = (id: string) => setHoveredId(id);
-  const handleDeactivate = () => setHoveredId(DEFAULT_MEMBER_ID);
+  const handleDeactivate = () => setHoveredId(defaultMemberId);
 
   return (
     <section ref={sectionRef} className={styles.section} id="team" data-visible="false">
@@ -64,53 +54,56 @@ export function TeamSection() {
           </p>
 
           <div className={styles.mobileProfiles}>
-            {MOBILE_MEMBERS.map((member) => (
-              <div key={member.name} className={styles.mobileProfile}>
-                <div className={styles.mobileImageWrapper}>
-                  <Image
-                    src={member.image}
-                    alt={member.name}
-                    fill
-                    className={styles.mobileImage}
-                    sizes="(max-width: 768px) 60vw"
-                  />
+            {normalizedMembers.map((member) => {
+              const mobileImage = member.mobileImageUrl || member.imageUrl;
+              return (
+                <div key={`mobile-${member.clientId}`} className={styles.mobileProfile}>
+                  <div className={styles.mobileImageWrapper}>
+                    {mobileImage ? (
+                      <Image
+                        src={mobileImage}
+                        alt={member.name}
+                        fill
+                        className={styles.mobileImage}
+                        sizes="(max-width: 768px) 60vw"
+                      />
+                    ) : null}
+                  </div>
+                  <div className={styles.mobileCopy}>
+                    <p className={styles.mobileRole}>{member.role ?? member.label}</p>
+                    <p className={styles.mobileName}>{member.name}</p>
+                  </div>
                 </div>
-                <div className={styles.mobileCopy}>
-                  <p className={styles.mobileRole}>{member.role}</p>
-                  <p className={styles.mobileName}>{member.name}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className={styles.desktopProfiles}>
-            {DESKTOP_MEMBERS.map((member) => {
-              const isActive = hoveredId === member.id;
+            {normalizedMembers.map((member, index) => {
+              const isActive = hoveredId === member.clientId;
+              const imageSrc = member.imageUrl || member.mobileImageUrl;
               return (
                 <div
-                  key={member.id}
+                  key={member.clientId}
                   className={`${styles.profileRow} ${isActive ? styles.profileRowActive : ""}`}
-                  onMouseEnter={() => handleActivate(member.id)}
+                  onMouseEnter={() => handleActivate(member.clientId)}
                   onMouseLeave={handleDeactivate}
-                  onFocus={() => handleActivate(member.id)}
+                  onFocus={() => handleActivate(member.clientId)}
                   onBlur={handleDeactivate}
                   tabIndex={0}
                 >
-                  <p className={styles.profileRole}>{member.label}</p>
+                  <p className={styles.profileRole}>{member.label ?? member.role}</p>
                   <p className={styles.profileName}>{member.name}</p>
-                  <div
-                    className={`${styles.profileImage} ${member.imageClassName} ${
-                      isActive ? styles.profileImageVisible : ""
-                    }`}
-                    aria-hidden={!isActive}
-                  >
-                    <Image
-                      src={member.image}
-                      alt={member.name}
-                      fill
-                      sizes="(min-width: 1025px) 20vw"
-                    />
-                  </div>
+                  {imageSrc ? (
+                    <div
+                      className={`${styles.profileImage} ${
+                        index === 0 ? styles.profileImagePrimary : styles.profileImageSecondary
+                      } ${isActive ? styles.profileImageVisible : ""}`}
+                      aria-hidden={!isActive}
+                    >
+                      <Image src={imageSrc} alt={member.name} fill sizes="(min-width: 1025px) 20vw" />
+                    </div>
+                  ) : null}
                 </div>
               );
             })}

@@ -9,15 +9,25 @@ import { JsonLd } from "@/components/json-ld";
 import { masterskajaPageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
+import { getSocialLinks } from "@/lib/site-settings";
+import { getTeamMembers } from "@/lib/team";
+import type { TeamMember } from "@/types/site";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("masterskaja");
 }
 
-export default function MasterskajaPage() {
+export default async function MasterskajaPage() {
+  const [socialLinks, rawTeamMembers] = await Promise.all([getSocialLinks(), getTeamMembers()]);
+  const teamMembers: TeamMember[] = rawTeamMembers.map((member) => {
+    const { createdAt: _createdAt, updatedAt: _updatedAt, ...rest } = member;
+    void _createdAt;
+    void _updatedAt;
+    return rest;
+  });
   return (
     <>
-      <SiteHeader showDesktopNav subLinks={MASTERSKAJA_SUBLINKS} />
+      <SiteHeader showDesktopNav subLinks={MASTERSKAJA_SUBLINKS} socialLinks={socialLinks} />
       <main className="min-h-screen bg-white text-neutral-900 antialiased">
         <section id="founder">
           <MasterskajaHero />
@@ -26,7 +36,7 @@ export default function MasterskajaPage() {
           <FounderSection />
         </section>
         <section id="team">
-          <TeamSection />
+          <TeamSection members={teamMembers} />
         </section>
         <section id="publications">
           <PublicationsSection />

@@ -65,7 +65,10 @@
 .logoLineWrapper {
   position: absolute;
   inset: 0;
-  background-image: url("https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png");
+  background-image: var(
+    --transition-logo-image,
+    url("https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png")
+  );
   background-repeat: no-repeat;
   background-position: 50% 100%;
   background-size: 20%;

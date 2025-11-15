@@ -17,11 +17,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Введите логин и пароль" }, { status: 400 });
     }
 
-    const forwardedFor = request.headers.get("x-forwarded-for");
-    const remoteIp = forwardedFor?.split(",")[0]?.trim();
-    const isRecaptchaValid = await verifyRecaptchaToken(recaptchaToken, remoteIp);
-    if (!isRecaptchaValid) {
-      return NextResponse.json({ error: "Подтвердите, что вы не робот" }, { status: 400 });
+    const shouldVerifyRecaptcha = Boolean(process.env.RECAPTCHA_SECRET_KEY);
+    if (shouldVerifyRecaptcha) {
+      const forwardedFor = request.headers.get("x-forwarded-for");
+      const remoteIp = forwardedFor?.split(",")[0]?.trim();
+      const isRecaptchaValid = await verifyRecaptchaToken(recaptchaToken, remoteIp);
+      if (!isRecaptchaValid) {
+        return NextResponse.json({ error: "Подтвердите, что вы не робот" }, { status: 400 });
+      }
     }
 
     await deleteExpiredAdminSessions();

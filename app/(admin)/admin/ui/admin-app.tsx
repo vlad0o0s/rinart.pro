@@ -195,7 +195,15 @@ type SeoPageState = {
 
 type SeoEditorField = "title" | "description" | "keywords" | "ogImageUrl";
 
-type MediaLibraryMode = "hero" | "gallery-add" | "gallery-replace" | "scheme" | "seo" | "seo-page";
+type MediaLibraryMode =
+  | "hero"
+  | "gallery-add"
+  | "gallery-replace"
+  | "scheme"
+  | "seo"
+  | "seo-page"
+  | "team-image"
+  | "team-mobile-image";
 
 type MediaLibraryState = {
   open: boolean;
@@ -203,6 +211,169 @@ type MediaLibraryState = {
   targetId?: string;
   initialSelection?: string[];
 };
+
+type ContactSettingsState = {
+  heroTitle: string;
+  phoneLabel: string;
+  phoneHref: string;
+  emailLabel: string;
+  emailHref: string;
+  locationLabel: string;
+  footerTitle: string;
+  cityLabel: string;
+  whatsappLabel: string;
+  whatsappUrl: string;
+  backToTopLabel: string;
+};
+
+type SocialLinkState = {
+  id: string;
+  platform: SocialPlatformOption;
+  label: string;
+  url: string;
+};
+
+type SocialPlatformOption = "instagram" | "telegram" | "vk" | "pinterest";
+
+type TeamMemberState = {
+  id: number;
+  name: string;
+  role: string;
+  label: string;
+  imageUrl: string;
+  mobileImageUrl: string;
+  isFeatured: boolean;
+  order: number;
+};
+
+type TeamEditorState = TeamMemberState | null;
+
+const CONTACT_DEFAULTS: ContactSettingsState = {
+  heroTitle: "Контактная информация",
+  phoneLabel: "+7 903 147-44-30",
+  phoneHref: "tel:+79031474430",
+  emailLabel: "rinartburo@mail.ru",
+  emailHref: "mailto:rinartburo@mail.ru",
+  locationLabel: "Москва, Российская Федерация",
+  footerTitle: "Обсудим ваш проект:",
+  cityLabel: "г. Москва",
+  whatsappLabel: "Написать в WhatsApp",
+  whatsappUrl: "https://wa.me/79031474430",
+  backToTopLabel: "В начало",
+};
+
+type AppearanceSettingsState = {
+  homeHeroImageUrl: string;
+  transitionImageUrl: string;
+};
+
+const APPEARANCE_DEFAULTS: AppearanceSettingsState = {
+  homeHeroImageUrl: "/img/01-ilichevka.jpg",
+  transitionImageUrl:
+    "https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png",
+};
+
+type SettingsTab = "contacts" | "social" | "media" | "team";
+
+const SETTINGS_TABS: { id: SettingsTab; label: string; description: string }[] = [
+  { id: "contacts", label: "Контакты", description: "Заголовки, телефон, почта и адрес" },
+  { id: "social", label: "Социальные сети", description: "Ссылки для шапки, подвала и контактов" },
+  { id: "media", label: "Медиа сайта", description: "Изображения главного экрана и переходов" },
+  { id: "team", label: "Команда", description: "Карточки участников мастерской" },
+];
+
+const SOCIAL_PLATFORM_OPTIONS: { label: string; value: SocialPlatformOption }[] = [
+  { label: "Instagram", value: "instagram" },
+  { label: "Telegram", value: "telegram" },
+  { label: "VK", value: "vk" },
+  { label: "Pinterest", value: "pinterest" },
+];
+
+const SOCIAL_DEFAULTS: SocialLinkState[] = [
+  { id: "instagram", platform: "instagram", label: "INST: rinart.buro", url: "https://www.instagram.com/rinart.buro/" },
+  { id: "telegram", platform: "telegram", label: "TG: rinart_buro", url: "https://t.me/rinart_buro" },
+  { id: "vk", platform: "vk", label: "VK: rinart_buro", url: "https://vk.com/rinart_buro" },
+  { id: "pinterest", platform: "pinterest", label: "Pinterest: rinartburo", url: "https://www.pinterest.com/rinartburo" },
+];
+
+function toTelHref(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+  const digits = trimmed.replace(/[^+\d]/g, "");
+  if (!digits) {
+    return "";
+  }
+  return `tel:${digits.replace(/^tel:/i, "")}`;
+}
+
+function toMailHref(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+  const clean = trimmed.replace(/^mailto:/i, "");
+  if (!clean) {
+    return "";
+  }
+  return `mailto:${clean}`;
+}
+
+function normalizeContactSettings(value?: Partial<ContactSettingsState> | null): ContactSettingsState {
+  if (!value) {
+    return CONTACT_DEFAULTS;
+  }
+  return {
+    heroTitle: value.heroTitle?.trim() || CONTACT_DEFAULTS.heroTitle,
+    phoneLabel: value.phoneLabel?.trim() || CONTACT_DEFAULTS.phoneLabel,
+    phoneHref: value.phoneHref?.trim() || CONTACT_DEFAULTS.phoneHref,
+    emailLabel: value.emailLabel?.trim() || CONTACT_DEFAULTS.emailLabel,
+    emailHref: value.emailHref?.trim() || CONTACT_DEFAULTS.emailHref,
+    locationLabel: value.locationLabel?.trim() || CONTACT_DEFAULTS.locationLabel,
+    footerTitle: value.footerTitle?.trim() || CONTACT_DEFAULTS.footerTitle,
+    cityLabel: value.cityLabel?.trim() || CONTACT_DEFAULTS.cityLabel,
+    whatsappLabel: value.whatsappLabel?.trim() || CONTACT_DEFAULTS.whatsappLabel,
+    whatsappUrl: value.whatsappUrl?.trim() || CONTACT_DEFAULTS.whatsappUrl,
+    backToTopLabel: value.backToTopLabel?.trim() || CONTACT_DEFAULTS.backToTopLabel,
+  };
+}
+
+function normalizeSocialLinks(links?: unknown): SocialLinkState[] {
+  if (!Array.isArray(links)) {
+    return SOCIAL_DEFAULTS;
+  }
+  const normalized = links
+    .map((link) => {
+      if (!link || typeof link !== "object") {
+        return null;
+      }
+      const source = link as Partial<SocialLinkState>;
+      const platform = SOCIAL_PLATFORM_OPTIONS.find((option) => option.value === source.platform)?.value ?? "instagram";
+      const id = typeof source.id === "string" && source.id.trim().length > 0 ? source.id.trim() : platform;
+      const label = typeof source.label === "string" && source.label.trim().length > 0 ? source.label.trim() : platform;
+      const url = typeof source.url === "string" && source.url.trim().length > 0 ? source.url.trim() : "";
+      if (!url) {
+        return null;
+      }
+      return { id, platform, label, url };
+    })
+    .filter((link): link is SocialLinkState => Boolean(link));
+  return normalized.length ? normalized : SOCIAL_DEFAULTS;
+}
+
+function normalizeTeamMember(member: Partial<TeamMemberState> | null | undefined): TeamMemberState {
+  return {
+    id: Number(member?.id) || 0,
+    name: typeof member?.name === "string" ? member.name : "",
+    role: typeof member?.role === "string" ? member.role : "",
+    label: typeof member?.label === "string" ? member.label : "",
+    imageUrl: typeof member?.imageUrl === "string" ? member.imageUrl : "",
+    mobileImageUrl: typeof member?.mobileImageUrl === "string" ? member.mobileImageUrl : "",
+    isFeatured: Boolean(member?.isFeatured),
+    order: Number(member?.order) || 0,
+  };
+}
 
 type EditorState = {
   slug: string;
@@ -794,11 +965,29 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [activeView, setActiveView] = useState<"projects" | "seo">("projects");
+  const [activeView, setActiveView] = useState<"projects" | "seo" | "settings">("projects");
   const [seoPages, setSeoPages] = useState<SeoPageState[]>([]);
   const [selectedSeoSlug, setSelectedSeoSlug] = useState<string | null>(null);
   const [seoLoading, setSeoLoading] = useState(false);
   const [seoSavingSlug, setSeoSavingSlug] = useState<string | null>(null);
+  const [contactSettings, setContactSettings] = useState<ContactSettingsState>(CONTACT_DEFAULTS);
+  const [socialLinks, setSocialLinks] = useState<SocialLinkState[]>(SOCIAL_DEFAULTS);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [appearanceSettings, setAppearanceSettings] = useState<AppearanceSettingsState>(APPEARANCE_DEFAULTS);
+  const [appearanceLoaded, setAppearanceLoaded] = useState(false);
+  const [appearanceLoading, setAppearanceLoading] = useState(false);
+  const [appearanceSaving, setAppearanceSaving] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMemberState[]>([]);
+  const [teamLoaded, setTeamLoaded] = useState(false);
+  const [teamLoading, setTeamLoading] = useState(false);
+  const [teamSelectedId, setTeamSelectedId] = useState<number | null>(null);
+  const [teamEditor, setTeamEditor] = useState<TeamEditorState>(null);
+  const [teamSaving, setTeamSaving] = useState(false);
+  const [teamDeleting, setTeamDeleting] = useState(false);
+  const [teamActiveDragId, setTeamActiveDragId] = useState<number | null>(null);
+  const [teamCreateModalOpen, setTeamCreateModalOpen] = useState(false);
   const activeProject = useMemo(
     () => (activeDragId ? projects.find((project) => project.slug === activeDragId) ?? null : null),
     [projects, activeDragId],
@@ -812,6 +1001,10 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   );
   const showSeoSkeleton = seoLoading && !seoPages.length;
   const seoSaving = selectedSeoSlug ? seoSavingSlug === selectedSeoSlug : false;
+  const activeTeamMember = useMemo(
+    () => (teamActiveDragId ? teamMembers.find((member) => member.id === teamActiveDragId) ?? null : null),
+    [teamMembers, teamActiveDragId],
+  );
 
   const redirectToLogin = useCallback(() => {
     window.location.href = "/admin/login";
@@ -831,6 +1024,309 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       }
     },
     [redirectToLogin],
+  );
+
+  const loadContactSettings = useCallback(async () => {
+    try {
+      setSettingsLoading(true);
+      const data = await fetchJson<{ contact: Partial<ContactSettingsState>; socials: SocialLinkState[] }>(
+        "/api/admin/settings/contact",
+      );
+      setContactSettings(normalizeContactSettings(data.contact));
+      setSocialLinks(normalizeSocialLinks(data.socials));
+      setSettingsLoaded(true);
+    } catch (error) {
+      reportError(error, "Не удалось загрузить настройки");
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, [reportError]);
+
+  const loadAppearanceSettings = useCallback(async () => {
+    try {
+      setAppearanceLoading(true);
+      const data = await fetchJson<{ appearance: AppearanceSettingsState }>("/api/admin/settings/appearance");
+      setAppearanceSettings({
+        homeHeroImageUrl: data.appearance.homeHeroImageUrl ?? APPEARANCE_DEFAULTS.homeHeroImageUrl,
+        transitionImageUrl: data.appearance.transitionImageUrl ?? APPEARANCE_DEFAULTS.transitionImageUrl,
+      });
+      setAppearanceLoaded(true);
+    } catch (error) {
+      reportError(error, "Не удалось загрузить изображения");
+    } finally {
+      setAppearanceLoading(false);
+    }
+  }, [reportError]);
+
+  const loadTeamMembers = useCallback(async () => {
+    try {
+      setTeamLoading(true);
+      const data = await fetchJson<{ members: TeamMemberState[] }>("/api/admin/team");
+      const normalized = (data.members ?? [])
+        .map((member) => normalizeTeamMember(member))
+        .sort((a, b) => a.order - b.order)
+        .map((member, index) => ({ ...member, order: index }));
+      setTeamMembers(normalized);
+      setTeamSelectedId((prev) => prev ?? normalized[0]?.id ?? null);
+      setTeamEditor((prev) => prev ?? normalized[0] ?? null);
+      setTeamLoaded(true);
+    } catch (error) {
+      reportError(error, "Не удалось загрузить команду");
+    } finally {
+      setTeamLoading(false);
+    }
+  }, [reportError]);
+
+  const handleContactFieldChange = useCallback(<K extends keyof ContactSettingsState>(field: K, value: string) => {
+    setContactSettings((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "phoneLabel") {
+        next.phoneHref = toTelHref(value);
+      }
+      if (field === "emailLabel") {
+        next.emailHref = toMailHref(value);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSocialFieldChange = useCallback(
+    (id: string, field: keyof SocialLinkState, value: string | SocialPlatformOption) => {
+      setSocialLinks((prev) =>
+        prev.map((link) =>
+          link.id === id
+            ? {
+                ...link,
+                [field]: field === "platform" ? (value as SocialPlatformOption) : (value as string),
+              }
+            : link,
+        ),
+      );
+    },
+    [],
+  );
+
+  const handleSaveSettings = useCallback(async () => {
+    try {
+      setSettingsSaving(true);
+      const sanitizedSocials = socialLinks
+        .map((link) => ({
+          ...link,
+          url: link.url.trim(),
+          label: link.label.trim(),
+        }))
+        .filter((link) => link.url.length > 0);
+      const response = await fetchJson<{ contact: ContactSettingsState; socials: SocialLinkState[] }>(
+        "/api/admin/settings/contact",
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            contact: contactSettings,
+            socials: sanitizedSocials,
+          }),
+        },
+      );
+      setContactSettings(normalizeContactSettings(response.contact));
+      setSocialLinks(normalizeSocialLinks(response.socials));
+      setStatus("Настройки сохранены");
+    } catch (error) {
+      reportError(error, "Не удалось сохранить настройки");
+    } finally {
+      setSettingsSaving(false);
+    }
+  }, [contactSettings, reportError, socialLinks]);
+
+  const handleAppearanceFieldChange = useCallback((field: keyof AppearanceSettingsState, value: string) => {
+    setAppearanceSettings((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleSaveAppearance = useCallback(async () => {
+    try {
+      setAppearanceSaving(true);
+      const payload = await fetchJson<{ appearance: AppearanceSettingsState }>("/api/admin/settings/appearance", {
+        method: "PUT",
+        body: JSON.stringify({ appearance: appearanceSettings }),
+      });
+      setAppearanceSettings(payload.appearance);
+      setStatus("Медиа обновлены");
+    } catch (error) {
+      reportError(error, "Не удалось сохранить изображения");
+    } finally {
+      setAppearanceSaving(false);
+    }
+  }, [appearanceSettings, reportError]);
+
+  const handleSelectTeamMember = useCallback(
+    (id: number) => {
+      setTeamSelectedId(id);
+      const member = teamMembers.find((item) => item.id === id) ?? null;
+      setTeamEditor(member);
+    },
+    [teamMembers],
+  );
+
+  const handleTeamFieldChange = useCallback(
+    (field: keyof TeamMemberState, value: string | boolean) => {
+      setTeamEditor((prev) => {
+        if (!prev) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [field]: typeof value === "string" ? value : value,
+        };
+      });
+    },
+    [],
+  );
+
+  const handleTeamSave = useCallback(async () => {
+    if (!teamEditor) {
+      return;
+    }
+    if (!teamEditor.name.trim()) {
+      setStatus("Введите имя участника");
+      return;
+    }
+    try {
+      setTeamSaving(true);
+      const payload = {
+        name: teamEditor.name.trim(),
+        role: teamEditor.role.trim() || null,
+        label: teamEditor.label.trim() || null,
+        imageUrl: teamEditor.imageUrl.trim() || null,
+        mobileImageUrl: teamEditor.mobileImageUrl.trim() || null,
+        isFeatured: teamEditor.isFeatured,
+      };
+      const response = await fetchJson<{ member: TeamMemberState }>(`/api/admin/team/${teamEditor.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+      const updatedMember = normalizeTeamMember(response.member);
+      setTeamMembers((prev) =>
+        prev
+          .map((member) => (member.id === updatedMember.id ? updatedMember : member))
+          .sort((a, b) => a.order - b.order)
+          .map((member, index) => ({ ...member, order: index })),
+      );
+      setTeamEditor(updatedMember);
+      setStatus("Участник обновлён");
+    } catch (error) {
+      reportError(error, "Не удалось сохранить участника");
+    } finally {
+      setTeamSaving(false);
+    }
+  }, [reportError, teamEditor]);
+
+  const handleTeamDelete = useCallback(async () => {
+    if (!teamEditor) {
+      return;
+    }
+    if (!window.confirm(`Удалить «${teamEditor.name}» из команды?`)) {
+      return;
+    }
+    try {
+      setTeamDeleting(true);
+      await fetchJson(`/api/admin/team/${teamEditor.id}`, { method: "DELETE" });
+      setTeamMembers((prev) => prev.filter((member) => member.id !== teamEditor.id).map((member, index) => ({ ...member, order: index })));
+      const nextMember = teamMembers.find((member) => member.id !== teamEditor.id);
+      setTeamSelectedId(nextMember?.id ?? null);
+      setTeamEditor(nextMember ?? null);
+      setStatus("Участник удалён");
+    } catch (error) {
+      reportError(error, "Не удалось удалить участника");
+    } finally {
+      setTeamDeleting(false);
+    }
+  }, [reportError, teamEditor, teamMembers]);
+
+  const handleCreateTeamMember = useCallback(
+    async ({ name, role }: { name: string; role?: string }) => {
+      try {
+        setTeamLoading(true);
+        const response = await fetchJson<{ member: TeamMemberState }>("/api/admin/team", {
+          method: "POST",
+          body: JSON.stringify({ name, role: role?.trim() || null }),
+        });
+        const newMember = normalizeTeamMember(response.member);
+        setTeamMembers((prev) =>
+          [...prev, newMember].sort((a, b) => a.order - b.order).map((member, index) => ({ ...member, order: index })),
+        );
+        setTeamSelectedId(newMember.id);
+        setTeamEditor(newMember);
+        setStatus("Участник добавлен");
+        setTeamCreateModalOpen(false);
+      } catch (error) {
+        reportError(error, "Не удалось создать участника");
+      } finally {
+        setTeamLoading(false);
+      }
+    },
+    [reportError],
+  );
+
+  const handleTeamDragStart = useCallback((event: DragStartEvent) => {
+    setTeamActiveDragId(Number(event.active.id));
+  }, []);
+
+  const handleTeamDragOver = useCallback((event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) {
+      return;
+    }
+    const activeId = Number(active.id);
+    const overId = Number(over.id);
+    setTeamMembers((prev) => {
+      const oldIndex = prev.findIndex((member) => member.id === activeId);
+      const newIndex = prev.findIndex((member) => member.id === overId);
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
+        return prev;
+      }
+      return arrayMove(prev, oldIndex, newIndex).map((member, index) => ({ ...member, order: index }));
+    });
+  }, []);
+
+  const handleTeamDragCancel = useCallback(() => {
+    setTeamActiveDragId(null);
+    setTeamMembers((prev) => prev.map((member, index) => ({ ...member, order: index })));
+  }, []);
+
+  const handleTeamDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setTeamActiveDragId(null);
+      const { active, over } = event;
+      if (!over) {
+        setTeamMembers((prev) => prev.map((member, index) => ({ ...member, order: index })));
+        return;
+      }
+      const activeId = Number(active.id);
+      const overId = Number(over.id);
+      if (activeId === overId) {
+        setTeamMembers((prev) => prev.map((member, index) => ({ ...member, order: index })));
+        return;
+      }
+      let nextOrder: number[] = [];
+      setTeamMembers((prev) => {
+        const oldIndex = prev.findIndex((member) => member.id === activeId);
+        const newIndex = prev.findIndex((member) => member.id === overId);
+        if (oldIndex === -1 || newIndex === -1) {
+          return prev;
+        }
+        const updated = arrayMove(prev, oldIndex, newIndex).map((member, index) => ({ ...member, order: index }));
+        nextOrder = updated.map((member) => member.id);
+        return updated;
+      });
+      if (!nextOrder.length) {
+        return;
+      }
+      void fetchJson("/api/admin/team/reorder", {
+        method: "POST",
+        body: JSON.stringify({ order: nextOrder }),
+      })
+        .then(() => setStatus("Порядок команды обновлён"))
+        .catch((error) => reportError(error, "Не удалось обновить порядок команды"));
+    },
+    [reportError],
   );
 
   const openMediaLibrary = useCallback((mode: MediaLibraryMode, config?: { targetId?: string; initialSelection?: string[] }) => {
@@ -998,6 +1494,16 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
             ),
           );
         }
+      } else if (mediaLibrary.mode === "team-image") {
+        const teamAsset = assets[0];
+        if (teamAsset) {
+          setTeamEditor((prev) => (prev ? { ...prev, imageUrl: teamAsset.url } : prev));
+        }
+      } else if (mediaLibrary.mode === "team-mobile-image") {
+        const teamAsset = assets[0];
+        if (teamAsset) {
+          setTeamEditor((prev) => (prev ? { ...prev, mobileImageUrl: teamAsset.url } : prev));
+        }
       }
 
       closeMediaLibrary();
@@ -1114,6 +1620,32 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       setSelectedSeoSlug(seoPages[0].slug);
     }
   }, [activeView, selectedSeoSlug, seoPages]);
+
+  useEffect(() => {
+    if (activeView !== "settings") {
+      return;
+    }
+    if (!settingsLoaded && !settingsLoading) {
+      void loadContactSettings();
+    }
+    if (!appearanceLoaded && !appearanceLoading) {
+      void loadAppearanceSettings();
+    }
+    if (!teamLoaded && !teamLoading) {
+      void loadTeamMembers();
+    }
+  }, [
+    activeView,
+    loadContactSettings,
+    loadAppearanceSettings,
+    loadTeamMembers,
+    settingsLoaded,
+    settingsLoading,
+    appearanceLoaded,
+    appearanceLoading,
+    teamLoaded,
+    teamLoading,
+  ]);
 
   const handleSelect = useCallback(
     async (slug: string) => {
@@ -1569,7 +2101,11 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         <div className={styles.branding}>
           <span className={styles.brandTitle}>RINART Admin</span>
           <span className={styles.brandSubtitle}>
-            {activeView === "projects" ? "Управление портфолио" : "SEO сайта"}
+            {activeView === "projects"
+              ? "Управление портфолио"
+              : activeView === "seo"
+                ? "SEO сайта"
+                : "Контакты и команда"}
           </span>
           <nav className={styles.viewTabs} aria-label="Разделы админки">
             <button
@@ -1589,6 +2125,15 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               disabled={activeView === "seo"}
             >
               SEO
+            </button>
+            <button
+              type="button"
+              className={styles.viewTabButton}
+              data-active={activeView === "settings"}
+              onClick={() => setActiveView("settings")}
+              disabled={activeView === "settings"}
+            >
+              Контент
             </button>
           </nav>
         </div>
@@ -1711,7 +2256,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               ) : null}
             </aside>
           </>
-        ) : (
+        ) : activeView === "seo" ? (
           <>
             <aside className={`${styles.projectColumn} ${styles.seoListColumn}`}>
               <div className={styles.projectColumnHeader}>
@@ -1761,6 +2306,44 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               )}
             </main>
           </>
+        ) : (
+          <SettingsView
+            contactSettings={contactSettings}
+            socialLinks={socialLinks}
+            onContactChange={handleContactFieldChange}
+            onSocialChange={handleSocialFieldChange}
+            onSaveContacts={handleSaveSettings}
+            onSaveSocials={handleSaveSettings}
+            settingsLoading={settingsLoading}
+            settingsSaving={settingsSaving}
+            appearanceSettings={appearanceSettings}
+            appearanceLoading={appearanceLoading}
+            appearanceSaving={appearanceSaving}
+            onAppearanceChange={handleAppearanceFieldChange}
+            onSaveAppearance={handleSaveAppearance}
+            teamMembers={teamMembers}
+            teamLoading={teamLoading}
+            teamSelectedId={teamSelectedId}
+            teamEditor={teamEditor}
+            onTeamSelect={handleSelectTeamMember}
+            onTeamFieldChange={handleTeamFieldChange}
+            onTeamSave={handleTeamSave}
+            onTeamDelete={handleTeamDelete}
+            onTeamCreate={() => setTeamCreateModalOpen(true)}
+            onTeamDragStart={handleTeamDragStart}
+            onTeamDragOver={handleTeamDragOver}
+            onTeamDragEnd={handleTeamDragEnd}
+            onTeamDragCancel={handleTeamDragCancel}
+            teamSaving={teamSaving}
+            teamDeleting={teamDeleting}
+            teamLoaded={teamLoaded}
+            sensors={sensors}
+            teamCreateModalOpen={teamCreateModalOpen}
+            onCloseCreateModal={() => setTeamCreateModalOpen(false)}
+            onCreateTeamMember={handleCreateTeamMember}
+            activeTeamMember={activeTeamMember}
+            onOpenMediaLibrary={openMediaLibrary}
+          />
         )}
       </div>
 
@@ -1913,7 +2496,7 @@ function SeoEditorPanel({
         </div>
         <div className={styles.seoOgActions}>
           <button type="button" className={styles.secondaryButton} onClick={onOpenOgPicker}>
-            Выбрать из медиатеки
+            Выбрать из библиотеки
           </button>
           {hasOgImage ? (
             <button type="button" className={styles.ghostButton} onClick={onClearOgImage}>
@@ -2620,6 +3203,805 @@ function MediaPanel({
         )}
       </section>
 
+    </div>
+  );
+}
+
+type SettingsViewProps = {
+  contactSettings: ContactSettingsState;
+  socialLinks: SocialLinkState[];
+  onContactChange: (field: keyof ContactSettingsState, value: string) => void;
+  onSocialChange: (id: string, field: keyof SocialLinkState, value: string | SocialPlatformOption) => void;
+  onSaveContacts: () => void;
+  onSaveSocials: () => void;
+  settingsLoading: boolean;
+  settingsSaving: boolean;
+  appearanceSettings: AppearanceSettingsState;
+  appearanceLoading: boolean;
+  appearanceSaving: boolean;
+  onAppearanceChange: (field: keyof AppearanceSettingsState, value: string) => void;
+  onSaveAppearance: () => void;
+  teamMembers: TeamMemberState[];
+  teamLoading: boolean;
+  teamSelectedId: number | null;
+  teamEditor: TeamEditorState;
+  onTeamSelect: (id: number) => void;
+  onTeamFieldChange: (field: keyof TeamMemberState, value: string | boolean) => void;
+  onTeamSave: () => void;
+  onTeamDelete: () => void;
+  onTeamCreate: () => void;
+  onTeamDragStart: (event: DragStartEvent) => void;
+  onTeamDragOver: (event: DragOverEvent) => void;
+  onTeamDragEnd: (event: DragEndEvent) => void;
+  onTeamDragCancel: () => void;
+  teamSaving: boolean;
+  teamDeleting: boolean;
+  teamLoaded: boolean;
+  sensors: ReturnType<typeof useSensors>;
+  teamCreateModalOpen: boolean;
+  onCloseCreateModal: () => void;
+  onCreateTeamMember: (payload: { name: string; role?: string }) => void;
+  activeTeamMember: TeamMemberState | null;
+  onOpenMediaLibrary: (mode: MediaLibraryMode, options?: { targetId?: string; initialSelection?: string[] }) => void;
+};
+
+function SettingsView({
+  contactSettings,
+  socialLinks,
+  onContactChange,
+  onSocialChange,
+  onSaveContacts,
+  onSaveSocials,
+  settingsLoading,
+  settingsSaving,
+  appearanceSettings,
+  appearanceLoading,
+  appearanceSaving,
+  onAppearanceChange,
+  onSaveAppearance,
+  teamMembers,
+  teamLoading,
+  teamSelectedId,
+  teamEditor,
+  onTeamSelect,
+  onTeamFieldChange,
+  onTeamSave,
+  onTeamDelete,
+  onTeamCreate,
+  onTeamDragStart,
+  onTeamDragOver,
+  onTeamDragEnd,
+  onTeamDragCancel,
+  teamSaving,
+  teamDeleting,
+  teamLoaded,
+  sensors,
+  teamCreateModalOpen,
+  onCloseCreateModal,
+  onCreateTeamMember,
+  activeTeamMember,
+  onOpenMediaLibrary,
+}: SettingsViewProps) {
+  const [activeTab, setActiveTab] = useState<SettingsTab>("contacts");
+
+  const handleContactsSubmit = (event: ReactFormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSaveContacts();
+  };
+
+  const handleSocialSubmit = (event: ReactFormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSaveSocials();
+  };
+
+  const handleAppearanceSubmit = (event: ReactFormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSaveAppearance();
+  };
+
+  const renderContactsPanel = () => (
+    <form className={styles.settingsPanel} onSubmit={handleContactsSubmit}>
+      <div className={styles.settingsCard}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionEyebrow}>Контент сайта</p>
+            <h2 className={styles.columnTitle}>Контакты</h2>
+            <p className={styles.columnSubtitle}>Настройте телефон, email, адрес и CTA в подвале.</p>
+          </div>
+        </div>
+        <div className={`${styles.formGrid} ${styles.gridTwo}`}>
+          <label className={styles.inputGroup}>
+            <span className={styles.inputLabel}>Телефон</span>
+            <input
+              className={styles.textInput}
+              value={contactSettings.phoneLabel}
+              onChange={(event) => onContactChange("phoneLabel", event.target.value)}
+              disabled={settingsLoading}
+              placeholder="+7 000 000-00-00"
+            />
+          </label>
+          <label className={styles.inputGroup}>
+            <span className={styles.inputLabel}>Email</span>
+            <input
+              className={styles.textInput}
+              value={contactSettings.emailLabel}
+              onChange={(event) => onContactChange("emailLabel", event.target.value)}
+              disabled={settingsLoading}
+              placeholder="hello@rinart.pro"
+            />
+          </label>
+        </div>
+        <div className={`${styles.formGrid} ${styles.gridTwo}`}>
+          <label className={styles.inputGroup}>
+            <span className={styles.inputLabel}>CTA WhatsApp</span>
+            <input
+              className={styles.textInput}
+              value={contactSettings.whatsappLabel}
+              onChange={(event) => onContactChange("whatsappLabel", event.target.value)}
+              disabled={settingsLoading}
+            />
+          </label>
+          <label className={styles.inputGroup}>
+            <span className={styles.inputLabel}>Ссылка WhatsApp</span>
+            <input
+              className={styles.textInput}
+              value={contactSettings.whatsappUrl}
+              onChange={(event) => onContactChange("whatsappUrl", event.target.value)}
+              disabled={settingsLoading}
+            />
+          </label>
+        </div>
+        <div className={`${styles.formGrid} ${styles.gridTwo}`}>
+          <label className={styles.inputGroup}>
+            <span className={styles.inputLabel}>Город в подвале</span>
+            <input
+              className={styles.textInput}
+              value={contactSettings.cityLabel}
+              onChange={(event) => onContactChange("cityLabel", event.target.value)}
+              disabled={settingsLoading}
+            />
+          </label>
+          <label className={styles.inputGroup}>
+            <span className={styles.inputLabel}>Адрес / локация</span>
+            <input
+              className={styles.textInput}
+              value={contactSettings.locationLabel}
+              onChange={(event) => onContactChange("locationLabel", event.target.value)}
+              disabled={settingsLoading}
+            />
+          </label>
+        </div>
+      </div>
+      <div className={styles.settingsActions}>
+        <button className={styles.primaryButton} type="submit" disabled={settingsSaving || settingsLoading}>
+          {settingsSaving ? "Сохраняем..." : "Сохранить контакты"}
+        </button>
+      </div>
+    </form>
+  );
+
+  const renderSocialPanel = () => (
+    <form className={styles.settingsPanel} onSubmit={handleSocialSubmit}>
+      <div className={styles.settingsCard}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionEyebrow}>Коммуникации</p>
+            <h2 className={styles.columnTitle}>Социальные сети</h2>
+            <p className={styles.columnSubtitle}>Ссылки используются в шапке, подвале и на странице контактов.</p>
+          </div>
+        </div>
+        <div className={styles.socialGrid}>
+          {socialLinks.map((link) => {
+            const platformKey = `socialIcon${link.platform.charAt(0).toUpperCase()}${link.platform.slice(1)}` as keyof typeof styles;
+            const platformClass = styles[platformKey] ?? "";
+            const platformLabel =
+              SOCIAL_PLATFORM_OPTIONS.find((option) => option.value === link.platform)?.label ?? link.platform.toUpperCase();
+            return (
+              <div key={link.id} className={styles.socialCard}>
+                <div className={styles.socialCardHeader}>
+                  <div className={styles.socialIconPreview}>
+                    <span className={`${styles.socialIconBadge} ${platformClass}`} aria-hidden="true" />
+                  </div>
+                  <div className={styles.socialPlatformMeta}>
+                    <span className={styles.socialPlatformLabel}>{platformLabel}</span>
+                    <span className={styles.socialPlatformHint}>Фиксированная иконка</span>
+                  </div>
+                </div>
+                <div className={styles.socialFields}>
+                  <label className={styles.inputGroup}>
+                    <span className={styles.inputLabel}>Текст ссылки</span>
+                    <input
+                      className={styles.textInput}
+                      value={link.label}
+                      onChange={(event) => onSocialChange(link.id, "label", event.target.value)}
+                      disabled={settingsLoading}
+                    />
+                  </label>
+                  <label className={styles.inputGroup}>
+                    <span className={styles.inputLabel}>URL</span>
+                    <input
+                      className={styles.textInput}
+                      value={link.url}
+                      onChange={(event) => onSocialChange(link.id, "url", event.target.value)}
+                      disabled={settingsLoading}
+                    />
+                  </label>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className={styles.settingsActions}>
+        <button className={styles.primaryButton} type="submit" disabled={settingsSaving || settingsLoading}>
+          {settingsSaving ? "Сохраняем..." : "Сохранить ссылки"}
+        </button>
+      </div>
+    </form>
+  );
+
+  const renderMediaPanel = () => (
+    <form className={styles.settingsPanel} onSubmit={handleAppearanceSubmit}>
+      <div className={styles.settingsCard}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionEyebrow}>Визуальный стиль</p>
+            <h2 className={styles.columnTitle}>Медиа сайта</h2>
+            <p className={styles.columnSubtitle}>Задайте фон главного экрана и логотип для переходов между страницами.</p>
+          </div>
+        </div>
+        <div className={styles.appearanceGrid}>
+          <div className={styles.appearanceItem}>
+              <span className={styles.inputLabel}>Изображение на главной странице</span>
+              <div className={styles.sectionActions}>
+                <button
+                  className={styles.secondaryButton}
+                  type="button"
+                  onClick={() =>
+                    onOpenMediaLibrary("hero", {
+                      initialSelection: appearanceSettings.homeHeroImageUrl ? [appearanceSettings.homeHeroImageUrl] : [],
+                    })
+                  }
+                >
+                  Выбрать из библиотеки
+                </button>
+              </div>
+            <label className={styles.inputGroup}>
+              <input
+                className={styles.textInput}
+                value={appearanceSettings.homeHeroImageUrl}
+                onChange={(event) => onAppearanceChange("homeHeroImageUrl", event.target.value)}
+                disabled={appearanceLoading}
+                placeholder="/img/hero.webp"
+              />
+            </label>
+            <div className={styles.appearancePreview}>
+              {appearanceSettings.homeHeroImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={appearanceSettings.homeHeroImageUrl} alt="Предпросмотр главного экрана" />
+              ) : (
+                <span className={styles.appearancePlaceholder}>Предпросмотр недоступен</span>
+              )}
+            </div>
+          </div>
+          <div className={styles.appearanceItem}>
+              <span className={styles.inputLabel}>Изображение перехода между страницами</span>
+              <div className={styles.sectionActions}>
+                <button
+                  className={styles.secondaryButton}
+                  type="button"
+                  onClick={() =>
+                    onOpenMediaLibrary("seo", {
+                      initialSelection: appearanceSettings.transitionImageUrl ? [appearanceSettings.transitionImageUrl] : [],
+                    })
+                  }
+                >
+                  Выбрать из библиотеки
+                </button>
+              </div>
+            <label className={styles.inputGroup}>
+              <input
+                className={styles.textInput}
+                value={appearanceSettings.transitionImageUrl}
+                onChange={(event) => onAppearanceChange("transitionImageUrl", event.target.value)}
+                disabled={appearanceLoading}
+                placeholder="https://..."
+              />
+            </label>
+            <div className={styles.appearancePreview}>
+              {appearanceSettings.transitionImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={appearanceSettings.transitionImageUrl} alt="Предпросмотр перехода" />
+              ) : (
+                <span className={styles.appearancePlaceholder}>Предпросмотр недоступен</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className={styles.settingsActions}>
+        <button className={styles.primaryButton} type="submit" disabled={appearanceSaving || appearanceLoading}>
+          {appearanceSaving ? "Сохраняем..." : "Сохранить медиа"}
+        </button>
+      </div>
+    </form>
+  );
+
+  return (
+    <div className={styles.settingsHub}>
+      <div className={styles.settingsIntro}>
+        <div>
+          <p className={styles.sectionEyebrow}>Контент</p>
+          <h2 className={styles.columnTitle}>Глобальные блоки сайта</h2>
+          <p className={styles.columnSubtitle}>Выберите вкладку, чтобы редактировать данные и сохранить изменения точечно.</p>
+        </div>
+      </div>
+      <div className={styles.settingsLayout}>
+        <nav className={styles.settingsNav} aria-label="Разделы контента">
+          {SETTINGS_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              className={styles.settingsNavButton}
+              type="button"
+              data-active={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span className={styles.settingsNavLabel}>{tab.label}</span>
+              <span className={styles.settingsNavDescription}>{tab.description}</span>
+            </button>
+          ))}
+        </nav>
+        <div className={styles.settingsContent}>
+          {activeTab === "contacts"
+            ? renderContactsPanel()
+            : activeTab === "social"
+              ? renderSocialPanel()
+              : activeTab === "media"
+                ? renderMediaPanel()
+                : (
+                  <div className={styles.teamSectionWrapper}>
+                    <div className={styles.teamSectionCard}>
+                      <TeamManager
+                        members={teamMembers}
+                        loading={teamLoading}
+                        selectedId={teamSelectedId}
+                        editor={teamEditor}
+                        onSelect={onTeamSelect}
+                        onFieldChange={onTeamFieldChange}
+                        onSave={onTeamSave}
+                        onDelete={onTeamDelete}
+                        onCreate={onTeamCreate}
+                        onDragStart={onTeamDragStart}
+                        onDragOver={onTeamDragOver}
+                        onDragEnd={onTeamDragEnd}
+                        onDragCancel={onTeamDragCancel}
+                        saving={teamSaving}
+                        deleting={teamDeleting}
+                        sensors={sensors}
+                        loaded={teamLoaded}
+                        activeDragMember={activeTeamMember}
+                        onOpenMediaLibrary={onOpenMediaLibrary}
+                      />
+                    </div>
+                  </div>
+                )}
+        </div>
+      </div>
+      {teamCreateModalOpen ? (
+        <CreateTeamMemberModal onClose={onCloseCreateModal} onCreate={onCreateTeamMember} />
+      ) : null}
+    </div>
+  );
+}
+
+function TeamManager({
+  members,
+  loading,
+  selectedId,
+  editor,
+  onSelect,
+  onFieldChange,
+  onSave,
+  onDelete,
+  onCreate,
+  onDragStart,
+  onDragOver,
+  onDragEnd,
+  onDragCancel,
+  saving,
+  deleting,
+  sensors,
+  loaded,
+  activeDragMember,
+  onOpenMediaLibrary,
+}: {
+  members: TeamMemberState[];
+  loading: boolean;
+  selectedId: number | null;
+  editor: TeamEditorState;
+  onSelect: (id: number) => void;
+  onFieldChange: (field: keyof TeamMemberState, value: string | boolean) => void;
+  onSave: () => void;
+  onDelete: () => void;
+  onCreate: () => void;
+  onDragStart: (event: DragStartEvent) => void;
+  onDragOver: (event: DragOverEvent) => void;
+  onDragEnd: (event: DragEndEvent) => void;
+  onDragCancel: () => void;
+  saving: boolean;
+  deleting: boolean;
+  sensors: ReturnType<typeof useSensors>;
+  loaded: boolean;
+  activeDragMember: TeamMemberState | null;
+  onOpenMediaLibrary?: (mode: MediaLibraryMode, options?: { targetId?: string; initialSelection?: string[] }) => void;
+}) {
+  return (
+    <div className={styles.teamLayout}>
+      <aside className={styles.projectColumn}>
+        <div className={styles.projectColumnHeader}>
+          <div>
+            <h2 className={styles.columnTitle}>Команда</h2>
+            <p className={styles.columnSubtitle}>Перетаскивайте карточки, чтобы менять порядок на странице.</p>
+          </div>
+          <button className={styles.primaryButton} type="button" onClick={onCreate} disabled={loading}>
+            Добавить
+          </button>
+        </div>
+        <div className={styles.projectColumnBody}>
+          <div className={styles.projectList}>
+            {loading && !loaded ? (
+              <ProjectListSkeleton />
+            ) : members.length ? (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                modifiers={[restrictToVerticalAxis]}
+                onDragStart={onDragStart}
+                onDragOver={onDragOver}
+                onDragEnd={onDragEnd}
+                onDragCancel={onDragCancel}
+              >
+                <SortableContext items={members.map((member) => member.id)} strategy={verticalListSortingStrategy}>
+                  {members.map((member, index) => (
+                    <SortableTeamItem
+                      key={member.id}
+                      member={member}
+                      index={index}
+                      isActive={member.id === selectedId}
+                      onSelect={onSelect}
+                    />
+                  ))}
+                </SortableContext>
+                <DragOverlay>
+                  {activeDragMember ? (
+                    <TeamListCard
+                      member={activeDragMember}
+                      index={Math.max(0, members.findIndex((item) => item.id === activeDragMember.id))}
+                    />
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
+            ) : (
+              <div className={styles.emptyState}>Добавьте участников, чтобы показать их на странице.</div>
+            )}
+          </div>
+        </div>
+      </aside>
+      <main className={styles.editorColumn}>
+        {loading && !editor ? (
+          <EditorSkeleton />
+        ) : editor ? (
+          <TeamEditorPanel
+            member={editor}
+            onFieldChange={onFieldChange}
+            onSave={onSave}
+            onDelete={onDelete}
+            saving={saving}
+            deleting={deleting}
+            onPickDesktopImage={
+              onOpenMediaLibrary
+                ? () =>
+                    onOpenMediaLibrary("team-image", {
+                      initialSelection: editor.imageUrl ? [editor.imageUrl] : [],
+                    })
+                : undefined
+            }
+            onPickMobileImage={
+              onOpenMediaLibrary
+                ? () =>
+                    onOpenMediaLibrary("team-mobile-image", {
+                      initialSelection: editor.mobileImageUrl ? [editor.mobileImageUrl] : [],
+                    })
+                : undefined
+            }
+          />
+        ) : (
+          <div className={styles.emptyState}>Выберите участника команды для редактирования.</div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+function SortableTeamItem({
+  member,
+  index,
+  isActive,
+  onSelect,
+}: {
+  member: TeamMemberState;
+  index: number;
+  isActive: boolean;
+  onSelect: (id: number) => void;
+}) {
+  const { listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
+    id: member.id,
+  });
+  const { onPointerDown: sortablePointerDown, ...otherListeners } = listeners ?? {};
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.85 : 1,
+    animationDelay: `${Math.min(index, 10) * 50}ms`,
+  };
+
+  return (
+    <article
+      ref={setNodeRef}
+      className={`${styles.projectListItem} ${styles.fadeInItem}`}
+      data-active={isActive}
+      data-dragging={isDragging}
+      style={style}
+      onClick={() => onSelect(member.id)}
+    >
+      <div className={styles.projectRow}>
+        <button
+          className={styles.dragHandle}
+          type="button"
+          aria-label={`Перетащить ${member.name}`}
+          ref={setActivatorNodeRef}
+          {...otherListeners}
+          onPointerDown={(event) => {
+            sortablePointerDown?.(event);
+            if (!event.defaultPrevented) {
+              event.stopPropagation();
+            }
+          }}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+        >
+          <span className={styles.dragIcon} aria-hidden="true" />
+        </button>
+        <div className={styles.projectMeta}>
+          <div className={styles.projectTitleRow}>
+            <span className={styles.projectOrder}>{String(index + 1).padStart(2, "0")}</span>
+            <h4 className={styles.projectListTitle}>{member.name}</h4>
+          </div>
+          {member.role ? <p className={styles.projectListMeta}>{member.role}</p> : null}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function TeamListCard({ member, index }: { member: TeamMemberState; index: number }) {
+  const cardStyle: React.CSSProperties = { animationDelay: `${Math.min(index, 10) * 50}ms` };
+  return (
+    <article className={`${styles.projectListItem} ${styles.fadeInItem}`} style={cardStyle}>
+      <div className={styles.projectRow}>
+        <div className={`${styles.dragHandle} ${styles.dragHandleStatic}`}>
+          <span className={styles.dragIcon} aria-hidden="true" />
+        </div>
+        <div className={styles.projectMeta}>
+          <div className={styles.projectTitleRow}>
+            <span className={styles.projectOrder}>{String(index + 1).padStart(2, "0")}</span>
+            <h4 className={styles.projectListTitle}>{member.name}</h4>
+          </div>
+          {member.role ? <p className={styles.projectListMeta}>{member.role}</p> : null}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function TeamEditorPanel({
+  member,
+  onFieldChange,
+  onSave,
+  onDelete,
+  saving,
+  deleting,
+  onPickDesktopImage,
+  onPickMobileImage,
+}: {
+  member: TeamMemberState;
+  onFieldChange: (field: keyof TeamMemberState, value: string | boolean) => void;
+  onSave: () => void;
+  onDelete: () => void;
+  saving: boolean;
+  deleting: boolean;
+  onPickDesktopImage?: () => void;
+  onPickMobileImage?: () => void;
+}) {
+  return (
+    <div className={styles.editorStack}>
+      <section className={styles.formSection}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h3 className={styles.sectionTitle}>Карточка участника</h3>
+            <p className={styles.sectionSubtitle}>Имя, роль и подпись для десктопной версии.</p>
+          </div>
+        </div>
+        <div className={`${styles.formGrid} ${styles.gridTwo}`}>
+          <label className={styles.inputGroup}>
+            <span className={styles.inputLabel}>Имя</span>
+            <input
+              className={styles.textInput}
+              value={member.name}
+              onChange={(event) => onFieldChange("name", event.target.value)}
+            />
+          </label>
+          <label className={styles.inputGroup}>
+            <span className={styles.inputLabel}>Подпись (desktop)</span>
+            <input
+              className={styles.textInput}
+              value={member.label}
+              onChange={(event) => onFieldChange("label", event.target.value)}
+            />
+          </label>
+        </div>
+        <label className={styles.inputGroup}>
+          <span className={styles.inputLabel}>Роль / описание</span>
+          <input
+            className={styles.textInput}
+            value={member.role}
+            onChange={(event) => onFieldChange("role", event.target.value)}
+          />
+        </label>
+      </section>
+      <section className={styles.formSection}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h3 className={styles.sectionTitle}>Фотографии</h3>
+            <p className={styles.sectionSubtitle}>Ссылки на изображения для десктопной и мобильной версии.</p>
+          </div>
+        </div>
+        <div className={`${styles.formGrid} ${styles.gridTwo}`}>
+          <label className={styles.inputGroup}>
+            <span className={styles.inputLabel}>Фото (desktop)</span>
+            {onPickDesktopImage ? (
+              <div className={styles.sectionActions}>
+                <button type="button" className={styles.secondaryButton} onClick={onPickDesktopImage}>
+                  Выбрать из библиотеки
+                </button>
+              </div>
+            ) : null}
+            <input
+              className={styles.textInput}
+              value={member.imageUrl}
+              onChange={(event) => onFieldChange("imageUrl", event.target.value)}
+              placeholder="/img/team-rinat.webp"
+            />
+          </label>
+          <label className={styles.inputGroup}>
+            <span className={styles.inputLabel}>Фото (mobile, опционально)</span>
+            {onPickMobileImage ? (
+              <div className={styles.sectionActions}>
+                <button type="button" className={styles.secondaryButton} onClick={onPickMobileImage}>
+                  Выбрать из библиотеки
+                </button>
+              </div>
+            ) : null}
+            <input
+              className={styles.textInput}
+              value={member.mobileImageUrl}
+              onChange={(event) => onFieldChange("mobileImageUrl", event.target.value)}
+              placeholder="/img/team-rinat.webp"
+            />
+          </label>
+        </div>
+        <label className={styles.checkboxRow}>
+          <input
+            type="checkbox"
+            checked={member.isFeatured}
+            onChange={(event) => onFieldChange("isFeatured", event.target.checked)}
+          />
+          <span>Показывать как главное фото (крупный портрет)</span>
+        </label>
+      </section>
+      <div className={styles.saveBar}>
+        <button className={styles.primaryButton} type="button" onClick={onSave} disabled={saving || deleting}>
+          {saving ? "Сохраняем..." : "Сохранить"}
+        </button>
+        <button className={styles.dangerButton} type="button" onClick={onDelete} disabled={saving || deleting}>
+          {deleting ? "Удаляем..." : "Удалить"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CreateTeamMemberModal({
+  onClose,
+  onCreate,
+}: {
+  onClose: () => void;
+  onCreate: (payload: { name: string; role?: string }) => Promise<void> | void;
+}) {
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!name.trim()) {
+      return;
+    }
+    await onCreate({ name: name.trim(), role: role.trim() || undefined });
+    setName("");
+    setRole("");
+  };
+
+  return (
+    <div className={styles.createModalOverlay} role="dialog" aria-modal="true" onClick={onClose}>
+      <div
+        className={styles.createModal}
+        onClick={(event) => {
+          event.stopPropagation();
+        }}
+      >
+        <header className={styles.createModalHeader}>
+          <div>
+            <h3 className={styles.createModalTitle}>Новый участник</h3>
+            <p className={styles.createModalSubtitle}>Укажите имя и роль. Остальные поля можно заполнить позже.</p>
+          </div>
+          <button className={styles.iconGhostButton} type="button" onClick={onClose} aria-label="Закрыть форму">
+            <IconX aria-hidden="true" />
+          </button>
+        </header>
+        <form className={styles.createModalForm} onSubmit={handleSubmit}>
+          <label className={styles.inputGroup}>
+            <span className={styles.inputLabel}>Имя</span>
+            <input
+              className={styles.textInput}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Например: Ринат Гильмутдинов"
+              autoFocus
+              required
+            />
+          </label>
+          <label className={styles.inputGroup}>
+            <span className={styles.inputLabel}>Роль (опционально)</span>
+            <input
+              className={styles.textInput}
+              value={role}
+              onChange={(event) => setRole(event.target.value)}
+              placeholder="Архитектор. Руководитель мастерской"
+            />
+          </label>
+          <div className={styles.modalActions}>
+            <button className={styles.ghostButton} type="button" onClick={onClose}>
+              Отмена
+            </button>
+            <button className={styles.primaryButton} type="submit" disabled={!name.trim()}>
+              Добавить
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

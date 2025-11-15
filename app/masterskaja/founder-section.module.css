@@ -58,6 +58,12 @@
   letter-spacing: -0.02em;
 }
 
+.marker em {
+  font-style: italic;
+  font-weight: inherit;
+  margin-right: 0.35em;
+}
+
 .imageWrapper {
   position: relative;
   width: 100%;

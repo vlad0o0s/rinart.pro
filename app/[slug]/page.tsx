@@ -9,10 +9,10 @@ import { projectPageSchema } from "@/lib/seo/schema";
 import ProjectBody from "./project-body";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 import { RelatedProjectsSlider } from "./related-projects";
+import { getSocialLinks } from "@/lib/site-settings";
 
-export function generateStaticParams() {
-  return getAllProjects().then((projects) => projects.map((project) => ({ slug: project.slug })));
-}
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -43,14 +43,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 async function ProjectPageComponent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const project = await getProjectBySlug(slug);
+  const [project, allProjects, socialLinks] = await Promise.all([
+    getProjectBySlug(slug),
+    getAllProjects(),
+    getSocialLinks(),
+  ]);
 
   if (!project) {
     notFound();
   }
 
   const { title, heroImageUrl, descriptionBody, descriptionHtml, schemes, gallery } = project;
-  const allProjects = await getAllProjects();
   const relatedProjects = allProjects
     .filter((item) => item.slug !== slug)
     .sort(
@@ -65,7 +68,7 @@ async function ProjectPageComponent({ params }: { params: Promise<{ slug: string
 
   return (
     <>
-      <SiteHeader showDesktopNav breadcrumbLabel={title} />
+      <SiteHeader showDesktopNav breadcrumbLabel={title} socialLinks={socialLinks} />
       <div className={styles.page}>
         <ProjectBody
           title={title}

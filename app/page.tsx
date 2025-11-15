@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer";
 import { HomeProjectsSection } from "./_components/home-page-content";
 import styles from "./page.module.css";
 import { getAllProjects } from "@/lib/projects";
+import { getAppearanceSettings, getSocialLinks } from "@/lib/site-settings";
 import { JsonLd } from "@/components/json-ld";
 import { homePageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
@@ -19,7 +20,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const projects = await getAllProjects();
+  const [projects, socialLinks, appearanceSettings] = await Promise.all([
+    getAllProjects(),
+    getSocialLinks(),
+    getAppearanceSettings(),
+  ]);
   const summaries = (projects as Array<{
     slug: string;
     title: string;
@@ -36,11 +41,11 @@ export default async function Home() {
 
   return (
     <>
-      <SiteHeader showDesktopBrand />
+      <SiteHeader showDesktopBrand socialLinks={socialLinks} />
       <main className={`${styles.pageShell} min-h-screen bg-white text-neutral-900 antialiased`}>
         <div className={styles.stage}>
           <div className={styles.stageLayer} data-stage="hero">
-        <Hero />
+        <Hero imageUrl={appearanceSettings.homeHeroImageUrl} />
           </div>
           <div className={styles.stageLayer} data-stage="nav">
           <PrimaryNav />

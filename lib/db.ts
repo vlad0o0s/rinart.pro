@@ -246,4 +246,33 @@ async function ensureSchema(connection: PoolConnection) {
       UNIQUE KEY PageSeo_slug_key (slug)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   );
+
+  await connection.query(
+    `CREATE TABLE IF NOT EXISTS SiteSetting (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      \`key\` VARCHAR(191) NOT NULL,
+      value JSON NULL,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY SiteSetting_key_unique (\`key\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  );
+
+  await connection.query(
+    `CREATE TABLE IF NOT EXISTS TeamMember (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      name VARCHAR(255) NOT NULL,
+      role TEXT NULL,
+      label TEXT NULL,
+      imageUrl TEXT NULL,
+      mobileImageUrl TEXT NULL,
+      isFeatured TINYINT(1) NOT NULL DEFAULT 0,
+      \`order\` INT NOT NULL DEFAULT 0,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY TeamMember_order_idx (\`order\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  );
 }

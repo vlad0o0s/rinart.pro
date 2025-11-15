@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { MutableRefObject, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { SocialLink, SocialPlatform } from "@/types/site";
 import styles from "./site-header.module.css";
 
 const NAV_LINKS = [
@@ -28,11 +29,31 @@ const MASTERSKAJA_SUBLINKS = [
   { href: "#publications", label: "Публикации" },
 ];
 
+const DEFAULT_SOCIAL_LINKS: SocialLink[] = [
+  { id: "instagram", platform: "instagram", label: "Instagram", url: "https://www.instagram.com/rinart.buro/" },
+  { id: "telegram", platform: "telegram", label: "Telegram", url: "https://t.me/rinart_buro" },
+  { id: "vk", platform: "vk", label: "VK", url: "https://vk.com/rinart_buro" },
+  { id: "pinterest", platform: "pinterest", label: "Pinterest", url: "https://www.pinterest.com/rinartburo" },
+];
+
+const SOCIAL_ICON_CLASS_MAP: Partial<Record<SocialPlatform, keyof typeof styles>> = {
+  instagram: "iconInstagram",
+  telegram: "iconTelegram",
+  vk: "iconVk",
+  pinterest: "iconPinterest",
+};
+
+function getSocialIconClass(platform: SocialPlatform) {
+  const key = SOCIAL_ICON_CLASS_MAP[platform];
+  return key ? styles[key] : undefined;
+}
+
 export type SiteHeaderProps = {
   showDesktopNav?: boolean;
   showDesktopBrand?: boolean;
   subLinks?: { href: string; label: string }[];
   breadcrumbLabel?: string;
+  socialLinks?: SocialLink[];
 };
 
 type Breadcrumb = { href: string; label: string; className?: string };
@@ -42,12 +63,14 @@ export function SiteHeader({
   showDesktopBrand = false,
   subLinks,
   breadcrumbLabel,
+  socialLinks,
 }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const burgerButtonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLElement | null>(null);
   const sanitizedBreadcrumbLabel = breadcrumbLabel?.trim();
+  const resolvedSocialLinks = useMemo(() => (socialLinks?.length ? socialLinks : DEFAULT_SOCIAL_LINKS), [socialLinks]);
 
   const breadcrumbs = useMemo<Breadcrumb[]>(() => {
     if (!pathname) {
@@ -148,7 +171,7 @@ export function SiteHeader({
           </ul>
         </nav>
       ) : null}
-      <MobileMenu menuOpen={menuOpen} menuRef={menuRef} closeMenu={closeMenu} />
+      <MobileMenu menuOpen={menuOpen} menuRef={menuRef} closeMenu={closeMenu} socials={resolvedSocialLinks} />
       {menuOpen ? (
         <button
           type="button"
@@ -290,10 +313,12 @@ function MobileMenu({
   menuOpen,
   menuRef,
   closeMenu,
+  socials,
 }: {
   menuOpen: boolean;
   menuRef: MutableRefObject<HTMLElement | null>;
   closeMenu: () => void;
+  socials: SocialLink[];
 }) {
   return (
     <nav
@@ -316,30 +341,23 @@ function MobileMenu({
             ))}
           </ul>
           <div className={styles.socials}>
-            <a
-              href="https://www.pinterest.com/rinartburo"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Pinterest RINART"
-            >
-              <span className={`${styles.icon} ${styles.iconPinterest}`} />
-            </a>
-            <a
-              href="https://t.me/rinart_buro"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Telegram RINART"
-            >
-              <span className={`${styles.icon} ${styles.iconTelegram}`} />
-            </a>
-            <a
-              href="https://vk.com/rinart_buro"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="VK RINART"
-            >
-              <span className={`${styles.icon} ${styles.iconVk}`} />
-            </a>
+            {socials.map((social) => {
+              const iconClass = getSocialIconClass(social.platform);
+              if (!iconClass) {
+                return null;
+              }
+              return (
+                <a
+                  key={`mobile-social-${social.id}`}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                >
+                  <span className={`${styles.icon} ${iconClass}`} />
+                </a>
+              );
+            })}
           </div>
         </div>
       </div>

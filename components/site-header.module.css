@@ -377,6 +377,11 @@
   -webkit-mask-image: url("/icons/vk.svg");
 }
 
+.iconInstagram {
+  mask-image: url("/icons/instagram.svg");
+  -webkit-mask-image: url("/icons/instagram.svg");
+}
+
 .subnav {
   display: none;
   width: 100%;

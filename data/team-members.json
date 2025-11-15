@@ -1,0 +1,21 @@
+[
+  {
+    "name": "Ринат Гильмутдинов",
+    "role": "Архитектор. Руководитель мастерской",
+    "label": "руководитель мастерской",
+    "imageUrl": "/img/team-rinat.webp",
+    "mobileImageUrl": "/img/team-rinat.webp",
+    "isFeatured": true,
+    "order": 0
+  },
+  {
+    "name": "Вадим Надршин",
+    "role": "Дизайнер",
+    "label": "Дизайнер",
+    "imageUrl": "/img/team-vadim-alt.jpg",
+    "mobileImageUrl": "/img/team-vadim.jpg",
+    "isFeatured": false,
+    "order": 1
+  }
+]
+

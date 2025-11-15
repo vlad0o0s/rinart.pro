@@ -14,15 +14,17 @@ import { JsonLd } from "@/components/json-ld";
 import { proektirovaniePageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
+import { getSocialLinks } from "@/lib/site-settings";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("proektirovanie");
 }
 
-export default function ProektirovaniePage() {
+export default async function ProektirovaniePage() {
+  const socialLinks = await getSocialLinks();
   return (
     <>
-      <SiteHeader showDesktopNav subLinks={PROEKTIR_SUBLINKS} />
+      <SiteHeader showDesktopNav subLinks={PROEKTIR_SUBLINKS} socialLinks={socialLinks} />
       <main className="min-h-screen bg-white text-neutral-900 antialiased">
         <HeroSection />
         <IntroSection />

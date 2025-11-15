@@ -10,6 +10,7 @@ import { PageTransition } from "@/components/page-transition";
 import { JsonLd } from "@/components/json-ld";
 import { isBotUserAgent } from "@/lib/is-bot";
 import { organizationSchema, webSiteSchema } from "@/lib/seo/schema";
+import { getAppearanceSettings } from "@/lib/site-settings";
 
 const neueHaasUnica = localFont({
   variable: "--font-neue-haas",
@@ -70,6 +71,7 @@ export default async function RootLayout({
   const headersList = await headers();
   const userAgent = headersList.get("user-agent") ?? "";
   const isBot = isBotUserAgent(userAgent);
+  const appearanceSettings = await getAppearanceSettings();
 
   return (
     <html lang="ru" data-scroll-behavior="smooth">
@@ -101,7 +103,7 @@ export default async function RootLayout({
           </div>
         </noscript>
         <div className="site-shell">
-          <PageTransition enabled={!isBot} />
+          <PageTransition enabled={!isBot} logoUrl={appearanceSettings.transitionImageUrl} />
           <JsonLd schema={[organizationSchema(), webSiteSchema()]} />
           {children}
         </div>

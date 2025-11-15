@@ -72,7 +72,9 @@ export function FounderSection() {
     <section ref={sectionRef} className={styles.section} id="biographia" data-visible="false">
       <div className={styles.wrapper}>
         <div className={styles.columnMarker}>
-          <p className={styles.marker}>ОСНОВАТЕЛЬ</p>
+          <p className={styles.marker}>
+            <em>(I)</em> ОСНОВАТЕЛЬ
+          </p>
         </div>
 
         <div className={styles.columnPhoto}>

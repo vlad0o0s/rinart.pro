@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./page-transition.module.css";
 
@@ -10,21 +11,21 @@ const CLOSE_DURATION = 800;
 const LINE_DURATION = 600;
 const OPEN_DURATION = 800;
 const MAX_WAIT_DURATION = 8000;
-
 type Phase = "idle" | "close" | "line" | "wait" | "open";
 
 type PageTransitionProps = {
   enabled?: boolean;
+  logoUrl?: string;
 };
 
-export function PageTransition({ enabled = true }: PageTransitionProps = {}) {
+export function PageTransition({ enabled = true, logoUrl }: PageTransitionProps = {}) {
   if (!enabled) {
     return null;
   }
-  return <PageTransitionInner />;
+  return <PageTransitionInner logoUrl={logoUrl} />;
 }
 
-function PageTransitionInner() {
+function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isActive, setIsActive] = useState(false);
@@ -226,10 +227,20 @@ function PageTransitionInner() {
     .filter(Boolean)
     .join(" ");
 
+  const logoStyle = useMemo(() => {
+    const url = logoUrl?.trim();
+    if (!url) {
+      return undefined;
+    }
+    return { "--transition-logo-image": `url("${url}")` } as CSSProperties & {
+      "--transition-logo-image"?: string;
+    };
+  }, [logoUrl]);
+
   return (
     <div className={wrapperClassName} aria-hidden={!isActive}>
       <div className={`${styles.panel} ${styles.panelTop}`}>
-        <div className={styles.logoLineWrapper} />
+        <div className={styles.logoLineWrapper} style={logoStyle} />
         <div className={styles.line} />
       </div>
       <div className={`${styles.panel} ${styles.panelBottom}`} />

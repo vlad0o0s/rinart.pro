@@ -1,17 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import type ReCAPTCHAComponent from "react-google-recaptcha";
-import { SiteHeader } from "@/components/site-header";
-import { Footer } from "@/components/footer";
+import ReCAPTCHA from "react-google-recaptcha";
 import styles from "./admin.module.css";
-
-const ReCAPTCHA = dynamic(() => import("react-google-recaptcha"), {
-  ssr: false,
-}) as unknown as typeof ReCAPTCHAComponent;
-const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
 const LOGIN_ERROR_DEFAULT = "Не удалось войти. Проверьте данные и попробуйте снова.";
 
@@ -21,23 +13,24 @@ export function AdminLoginForm() {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  const recaptchaRef = useRef<ReCAPTCHAComponent | null>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string>("");
+  const recaptchaRef = useRef<ReCAPTCHA | null>(null);
+  const siteKey = useMemo(() => process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? "", []);
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
       if (submitting) return;
       setStatus("");
+
+       if (siteKey && !recaptchaToken) {
+        setStatus("Подтвердите, что вы не робот");
+        return;
+      }
+
       setSubmitting(true);
 
       try {
-        let recaptchaToken: string | undefined;
-        if (RECAPTCHA_SITE_KEY) {
-          const token = await recaptchaRef.current?.executeAsync();
-          recaptchaToken = token ?? undefined;
-          recaptchaRef.current?.reset();
-        }
-
         const response = await fetch("/api/admin/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -48,6 +41,10 @@ export function AdminLoginForm() {
           const payload = await response.json().catch(() => ({}));
           setStatus(typeof payload.error === "string" ? payload.error : LOGIN_ERROR_DEFAULT);
           setSubmitting(false);
+          if (siteKey) {
+            recaptchaRef.current?.reset();
+            setRecaptchaToken("");
+          }
           return;
         }
 
@@ -62,59 +59,74 @@ export function AdminLoginForm() {
         return;
       }
     },
-    [login, password, router, submitting],
+    [login, password, recaptchaToken, router, siteKey, submitting],
   );
 
   return (
-    <div className={styles.loginShell}>
-      <SiteHeader showDesktopNav={false} showDesktopBrand showMobileBrand={false} />
+    <main className={styles.loginMain}>
+      <form className={styles.loginCard} onSubmit={handleSubmit}>
+        <h1 className={styles.loginTitle}>Вход в систему</h1>
+        <p className={styles.loginSubtitle}>Введите логин и пароль, выданные администрацией.</p>
 
-      <main className={styles.loginMain}>
-        <form className={styles.loginCard} onSubmit={handleSubmit}>
-          <h1 className={styles.loginTitle}>Вход в систему</h1>
-          <p className={styles.loginSubtitle}>Введите логин и пароль, выданные администрацией.</p>
+        <label className={styles.inputGroup}>
+          <span className={styles.inputLabel}>Логин</span>
+          <input
+            className={styles.textInput}
+            value={login}
+            onChange={(event) => setLogin(event.target.value)}
+            placeholder="example@rinart.pro"
+            autoComplete="username"
+            required
+          />
+        </label>
 
-          <label className={styles.inputGroup}>
-            <span className={styles.inputLabel}>Логин</span>
-            <input
-              className={styles.textInput}
-              value={login}
-              onChange={(event) => setLogin(event.target.value)}
-              placeholder="example@rinart.pro"
-              autoComplete="username"
-              required
+        <label className={styles.inputGroup}>
+          <span className={styles.inputLabel}>Пароль</span>
+          <input
+            className={styles.textInput}
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Введите пароль"
+            autoComplete="current-password"
+            required
+          />
+        </label>
+
+        {siteKey ? (
+          <div className={styles.captchaWrapper}>
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={siteKey}
+              onChange={(token) => setRecaptchaToken(token ?? "")}
+              onExpired={() => setRecaptchaToken("")}
             />
-          </label>
+          </div>
+        ) : (
+          <p className={styles.statusBar}>reCAPTCHA не настроена.</p>
+        )}
 
-          <label className={styles.inputGroup}>
-            <span className={styles.inputLabel}>Пароль</span>
-            <input
-              className={styles.textInput}
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Введите пароль"
-              autoComplete="current-password"
-              required
-            />
-          </label>
-
-          <button className={styles.loginButton} type="submit" disabled={submitting}>
-            {submitting ? "Авторизация…" : "Войти в систему"}
-          </button>
-          {RECAPTCHA_SITE_KEY ? (
-            <ReCAPTCHA ref={recaptchaRef} sitekey={RECAPTCHA_SITE_KEY} size="invisible" />
-          ) : (
-            <p className={styles.statusBar}>
-              reCAPTCHA не настроена. Добавьте ключи в переменные окружения.
-            </p>
-          )}
-          <p className={styles.loginMeta}>Все попытки авторизации фиксируются в журнале безопасности.</p>
-          {status ? <span className={styles.statusBar}>{status}</span> : null}
-        </form>
-      </main>
-
-      <Footer />
-    </div>
+        <button className={styles.loginButton} type="submit" disabled={submitting}>
+          {submitting ? "Авторизация…" : "Войти в систему"}
+        </button>
+        {siteKey ? (
+          <p className={styles.loginMeta}>
+            Этот вход защищён reCAPTCHA и действует{" "}
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">
+              Политика конфиденциальности
+            </a>{" "}
+            и{" "}
+            <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer">
+              Условия использования
+            </a>{" "}
+            Google.
+          </p>
+        ) : (
+          <p className={styles.loginMeta}>reCAPTCHA не активирована. Обратитесь к администратору.</p>
+        )}
+        <p className={styles.loginMeta}>Все попытки авторизации фиксируются в журнале безопасности.</p>
+        {status ? <span className={styles.statusBar}>{status}</span> : null}
+      </form>
+    </main>
   );
 }
