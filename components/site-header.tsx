@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { MutableRefObject, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./site-header.module.css";
@@ -30,14 +31,14 @@ const MASTERSKAJA_SUBLINKS = [
 export type SiteHeaderProps = {
   showDesktopNav?: boolean;
   showDesktopBrand?: boolean;
-  showMobileBrand?: boolean;
   subLinks?: { href: string; label: string }[];
 };
 
+type Breadcrumb = { href: string; label: string; className?: string };
+
 export function SiteHeader({
   showDesktopNav = false,
-  showDesktopBrand = true,
-  showMobileBrand = true,
+  showDesktopBrand = false,
   subLinks,
 }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -45,7 +46,7 @@ export function SiteHeader({
   const burgerButtonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLElement | null>(null);
 
-  const breadcrumbs = useMemo<{ href: string; label: string; className?: string }[]>(() => {
+  const breadcrumbs = useMemo<Breadcrumb[]>(() => {
     if (!pathname) {
       return [];
     }
@@ -121,55 +122,121 @@ export function SiteHeader({
 
   return (
     <header className={`w-full bg-white ${styles.header}`}>
-      {showDesktopBrand ? (
-        <div className={`${styles.wrapper} md:flex`}>
+      <DesktopHeaderSection showDesktopBrand={showDesktopBrand} showDesktopNav={showDesktopNav} />
+
+      <MobileHeaderSection
+        menuOpen={menuOpen}
+        burgerButtonRef={burgerButtonRef}
+        toggleMenu={toggleMenu}
+        showBreadcrumbs={showBreadcrumbs}
+        breadcrumbs={breadcrumbs}
+        renderBreadcrumbLabel={renderBreadcrumbLabel}
+        showBrand={!showDesktopBrand}
+      />
+
+      {showDesktopNav && subLinks && subLinks.length ? (
+        <nav className={styles.subnav} aria-label="Подразделы">
+          <ul className={styles.subnavList}>
+            {subLinks.map((link) => (
+              <li key={link.href} className={styles.subnavItem}>
+                <a href={link.href}>{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
+      <MobileMenu menuOpen={menuOpen} menuRef={menuRef} closeMenu={closeMenu} />
+      {menuOpen ? (
+        <button
+          type="button"
+          className={styles.menuBackdrop}
+          aria-label="Закрыть меню"
+          onClick={closeMenu}
+        />
+      ) : null}
+    </header>
+  );
+}
+
+export { PROEKTIR_SUBLINKS, MASTERSKAJA_SUBLINKS };
+
+function DesktopHeaderSection({
+  showDesktopBrand,
+  showDesktopNav,
+}: {
+  showDesktopBrand: boolean;
+  showDesktopNav: boolean;
+}) {
+  if (!showDesktopBrand && !showDesktopNav) {
+    return null;
+  }
+
+  return (
+    <div className={`${styles.wrapper} hidden md:flex`}>
+      {showDesktopBrand ? <DesktopBrand /> : null}
+      {showDesktopNav ? <DesktopNavigation /> : null}
+    </div>
+  );
+}
+
+function DesktopBrand() {
+  return (
+    <Link
+      href="/"
+      className={`inline-block w-auto max-w-none text-[12px] font-black uppercase leading-[12px] md:text-[clamp(18px,1.5vw,32px)] md:leading-[17px] ${styles.root} ${styles.desktopBrand}`}
+      aria-label="Перейти на главную"
+    >
+      <span className={`${styles.architect} ${styles.architectBrand}`}>Архитектор</span>
+      <span className={styles.accent}>РИНАТ ГИЛЬМУТДИНОВ</span>
+    </Link>
+  );
+}
+
+function DesktopNavigation() {
+  return (
+    <nav className={styles.desktopNav} aria-label="Основное меню">
+      <ul className={styles.desktopNavList}>
+        {NAV_LINKS.map((link) => (
+          <li key={link.href} className={styles.desktopNavItem}>
+            <Link href={link.href}>{link.label}</Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function MobileHeaderSection({
+  menuOpen,
+  toggleMenu,
+  burgerButtonRef,
+  showBreadcrumbs,
+  breadcrumbs,
+  renderBreadcrumbLabel,
+  showBrand,
+}: {
+  menuOpen: boolean;
+  toggleMenu: () => void;
+  burgerButtonRef: MutableRefObject<HTMLButtonElement | null>;
+  showBreadcrumbs: boolean;
+  breadcrumbs: Breadcrumb[];
+  renderBreadcrumbLabel: (label: string) => string | ReactNode;
+  showBrand: boolean;
+}) {
+  return (
+    <div className={`${styles.mobileControls} md:hidden`}>
+      <div className={styles.mobileTopLine}>
+        {showBrand ? (
           <Link
             href="/"
-            className={`inline-block w-auto max-w-none text-[12px] font-black uppercase leading-[12px] md:text-[clamp(18px,1.5vw,32px)] md:leading-[17px] ${styles.root} ${styles.desktopBrand}`}
+            className={`${styles.root} ${styles.mobileBrandCompact}`}
             aria-label="Перейти на главную"
           >
-            <span className={`${styles.architect} ${styles.architectBrand}`}>Архитектор</span>
-            <span className={styles.accent}>РИНАТ ГИЛЬМУТДИНОВ</span>
+            <span className={styles.architect}>Архитектор</span>
+            <span>РИНАТ ГИЛЬМУТДИНОВ</span>
           </Link>
-
-          {showDesktopNav ? (
-            <nav className={styles.desktopNav} aria-label="Основное меню">
-              <ul className={styles.desktopNavList}>
-                {NAV_LINKS.map((link) => (
-                  <li key={link.href} className={styles.desktopNavItem}>
-                    <Link href={link.href}>{link.label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className={`${styles.mobileControls} md:hidden`}>
-        {showBreadcrumbs ? (
-          <nav className={styles.mobileBreadcrumbs} aria-label="Хлебные крошки">
-            <ol className={styles.mobileBreadcrumbsList}>
-              {breadcrumbs.map((crumb, index) => (
-                <li key={`${crumb.href}-${index}`} className={styles.mobileBreadcrumbsItem}>
-                  {index < breadcrumbs.length - 1 ? (
-                    <Link
-                      href={crumb.href}
-                      className={`${styles.mobileBreadcrumbsLink} ${crumb.className ?? ""}`}
-                    >
-                      {renderBreadcrumbLabel(crumb.label)}
-                    </Link>
-                  ) : (
-                    <span className={`${styles.mobileBreadcrumbsCurrent} ${crumb.className ?? ""}`}>
-                      {renderBreadcrumbLabel(crumb.label)}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </nav>
         ) : (
-          <div className={styles.mobileBreadcrumbs} aria-hidden="true" />
+          <span aria-hidden className={`${styles.root} ${styles.mobileBrandPlaceholder}`} />
         )}
         <button
           type="button"
@@ -186,81 +253,89 @@ export function SiteHeader({
           <span className={styles.burgerElement} />
         </button>
       </div>
-
-      {showDesktopNav && subLinks && subLinks.length ? (
-        <nav className={styles.subnav} aria-label="Подразделы">
-          <ul className={styles.subnavList}>
-            {subLinks.map((link) => (
-              <li key={link.href} className={styles.subnavItem}>
-                <a href={link.href}>{link.label}</a>
+      {showBreadcrumbs ? (
+        <nav className={styles.mobileBreadcrumbs} aria-label="Хлебные крошки">
+          <ol className={styles.mobileBreadcrumbsList}>
+            {breadcrumbs.map((crumb, index) => (
+              <li key={`${crumb.href}-${index}`} className={styles.mobileBreadcrumbsItem}>
+                {index < breadcrumbs.length - 1 ? (
+                  <Link
+                    href={crumb.href}
+                    className={`${styles.mobileBreadcrumbsLink} ${crumb.className ?? ""}`}
+                  >
+                    {renderBreadcrumbLabel(crumb.label)}
+                  </Link>
+                ) : (
+                  <span className={`${styles.mobileBreadcrumbsCurrent} ${crumb.className ?? ""}`}>
+                    {renderBreadcrumbLabel(crumb.label)}
+                  </span>
+                )}
               </li>
             ))}
-          </ul>
+          </ol>
         </nav>
-      ) : null}
-      <nav
-        className={`${styles.menu} ${menuOpen ? styles.menuOpen : ""}`}
-        aria-hidden={!menuOpen}
-        ref={menuRef}
-      >
-        {showMobileBrand ? (
-          <Link
-            href="/"
-            className={`inline-block w-auto max-w-none text-[12px] font-black uppercase leading-[12px] md:hidden ${styles.root} ${styles.mobileBrand}`}
-            aria-label="Перейти на главную"
-            onClick={closeMenu}
-          >
-            <span className={`${styles.architect} ${styles.architectBrand}`}>Архитектор</span>
-            <span className={styles.accent}>РИНАТ ГИЛЬМУТДИНОВ</span>
-          </Link>
-        ) : null}
-        <ul className={styles.menuList}>
-          {NAV_LINKS.map((link) => (
-            <li key={`${link.href}-mobile`} className={styles.menuItem}>
-              <Link href={link.href} onClick={closeMenu}>
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <div className={styles.socials}>
-          <a
-            href="https://www.pinterest.com/rinartburo"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Pinterest RINART"
-          >
-            <span className={`${styles.icon} ${styles.iconPinterest}`} />
-          </a>
-          <a
-            href="https://t.me/rinart_buro"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Telegram RINART"
-          >
-            <span className={`${styles.icon} ${styles.iconTelegram}`} />
-          </a>
-          <a
-            href="https://vk.com/rinart_buro"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="VK RINART"
-          >
-            <span className={`${styles.icon} ${styles.iconVk}`} />
-          </a>
-        </div>
-      </nav>
-      {menuOpen ? (
-        <button
-          type="button"
-          className={styles.menuBackdrop}
-          aria-label="Закрыть меню"
-          onClick={closeMenu}
-        />
-      ) : null}
-    </header>
+      ) : (
+        <div className={styles.mobileBreadcrumbs} aria-hidden="true" />
+      )}
+    </div>
   );
 }
 
-export { PROEKTIR_SUBLINKS, MASTERSKAJA_SUBLINKS };
+function MobileMenu({
+  menuOpen,
+  menuRef,
+  closeMenu,
+}: {
+  menuOpen: boolean;
+  menuRef: MutableRefObject<HTMLElement | null>;
+  closeMenu: () => void;
+}) {
+  return (
+    <nav
+      className={`${styles.menu} ${menuOpen ? styles.menuOpen : ""}`}
+      aria-hidden={!menuOpen}
+      ref={menuRef}
+    >
+      <div className={styles.menuPanel}>
+        <div className={styles.menuContent}>
+          <ul className={styles.menuList}>
+            {NAV_LINKS.map((link) => (
+              <li key={`${link.href}-mobile`} className={styles.menuItem}>
+                <Link href={link.href} onClick={closeMenu}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className={styles.socials}>
+            <a
+              href="https://www.pinterest.com/rinartburo"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Pinterest RINART"
+            >
+              <span className={`${styles.icon} ${styles.iconPinterest}`} />
+            </a>
+            <a
+              href="https://t.me/rinart_buro"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Telegram RINART"
+            >
+              <span className={`${styles.icon} ${styles.iconTelegram}`} />
+            </a>
+            <a
+              href="https://vk.com/rinart_buro"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="VK RINART"
+            >
+              <span className={`${styles.icon} ${styles.iconVk}`} />
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
 

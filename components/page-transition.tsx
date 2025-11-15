@@ -35,6 +35,7 @@ function PageTransitionInner() {
   const previousPathRef = useRef<string | null>(null);
   const pendingPathRef = useRef<string | null>(null);
   const shouldAwaitRouteRef = useRef(false);
+  const readyPathRef = useRef<string | null>(null);
 
   const clearNavigationTimer = useCallback(() => {
     if (navigationRef.current) {
@@ -57,6 +58,9 @@ function PageTransitionInner() {
       shouldAwaitRouteRef.current = Boolean(options?.awaitRoute);
       if (!shouldAwaitRouteRef.current) {
         pendingPathRef.current = null;
+        readyPathRef.current = null;
+      } else {
+        readyPathRef.current = null;
       }
       setPhase("idle");
       setIsActive(true);
@@ -156,50 +160,61 @@ function PageTransitionInner() {
     previousPathRef.current = pathname;
   }, [pathname]);
 
+  const finishWaiting = useCallback(() => {
+    clearWaitTimer();
+    pendingPathRef.current = null;
+    readyPathRef.current = null;
+    setPhase("open");
+  }, [clearWaitTimer]);
+
   useEffect(() => {
     if (phase !== "wait") {
       clearWaitTimer();
       return;
     }
 
+    if (
+      pendingPathRef.current &&
+      readyPathRef.current &&
+      readyPathRef.current === pendingPathRef.current
+    ) {
+      queueMicrotask(() => {
+        finishWaiting();
+      });
+      return;
+    }
+
     waitTimerRef.current = setTimeout(() => {
-      setPhase("open");
-      pendingPathRef.current = null;
+      finishWaiting();
       waitTimerRef.current = null;
     }, MAX_WAIT_DURATION);
 
-    if (typeof window !== "undefined" && pendingPathRef.current && pathname === pendingPathRef.current) {
-      window.dispatchEvent(
-        new CustomEvent("rinart:route-ready", {
-          detail: { pathname },
-        }),
-      );
-    }
-
     return () => clearWaitTimer();
-  }, [phase, pathname, clearWaitTimer]);
+  }, [phase, finishWaiting, clearWaitTimer]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const handleRouteReady = (event: Event) => {
-      if (phase !== "wait") {
-        return;
-      }
-
       const customEvent = event as CustomEvent<{ pathname?: string }>;
       const readyPath = customEvent.detail?.pathname;
-      if (!readyPath || !pendingPathRef.current || readyPath !== pendingPathRef.current) {
+      readyPathRef.current = readyPath ?? null;
+
+      if (
+        phase !== "wait" ||
+        !readyPathRef.current ||
+        !pendingPathRef.current ||
+        readyPathRef.current !== pendingPathRef.current
+      ) {
         return;
       }
 
-      pendingPathRef.current = null;
-      setPhase("open");
+      finishWaiting();
     };
 
     window.addEventListener("rinart:route-ready", handleRouteReady as EventListener);
     return () => window.removeEventListener("rinart:route-ready", handleRouteReady as EventListener);
-  }, [phase]);
+  }, [phase, finishWaiting]);
 
   const wrapperClassName = [
     styles.wrapper,

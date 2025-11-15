@@ -9,6 +9,10 @@
   display: block;
 }
 
+.wrapper.phaseOpen {
+  pointer-events: none;
+}
+
 .bigColor {
   position: absolute;
   inset: 0;

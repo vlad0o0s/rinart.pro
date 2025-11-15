@@ -13,6 +13,7 @@ import { ThirdStageSection } from "./third-stage-section";
 import { JsonLd } from "@/components/json-ld";
 import { proektirovaniePageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
+import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("proektirovanie");
@@ -21,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function ProektirovaniePage() {
   return (
     <>
-      <SiteHeader showDesktopNav showDesktopBrand={false} subLinks={PROEKTIR_SUBLINKS} />
+      <SiteHeader showDesktopNav subLinks={PROEKTIR_SUBLINKS} />
       <main className="min-h-screen bg-white text-neutral-900 antialiased">
         <HeroSection />
         <IntroSection />
@@ -35,6 +36,7 @@ export default function ProektirovaniePage() {
       </main>
       <Footer />
       <JsonLd schema={proektirovaniePageSchema()} />
+      <RouteReadyAnnouncer />
     </>
   );
 }

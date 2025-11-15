@@ -9,6 +9,7 @@ import { getAllProjects } from "@/lib/projects";
 import { JsonLd } from "@/components/json-ld";
 import { homePageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
+import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -35,7 +36,7 @@ export default async function Home() {
 
   return (
     <>
-      <SiteHeader showDesktopNav={false} />
+      <SiteHeader showDesktopBrand />
       <main className={`${styles.pageShell} min-h-screen bg-white text-neutral-900 antialiased`}>
         <div className={styles.stage}>
           <div className={styles.stageLayer} data-stage="hero">
@@ -60,6 +61,7 @@ export default async function Home() {
           })),
         )}
       />
+      <RouteReadyAnnouncer />
     </>
   );
 }

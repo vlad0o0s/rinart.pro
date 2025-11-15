@@ -6,6 +6,7 @@ import styles from "./page.module.css";
 import { JsonLd } from "@/components/json-ld";
 import { contactPageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
+import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 
 const contacts = [
   { type: "title", label: "Контактная информация" },
@@ -29,12 +30,13 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function KontaktyPage() {
   return (
     <>
-      <SiteHeader showDesktopNav showDesktopBrand={false} />
+      <SiteHeader showDesktopNav />
       <main className={styles.page}>
         <ContactsHero contacts={contacts} />
       </main>
       <Footer />
       <JsonLd schema={contactPageSchema()} />
+      <RouteReadyAnnouncer />
     </>
   );
 }

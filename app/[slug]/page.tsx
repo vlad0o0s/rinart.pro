@@ -7,6 +7,7 @@ import styles from "./page.module.css";
 import { JsonLd } from "@/components/json-ld";
 import { projectPageSchema } from "@/lib/seo/schema";
 import ProjectBody from "./project-body";
+import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 
 export function generateStaticParams() {
   return getAllProjects().then((projects) => projects.map((project) => ({ slug: project.slug })));
@@ -55,7 +56,7 @@ async function ProjectPageComponent({ params }: { params: Promise<{ slug: string
 
   return (
     <>
-      <SiteHeader showDesktopNav showDesktopBrand={false} />
+      <SiteHeader showDesktopNav />
       <div className={styles.page}>
         <ProjectBody
           title={title}
@@ -68,6 +69,7 @@ async function ProjectPageComponent({ params }: { params: Promise<{ slug: string
       </div>
       <Footer />
       <JsonLd schema={projectPageSchema(project)} />
+      <RouteReadyAnnouncer />
     </>
   );
 }

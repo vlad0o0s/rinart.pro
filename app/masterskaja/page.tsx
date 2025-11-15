@@ -8,6 +8,7 @@ import { PublicationsSection } from "./publications-section";
 import { JsonLd } from "@/components/json-ld";
 import { masterskajaPageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
+import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("masterskaja");
@@ -16,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function MasterskajaPage() {
   return (
     <>
-      <SiteHeader showDesktopNav showDesktopBrand={false} subLinks={MASTERSKAJA_SUBLINKS} />
+      <SiteHeader showDesktopNav subLinks={MASTERSKAJA_SUBLINKS} />
       <main className="min-h-screen bg-white text-neutral-900 antialiased">
         <section id="founder">
           <MasterskajaHero />
@@ -33,6 +34,7 @@ export default function MasterskajaPage() {
       </main>
       <Footer />
       <JsonLd schema={masterskajaPageSchema()} />
+      <RouteReadyAnnouncer />
     </>
   );
 }

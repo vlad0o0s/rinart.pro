@@ -131,10 +131,7 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
               aria-expanded={mobileCategoriesOpen}
             >
               <span>{activeCategoryLabel}</span>
-              <span className={styles.mobileCategoryIcon} aria-hidden>
-                <span />
-                <span />
-              </span>
+              <span className={styles.mobileCategoryIcon} aria-hidden />
             </button>
 
             <div

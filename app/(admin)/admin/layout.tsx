@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
+import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 
 export const metadata: Metadata = {
   title: "Админка — RINART",
@@ -10,5 +11,10 @@ export const metadata: Metadata = {
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      {children}
+      <RouteReadyAnnouncer />
+    </>
+  );
 }

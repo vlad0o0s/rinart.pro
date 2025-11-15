@@ -7,7 +7,6 @@ import { PageTransition } from "@/components/page-transition";
 import { JsonLd } from "@/components/json-ld";
 import { isBotUserAgent } from "@/lib/is-bot";
 import { organizationSchema, webSiteSchema } from "@/lib/seo/schema";
-import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 
 const neueHaasUnica = localFont({
   variable: "--font-neue-haas",
@@ -100,7 +99,6 @@ export default async function RootLayout({
         </noscript>
         <div className="site-shell">
           <PageTransition enabled={!isBot} />
-          <RouteReadyAnnouncer />
           <JsonLd schema={[organizationSchema(), webSiteSchema()]} />
           {children}
         </div>
