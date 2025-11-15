@@ -1,4 +1,11 @@
-import { getPool, withTransaction, PoolConnection, RowDataPacket, ResultSetHeader, ensureDatabaseSchema } from "./db";
+import {
+  withTransaction,
+  PoolConnection,
+  RowDataPacket,
+  ResultSetHeader,
+  ensureDatabaseSchema,
+  runQuery,
+} from "./db";
 
 export type ProjectMediaKind = "FEATURE" | "GALLERY" | "SCHEME";
 
@@ -287,8 +294,10 @@ function mapSchemeRow(row: ProjectSchemeRow): ProjectSchemeRecord {
 
 export async function fetchAllProjects(): Promise<ProjectRecord[]> {
   await ensureDatabaseSchema();
-  const [rows] = await getPool().query<ProjectRow[]>(
-    "SELECT id, slug, title, tagline, location, year, area, scope, intro, heroImageUrl, `order`, categories, content, createdAt, updatedAt FROM Project ORDER BY `order` ASC, id ASC",
+  const [rows] = await runQuery((pool) =>
+    pool.query<ProjectRow[]>(
+      "SELECT id, slug, title, tagline, location, year, area, scope, intro, heroImageUrl, `order`, categories, content, createdAt, updatedAt FROM Project ORDER BY `order` ASC, id ASC",
+    ),
   );
   return rows.map(mapProjectRow);
 }
@@ -304,20 +313,24 @@ export async function fetchAllProjectsWithRelations(): Promise<ProjectDetailReco
 
   const placeholders = ids.map(() => "?").join(", ");
 
-  const [mediaRows] = await getPool().query<ProjectMediaRow[]>(
-    `SELECT id, projectId, url, caption, kind, \`order\`, createdAt
-     FROM ProjectMedia
-     WHERE projectId IN (${placeholders})
-     ORDER BY projectId ASC, \`order\` ASC, id ASC`,
-    ids,
+  const [mediaRows] = await runQuery((pool) =>
+    pool.query<ProjectMediaRow[]>(
+      `SELECT id, projectId, url, caption, kind, \`order\`, createdAt
+       FROM ProjectMedia
+       WHERE projectId IN (${placeholders})
+       ORDER BY projectId ASC, \`order\` ASC, id ASC`,
+      ids,
+    ),
   );
 
-  const [schemeRows] = await getPool().query<ProjectSchemeRow[]>(
-    `SELECT id, projectId, title, url, \`order\`, createdAt
-     FROM ProjectScheme
-     WHERE projectId IN (${placeholders})
-     ORDER BY projectId ASC, \`order\` ASC, id ASC`,
-    ids,
+  const [schemeRows] = await runQuery((pool) =>
+    pool.query<ProjectSchemeRow[]>(
+      `SELECT id, projectId, title, url, \`order\`, createdAt
+       FROM ProjectScheme
+       WHERE projectId IN (${placeholders})
+       ORDER BY projectId ASC, \`order\` ASC, id ASC`,
+      ids,
+    ),
   );
 
   const mediaMap = new Map<number, ProjectMediaRecord[]>();
@@ -343,23 +356,29 @@ export async function fetchAllProjectsWithRelations(): Promise<ProjectDetailReco
 
 export async function fetchProjectBySlugWithRelations(slug: string): Promise<ProjectDetailRecord | null> {
   await ensureDatabaseSchema();
-  const [rows] = await getPool().query<ProjectRow[]>(
-    "SELECT id, slug, title, tagline, location, year, area, scope, intro, heroImageUrl, `order`, categories, content, createdAt, updatedAt FROM Project WHERE slug = ? LIMIT 1",
-    [slug],
+  const [rows] = await runQuery((pool) =>
+    pool.query<ProjectRow[]>(
+      "SELECT id, slug, title, tagline, location, year, area, scope, intro, heroImageUrl, `order`, categories, content, createdAt, updatedAt FROM Project WHERE slug = ? LIMIT 1",
+      [slug],
+    ),
   );
   if (!rows.length) {
     return null;
   }
   const project = mapProjectRow(rows[0]);
 
-  const [mediaRows] = await getPool().query<ProjectMediaRow[]>(
-    "SELECT id, projectId, url, caption, kind, `order`, createdAt FROM ProjectMedia WHERE projectId = ? ORDER BY `order` ASC, id ASC",
-    [project.id],
+  const [mediaRows] = await runQuery((pool) =>
+    pool.query<ProjectMediaRow[]>(
+      "SELECT id, projectId, url, caption, kind, `order`, createdAt FROM ProjectMedia WHERE projectId = ? ORDER BY `order` ASC, id ASC",
+      [project.id],
+    ),
   );
 
-  const [schemeRows] = await getPool().query<ProjectSchemeRow[]>(
-    "SELECT id, projectId, title, url, `order`, createdAt FROM ProjectScheme WHERE projectId = ? ORDER BY `order` ASC, id ASC",
-    [project.id],
+  const [schemeRows] = await runQuery((pool) =>
+    pool.query<ProjectSchemeRow[]>(
+      "SELECT id, projectId, title, url, `order`, createdAt FROM ProjectScheme WHERE projectId = ? ORDER BY `order` ASC, id ASC",
+      [project.id],
+    ),
   );
 
   return {
@@ -371,7 +390,7 @@ export async function fetchProjectBySlugWithRelations(slug: string): Promise<Pro
 
 export async function fetchProjectIdBySlug(slug: string): Promise<number | null> {
   await ensureDatabaseSchema();
-  const [rows] = await getPool().query<RowDataPacket[]>("SELECT id FROM Project WHERE slug = ? LIMIT 1", [slug]);
+  const [rows] = await runQuery((pool) => pool.query<RowDataPacket[]>("SELECT id FROM Project WHERE slug = ? LIMIT 1", [slug]));
   if (!rows.length) {
     return null;
   }

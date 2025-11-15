@@ -40,39 +40,76 @@
 }
 
 .contactTitle {
-  margin: 0;
-  font-size: clamp(24px, 3.6vw, 32px);
+  margin: 0 0 18px;
+  font-family: "Neue Haas Unica", Sans-serif;
+  font-size: clamp(22px, 2.2vw, 32px);
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  line-height: 1.1;
+  line-height: 1;
+  color: #252525;
+}
+
+.contactPrimary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: "Neue Haas Unica", Sans-serif;
+  font-size: clamp(18px, 1.8vw, 24px);
+  font-weight: 900;
+  color: #252525;
+  margin-bottom: 30px;
+}
+
+.contactPrimary a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.contactPrimary a:hover,
+.contactPrimary a:focus-visible {
+  color: rgba(37, 37, 37, 0.8);
+}
+
+.contactSocialsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: "Neue Haas Unica", Sans-serif;
+  font-size: clamp(16px, 1.6vw, 20px);
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #252525;
+  margin-bottom: 30px;
+}
+
+.contactSocialLine {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.contactSocialLine:hover,
+.contactSocialLine:focus-visible {
+  color: rgba(37, 37, 37, 0.8);
 }
 
 .contactLine {
-  display: block;
-  font-size: clamp(16px, 2.4vw, 18px);
-  font-weight: 800;
+  display: inline-block;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: rgba(37, 37, 37, 0.9);
+  color: inherit;
   text-decoration: none;
-  line-height: 1.3;
-}
-
-.contactLine:hover,
-.contactLine:focus-visible {
-  color: rgba(37, 37, 37, 1);
 }
 
 .contactPlain {
-  margin-top: 10px;
-  color: rgba(37, 37, 37, 0.7);
+  margin-top: 30px;
+  color: rgba(37, 37, 37, 0.75);
 }
 
 .heroImage {
   position: relative;
-  width: 100%;
-  aspect-ratio: 387 / 317;
+  width: min(320px, 100%);
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   justify-self: end;
   opacity: 0;
@@ -161,6 +198,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
+  margin-top: 30px;
 }
 
 .socialItem {
@@ -273,7 +311,10 @@
   }
 
   .heroImage {
-    aspect-ratio: 3 / 4;
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 1 / 1;
+    justify-self: center;
   }
 
   .cta {

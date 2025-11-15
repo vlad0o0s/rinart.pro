@@ -9,6 +9,7 @@ type ProjectSummary = {
   heroImageUrl?: string;
   order: number;
   categories: string[];
+  createdAt: string;
 };
 
 type CacheEntry<T> = { value: T; expires: number };
@@ -96,6 +97,7 @@ export async function getAllProjects() {
     heroImageUrl: project.heroImageUrl ?? undefined,
     order: project.order,
     categories: normaliseCategories(project.categories),
+    createdAt: project.createdAt?.toISOString?.() ?? new Date().toISOString(),
   }));
 
   writeAllProjectsCache(summaries);

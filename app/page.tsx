@@ -42,7 +42,7 @@ export default async function Home() {
           <div className={styles.stageLayer} data-stage="hero">
         <Hero />
           </div>
-          <div className={`${styles.stageLayer} hidden md:block`} data-stage="nav">
+          <div className={styles.stageLayer} data-stage="nav">
           <PrimaryNav />
           </div>
           <div className={styles.stageLayer} data-stage="portfolio">

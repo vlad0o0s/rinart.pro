@@ -1,3 +1,7 @@
+.menuItemHideMobile:first-child {
+  display: none;
+}
+
 .mobileControls {
   display: flex;
   flex-direction: row-reverse;
@@ -30,9 +34,7 @@
 .mobileTopLine {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 8px;
+  gap: 12px;
 }
 
 .mobileBrandCompact {
@@ -49,6 +51,28 @@
 
 .mobileBrandCompact span:last-child {
   color: rgba(37, 37, 37, 0.5);
+}
+
+@media (max-width: 767px) {
+  .mobileBrandCompact {
+    display: none;
+  }
+
+  .mobileTopLine {
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .mobileBrandPlaceholder {
+    flex: 0 0 80%;
+  }
+
+  .mobileControlsButtonWrapper {
+    flex: 0 0 20%;
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+  }
 }
 
 .mobileBrandPlaceholder {
@@ -214,7 +238,7 @@
 }
 
 .menuPanel {
-  width: min(320px, 70vw);
+  width: min(320px, 60vw);
   max-width: 420px;
   height: 100%;
   background: #ffffff;
@@ -231,7 +255,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   gap: 32px;
 }
@@ -279,9 +303,10 @@
   display: flex;
   gap: 15px;
   align-items: center;
-  justify-content: flex-start;
-  margin-top: auto;
-  padding-top: 24px;
+  justify-content: center;
+  position: relative;
+  padding-top: 16px;
+  top: 25vh;
 }
 
 .socials a {

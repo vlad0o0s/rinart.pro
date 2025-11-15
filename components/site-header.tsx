@@ -32,6 +32,7 @@ export type SiteHeaderProps = {
   showDesktopNav?: boolean;
   showDesktopBrand?: boolean;
   subLinks?: { href: string; label: string }[];
+  breadcrumbLabel?: string;
 };
 
 type Breadcrumb = { href: string; label: string; className?: string };
@@ -40,11 +41,13 @@ export function SiteHeader({
   showDesktopNav = false,
   showDesktopBrand = false,
   subLinks,
+  breadcrumbLabel,
 }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const burgerButtonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLElement | null>(null);
+  const sanitizedBreadcrumbLabel = breadcrumbLabel?.trim();
 
   const breadcrumbs = useMemo<Breadcrumb[]>(() => {
     if (!pathname) {
@@ -66,7 +69,7 @@ export function SiteHeader({
       : "";
 
     const fallbackLabel = fallbackSegment.length ? fallbackSegment : "Главная";
-    const currentLabel = labels[pathname] ?? fallbackLabel;
+    const currentLabel = sanitizedBreadcrumbLabel ?? labels[pathname] ?? fallbackLabel;
 
     if (pathname !== "/" && !currentLabel) {
       return [];
@@ -80,7 +83,7 @@ export function SiteHeader({
       { href: "/", label: "Архитектор", className: styles.architect },
       { href: pathname || "/", label: secondLabel },
     ];
-  }, [pathname]);
+  }, [pathname, sanitizedBreadcrumbLabel]);
 
   const showBreadcrumbs = !menuOpen && breadcrumbs.length > 0;
 
@@ -238,20 +241,22 @@ function MobileHeaderSection({
         ) : (
           <span aria-hidden className={`${styles.root} ${styles.mobileBrandPlaceholder}`} />
         )}
-        <button
-          type="button"
-          className={`${styles.burger} ${styles.mobileBurger}`}
-          aria-label="Открыть меню"
-          aria-expanded={menuOpen}
-          data-active={menuOpen ? "true" : "false"}
-          onClick={toggleMenu}
-          ref={burgerButtonRef}
-        >
-          <span className={styles.burgerElement} />
-          <span className={styles.burgerElement} />
-          <span className={styles.burgerElement} />
-          <span className={styles.burgerElement} />
-        </button>
+        <div className={styles.mobileControlsButtonWrapper}>
+          <button
+            type="button"
+            className={`${styles.burger} ${styles.mobileBurger}`}
+            aria-label="Открыть меню"
+            aria-expanded={menuOpen}
+            data-active={menuOpen ? "true" : "false"}
+            onClick={toggleMenu}
+            ref={burgerButtonRef}
+          >
+            <span className={styles.burgerElement} />
+            <span className={styles.burgerElement} />
+            <span className={styles.burgerElement} />
+            <span className={styles.burgerElement} />
+          </button>
+        </div>
       </div>
       {showBreadcrumbs ? (
         <nav className={styles.mobileBreadcrumbs} aria-label="Хлебные крошки">
@@ -299,8 +304,11 @@ function MobileMenu({
       <div className={styles.menuPanel}>
         <div className={styles.menuContent}>
           <ul className={styles.menuList}>
-            {NAV_LINKS.map((link) => (
-              <li key={`${link.href}-mobile`} className={styles.menuItem}>
+            {NAV_LINKS.map((link, index) => (
+              <li
+                key={`${link.href}-mobile`}
+                className={`${styles.menuItem} ${index === 0 ? styles.menuItemHideMobile : ""}`}
+              >
                 <Link href={link.href} onClick={closeMenu}>
                   {link.label}
                 </Link>

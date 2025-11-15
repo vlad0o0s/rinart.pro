@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import type { CSSProperties } from "react";
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { FreeMode, Mousewheel } from "swiper/modules";
 import { useReveal } from "@/lib/use-reveal";
 import styles from "./page.module.css";
 
@@ -49,9 +51,7 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
     return items;
   }, [featureImage, gallery, schemes, title]);
 
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [visibleItems, setVisibleItems] = useState<MediaItem[]>(mediaItems);
 
   const closeModal = useCallback(() => {
     setActiveIndex(null);
@@ -60,14 +60,20 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
   const showPrev = useCallback(() => {
     setActiveIndex((index) => {
       if (index === null) return index;
-      return Math.max(0, index - 1);
+      if (mediaItems.length <= 1) {
+        return index;
+      }
+      return index === 0 ? mediaItems.length - 1 : index - 1;
     });
-  }, []);
+  }, [mediaItems.length]);
 
   const showNext = useCallback(() => {
     setActiveIndex((index) => {
       if (index === null) return index;
-      return Math.min(mediaItems.length - 1, index + 1);
+      if (mediaItems.length <= 1) {
+        return index;
+      }
+      return index === mediaItems.length - 1 ? 0 : index + 1;
     });
   }, [mediaItems.length]);
 
@@ -91,32 +97,6 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
   }, [activeIndex, closeModal, showNext, showPrev]);
 
   useEffect(() => {
-    startTransition(() => {
-      setVisibleItems(mediaItems);
-    });
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
-    }
-  }, [mediaItems]);
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container || !mediaItems.length) {
-      return;
-    }
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      if (scrollTop + clientHeight >= scrollHeight - 200) {
-        setVisibleItems((prev) => [...prev, ...mediaItems]);
-      }
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [mediaItems]);
-
-  useEffect(() => {
     if (activeIndex === null) {
       return;
     }
@@ -127,16 +107,10 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
     };
   }, [activeIndex]);
 
-  const mediaRef = useReveal<HTMLDivElement>({ threshold: 0.15 });
-  const combinedRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      scrollContainerRef.current = node;
-      mediaRef.current = node;
-    },
-    [mediaRef],
-  );
+  const desktopRef = useReveal<HTMLDivElement>({ threshold: 0.15 });
+  const mobileRef = useReveal<HTMLDivElement>({ threshold: 0.1 });
 
-  if (!visibleItems.length) {
+  if (!mediaItems.length) {
     return null;
   }
 
@@ -147,36 +121,66 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
 
   return (
     <>
-      <div
-        className={styles.mediaColumn}
-        ref={combinedRef}
-        data-visible="false"
-        style={columnStyle}
-      >
-        <div className={styles.mediaScroller}>
-          {visibleItems.map((item, index) => (
-            <figure
-              key={`${item.src}-${index}`}
-              className={styles.mediaFrame}
-              style={{ "--media-index": index } as CSSProperties}
-            >
-              <Image
-                src={item.src}
-                alt={item.alt}
-                className={styles.mediaImage}
-                loading="lazy"
-                width={1600}
-                height={1000}
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                unoptimized
-                onClick={() => setActiveIndex(index % mediaItems.length)}
-              />
-              {item.type === "scheme" && item.caption ? (
-                <figcaption className={styles.mediaCaption}>{item.caption}</figcaption>
-              ) : null}
-            </figure>
+      <div className={styles.mediaColumnDesktop} ref={desktopRef} data-visible="false" style={columnStyle}>
+        <Swiper
+          modules={[FreeMode, Mousewheel]}
+          direction="vertical"
+          slidesPerView={1.1}
+          spaceBetween={20}
+          loop={mediaItems.length > 1}
+          freeMode={{
+            enabled: true,
+            momentum: true,
+            momentumVelocityRatio: 0.6,
+          }}
+          mousewheel={{ forceToAxis: true, releaseOnEdges: false }}
+          className={styles.mediaSwiper}
+        >
+          {mediaItems.map((item, index) => (
+            <SwiperSlide key={`${item.src}-${index}`} className={styles.mediaSlide}>
+              <figure
+                className={styles.mediaFrame}
+                style={{ "--media-index": index } as CSSProperties}
+              >
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  className={styles.mediaImage}
+                  loading="lazy"
+                  width={1600}
+                  height={1000}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  unoptimized
+                  onClick={() => setActiveIndex(index)}
+                />
+                {item.type === "scheme" && item.caption ? (
+                  <figcaption className={styles.mediaCaption}>{item.caption}</figcaption>
+                ) : null}
+              </figure>
+            </SwiperSlide>
           ))}
-        </div>
+        </Swiper>
+      </div>
+
+      <div className={styles.mediaColumnMobile} ref={mobileRef} data-visible="false">
+        {mediaItems.map((item, index) => (
+          <figure key={`${item.src}-mobile-${index}`} className={styles.mediaFrame}>
+            <Image
+              src={item.src}
+              alt={item.alt}
+              className={styles.mediaImage}
+              loading="lazy"
+              width={1600}
+              height={1000}
+              sizes="100vw"
+              unoptimized
+              onClick={() => setActiveIndex(index)}
+            />
+            {item.type === "scheme" && item.caption ? (
+              <figcaption className={styles.mediaCaption}>{item.caption}</figcaption>
+            ) : null}
+          </figure>
+        ))}
       </div>
 
       {activeItem ? (
@@ -188,7 +192,7 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
             type="button"
             className={`${styles.modalNav} ${styles.modalPrev}`}
             onClick={showPrev}
-            disabled={activeIndex === 0}
+            disabled={mediaItems.length <= 1}
             aria-label="Предыдущее изображение"
           >
             &#10094;
@@ -211,7 +215,7 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
             type="button"
             className={`${styles.modalNav} ${styles.modalNext}`}
             onClick={showNext}
-            disabled={activeIndex === mediaItems.length - 1}
+            disabled={mediaItems.length <= 1}
             aria-label="Следующее изображение"
           >
             &#10095;

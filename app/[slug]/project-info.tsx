@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Link from "next/link";
 import { RichText } from "@/components/rich-text";
 import { useReveal } from "@/lib/use-reveal";
 import styles from "./page.module.css";
@@ -48,12 +47,7 @@ export function ProjectInfo({ title, descriptionHtml, descriptionParagraphs, onH
       className={styles.infoColumn}
       data-visible="false"
     >
-      <div className={styles.breadcrumbRow}>
-        <Link href="/" className={styles.breadcrumb}>
-          ← Ко всем проектам
-        </Link>
-        <span className={styles.breadcrumbCurrent}>{title}</span>
-      </div>
+      
       <h1 className={styles.title}>{title}</h1>
 
       {descriptionHtml ? (

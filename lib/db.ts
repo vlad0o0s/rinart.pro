@@ -1,6 +1,8 @@
 import mysql from "mysql2";
 import type { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
+type MysqlError = NodeJS.ErrnoException & { fatal?: boolean };
+
 let pool: Pool | null = null;
 let schemaReadyPromise: Promise<void> | null = null;
 
@@ -12,17 +14,101 @@ function getDatabaseUrl(): string {
   return url;
 }
 
+async function resetPool() {
+  if (pool) {
+    try {
+      await pool.end();
+    } catch (error) {
+      console.warn("[db] failed to close pool during reset", error);
+    }
+    pool = null;
+  }
+  schemaReadyPromise = null;
+}
+
+function createPool(): Pool {
+  const url = getDatabaseUrl();
+  const basePool = mysql.createPool({
+    uri: url,
+    waitForConnections: true,
+    connectionLimit: Number(process.env.DB_POOL_SIZE ?? 10),
+    queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0,
+  });
+
+  basePool.on("error", (error: MysqlError) => {
+    console.error("[db] pool error", error);
+    if (error?.code === "PROTOCOL_CONNECTION_LOST" || error?.code === "ECONNRESET" || error?.fatal) {
+      void resetPool();
+    }
+  });
+
+  pool = basePool.promise();
+  return pool;
+}
+
 export function getPool(): Pool {
   if (!pool) {
-    pool = mysql.createPool(getDatabaseUrl()).promise();
+    return createPool();
   }
   return pool;
+}
+
+function isRecoverableError(error: MysqlError | undefined) {
+  if (!error) {
+    return false;
+  }
+  const recoverableCodes = new Set([
+    "PROTOCOL_CONNECTION_LOST",
+    "PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR",
+    "ECONNRESET",
+    "ER_CLIENT_INTERACTION_TIMEOUT",
+  ]);
+  return recoverableCodes.has(error.code ?? "") || /packets out of order/i.test(error.message ?? "");
+}
+
+async function getConnectionWithRetry(attempt = 0): Promise<PoolConnection> {
+  try {
+    return await getPool().getConnection();
+  } catch (rawError) {
+    const error = rawError as MysqlError;
+    if (attempt === 0 && isRecoverableError(error)) {
+      console.warn("[db] retrying connection after error", error);
+      await resetPool();
+      return getConnectionWithRetry(attempt + 1);
+    }
+    throw error;
+  }
+}
+
+async function runWithRetry<T>(operation: (pool: Pool) => Promise<T>, attempt = 0): Promise<T> {
+  const currentPool = getPool();
+  try {
+    return await operation(currentPool);
+  } catch (rawError) {
+    const error = rawError as MysqlError;
+    if (attempt === 0 && isRecoverableError(error)) {
+      console.warn("[db] retrying query after connection error", error);
+      await resetPool();
+      return runWithRetry(operation, attempt + 1);
+    }
+    throw error;
+  }
+}
+
+export async function runQuery<T>(operation: (pool: Pool) => Promise<T>): Promise<T> {
+  return runWithRetry(operation);
+}
+
+async function getConnection(): Promise<PoolConnection> {
+  return getConnectionWithRetry();
 }
 
 export async function ensureDatabaseSchema(): Promise<void> {
   if (!schemaReadyPromise) {
     schemaReadyPromise = (async () => {
-      const connection = await getPool().getConnection();
+      const connection = await getConnection();
       try {
         await ensureSchema(connection);
       } finally {
@@ -35,7 +121,7 @@ export async function ensureDatabaseSchema(): Promise<void> {
 
 export async function withTransaction<T>(handler: (connection: PoolConnection) => Promise<T>): Promise<T> {
   await ensureDatabaseSchema();
-  const connection = await getPool().getConnection();
+  const connection = await getConnection();
   try {
     await connection.beginTransaction();
     const result = await handler(connection);

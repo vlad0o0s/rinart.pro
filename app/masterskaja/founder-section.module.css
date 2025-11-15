@@ -314,6 +314,13 @@
     max-width: none;
     align-items: stretch;
   }
+
+  .imageWrapper {
+    width: 40%;
+    max-width: none;
+    margin: 0;
+    margin-right: auto;
+  }
 }
 
 @media (max-width: 639px) {

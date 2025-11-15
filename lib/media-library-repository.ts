@@ -1,4 +1,4 @@
-import { ensureDatabaseSchema, getPool, ResultSetHeader, RowDataPacket } from "./db";
+import { ensureDatabaseSchema, ResultSetHeader, RowDataPacket, runQuery } from "./db";
 
 export type MediaLibraryRecord = {
   id: number;
@@ -25,17 +25,21 @@ function mapMediaRow(row: MediaLibraryRow): MediaLibraryRecord {
 
 export async function fetchMediaAssets(): Promise<MediaLibraryRecord[]> {
   await ensureDatabaseSchema();
-  const [rows] = await getPool().query<MediaLibraryRow[]>(
-    "SELECT id, url, title, createdAt FROM MediaAsset ORDER BY createdAt DESC, id DESC",
+  const [rows] = await runQuery((pool) =>
+    pool.query<MediaLibraryRow[]>(
+      "SELECT id, url, title, createdAt FROM MediaAsset ORDER BY createdAt DESC, id DESC",
+    ),
   );
   return rows.map(mapMediaRow);
 }
 
 export async function findMediaAssetByUrl(url: string): Promise<MediaLibraryRecord | null> {
   await ensureDatabaseSchema();
-  const [rows] = await getPool().query<MediaLibraryRow[]>(
-    "SELECT id, url, title, createdAt FROM MediaAsset WHERE url = ? LIMIT 1",
-    [url],
+  const [rows] = await runQuery((pool) =>
+    pool.query<MediaLibraryRow[]>(
+      "SELECT id, url, title, createdAt FROM MediaAsset WHERE url = ? LIMIT 1",
+      [url],
+    ),
   );
   if (!rows.length) {
     return null;
@@ -48,21 +52,22 @@ export async function createMediaAssetRecord(url: string, title?: string | null)
   const existing = await findMediaAssetByUrl(url);
   if (existing) {
     if (title && !existing.title) {
-      await getPool().execute("UPDATE MediaAsset SET title = ? WHERE id = ?", [title, existing.id]);
+      await runQuery((pool) => pool.execute("UPDATE MediaAsset SET title = ? WHERE id = ?", [title, existing.id]));
       return { ...existing, title };
     }
     return existing;
   }
 
-  const [result] = await getPool().execute<ResultSetHeader>(
-    "INSERT INTO MediaAsset (url, title) VALUES (?, ?)",
-    [url, title ?? null],
+  const [result] = await runQuery((pool) =>
+    pool.execute<ResultSetHeader>("INSERT INTO MediaAsset (url, title) VALUES (?, ?)", [url, title ?? null]),
   );
 
   const insertedId = Number(result.insertId);
-  const [rows] = await getPool().query<MediaLibraryRow[]>(
-    "SELECT id, url, title, createdAt FROM MediaAsset WHERE id = ? LIMIT 1",
-    [insertedId],
+  const [rows] = await runQuery((pool) =>
+    pool.query<MediaLibraryRow[]>(
+      "SELECT id, url, title, createdAt FROM MediaAsset WHERE id = ? LIMIT 1",
+      [insertedId],
+    ),
   );
   if (!rows.length) {
     throw new Error("Failed to load media asset after insert");
@@ -72,6 +77,6 @@ export async function createMediaAssetRecord(url: string, title?: string | null)
 
 export async function deleteMediaAssetById(id: number): Promise<void> {
   await ensureDatabaseSchema();
-  await getPool().execute("DELETE FROM MediaAsset WHERE id = ?", [id]);
+  await runQuery((pool) => pool.execute("DELETE FROM MediaAsset WHERE id = ?", [id]));
 }
 

@@ -17,6 +17,12 @@
   align-items: center;
 }
 
+@media (max-width: 767px) {
+  .list {
+    display: none;
+  }
+}
+
 .item {
   width: 100%;
   display: flex;

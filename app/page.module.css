@@ -24,6 +24,12 @@
   animation: stageFade 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+@media (max-width: 767px) {
+  .stageLayer {
+    display: none;
+  }
+}
+
 .stageLayer[data-stage="nav"] {
   z-index: 3;
 }
@@ -208,7 +214,7 @@
 
 .portfolioGrid {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: clamp(16px, 1.5vw, 32px);
 }
 
@@ -234,22 +240,14 @@
   display: block;
   text-decoration: none;
   color: inherit;
-  grid-column: span 3;
+  grid-column: span 1;
 }
 
-.portfolioLink:nth-of-type(6n + 1),
-.portfolioLink:nth-of-type(6n + 4) {
-  grid-column: span 5;
-}
-
-.portfolioLink:nth-of-type(6n + 2),
-.portfolioLink:nth-of-type(6n + 5) {
-  grid-column: span 3;
-}
-
-.portfolioLink:nth-of-type(6n + 3),
-.portfolioLink:nth-of-type(6n) {
-  grid-column: span 4;
+.portfolioLink:nth-of-type(8n + 2),
+.portfolioLink:nth-of-type(8n + 4),
+.portfolioLink:nth-of-type(8n + 5),
+.portfolioLink:nth-of-type(8n + 7) {
+  grid-column: span 2;
 }
 
 .portfolioCard {
@@ -360,7 +358,7 @@
 .mobileCategoryButton {
   display: none;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   width: 100%;
   padding: 12px 0;
   text-transform: uppercase;
@@ -373,37 +371,26 @@
   border-bottom: 1px solid rgba(37, 37, 37, 0.12);
 }
 
+.mobileCategoryButton span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .mobileCategoryIcon {
-  position: relative;
-  width: 16px;
-  height: 16px;
-  margin-left: 10px;
-  transition: transform 0.3s ease;
-}
-
-.mobileCategoryIcon::before,
-.mobileCategoryIcon::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 12px;
-  height: 2px;
-  background-color: rgba(37, 37, 37, 0.5);
-  transform-origin: center;
-  transition: transform 0.3s ease, background-color 0.3s ease;
-}
-
-.mobileCategoryIcon::before {
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
-.mobileCategoryIcon::after {
-  transform: translate(-50%, -50%) rotate(-45deg);
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid rgba(37, 37, 37, 0.7);
+  border-bottom: 2px solid rgba(37, 37, 37, 0.7);
+  transform: rotate(45deg);
+  vertical-align: middle;
+  margin-top: -2px;
+  transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
 .mobileCategoryButton[aria-expanded="true"] .mobileCategoryIcon {
-  transform: rotate(180deg);
+  transform: rotate(-135deg);
 }
 
 .categoryList {
@@ -462,6 +449,7 @@
 
   .mobileCategoryButton {
     display: flex;
+    gap: 10px;
   }
 
   .categorySkeletonMobile {
@@ -476,7 +464,9 @@
   .categoryList {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    align-items: flex-start;
+    width: 100%;
+    gap: 5px;
     border-bottom: 1px solid rgba(37, 37, 37, 0.12);
     overflow: hidden;
     max-height: 0;
@@ -548,11 +538,11 @@
 
 @media (max-width: 1400px) {
   .portfolioGrid {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .portfolioLink {
-    grid-column: span 4;
+    grid-column: span 2;
   }
 }
 
@@ -567,13 +557,27 @@
   }
 }
 
+.portfolioImageWrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 68%;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .portfolioImageWrapper {
+    padding-top: 200px;
+  }
+}
+
 @media (max-width: 640px) {
   .portfolioGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 
   .portfolioLink {
-    grid-column: 1 / -1 !important;
+    grid-column: span 1 !important;
   }
 
   .portfolioMeta {

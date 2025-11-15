@@ -1,4 +1,4 @@
-import { ensureDatabaseSchema, getPool, ResultSetHeader, RowDataPacket } from "./db";
+import { ensureDatabaseSchema, ResultSetHeader, RowDataPacket, runQuery } from "./db";
 
 export type PageSeoRecord = {
   slug: string;
@@ -67,17 +67,21 @@ function mapRow(row: PageSeoRow): PageSeoRecord {
 
 export async function fetchAllPageSeo(): Promise<PageSeoRecord[]> {
   await ensureDatabaseSchema();
-  const [rows] = await getPool().query<PageSeoRow[]>(
-    "SELECT slug, title, description, keywords, ogImageUrl, createdAt, updatedAt FROM PageSeo ORDER BY slug",
+  const [rows] = await runQuery((pool) =>
+    pool.query<PageSeoRow[]>(
+      "SELECT slug, title, description, keywords, ogImageUrl, createdAt, updatedAt FROM PageSeo ORDER BY slug",
+    ),
   );
   return rows.map(mapRow);
 }
 
 export async function findPageSeoBySlug(slug: string): Promise<PageSeoRecord | null> {
   await ensureDatabaseSchema();
-  const [rows] = await getPool().query<PageSeoRow[]>(
-    "SELECT slug, title, description, keywords, ogImageUrl, createdAt, updatedAt FROM PageSeo WHERE slug = ? LIMIT 1",
-    [slug],
+  const [rows] = await runQuery((pool) =>
+    pool.query<PageSeoRow[]>(
+      "SELECT slug, title, description, keywords, ogImageUrl, createdAt, updatedAt FROM PageSeo WHERE slug = ? LIMIT 1",
+      [slug],
+    ),
   );
   if (!rows.length) {
     return null;
@@ -107,17 +111,19 @@ export async function upsertPageSeo(params: {
   };
 
   await ensureDatabaseSchema();
-  await getPool().execute<ResultSetHeader>(
-    `INSERT INTO PageSeo (slug, title, description, keywords, ogImageUrl)
+  await runQuery((pool) =>
+    pool.execute<ResultSetHeader>(
+      `INSERT INTO PageSeo (slug, title, description, keywords, ogImageUrl)
      VALUES (?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE title = VALUES(title), description = VALUES(description), keywords = VALUES(keywords), ogImageUrl = VALUES(ogImageUrl)`,
-    [
-      payload.slug,
-      payload.title,
-      payload.description,
-      payload.keywords.length ? JSON.stringify(payload.keywords) : null,
-      payload.ogImageUrl,
-    ],
+      [
+        payload.slug,
+        payload.title,
+        payload.description,
+        payload.keywords.length ? JSON.stringify(payload.keywords) : null,
+        payload.ogImageUrl,
+      ],
+    ),
   );
 
   const record = await findPageSeoBySlug(payload.slug);

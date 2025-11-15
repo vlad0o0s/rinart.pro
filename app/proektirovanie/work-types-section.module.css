@@ -193,6 +193,12 @@
     font-size: 3.8vw;
     line-height: 1;
   }
+  
+  .sectionsBlock {
+    flex-direction: column;
+    gap: 0;
+    display: flex;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

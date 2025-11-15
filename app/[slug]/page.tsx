@@ -8,6 +8,7 @@ import { JsonLd } from "@/components/json-ld";
 import { projectPageSchema } from "@/lib/seo/schema";
 import ProjectBody from "./project-body";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
+import { RelatedProjectsSlider } from "./related-projects";
 
 export function generateStaticParams() {
   return getAllProjects().then((projects) => projects.map((project) => ({ slug: project.slug })));
@@ -49,6 +50,14 @@ async function ProjectPageComponent({ params }: { params: Promise<{ slug: string
   }
 
   const { title, heroImageUrl, descriptionBody, descriptionHtml, schemes, gallery } = project;
+  const allProjects = await getAllProjects();
+  const relatedProjects = allProjects
+    .filter((item) => item.slug !== slug)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
+    .slice(0, 8);
 
   const descriptionParagraphs = descriptionBody.filter(
     (paragraph): paragraph is string => typeof paragraph === "string" && paragraph.trim().length > 0,
@@ -56,7 +65,7 @@ async function ProjectPageComponent({ params }: { params: Promise<{ slug: string
 
   return (
     <>
-      <SiteHeader showDesktopNav />
+      <SiteHeader showDesktopNav breadcrumbLabel={title} />
       <div className={styles.page}>
         <ProjectBody
           title={title}
@@ -66,6 +75,7 @@ async function ProjectPageComponent({ params }: { params: Promise<{ slug: string
           schemes={schemes.map((scheme) => ({ title: scheme.title, image: scheme.url }))}
           gallery={gallery.map((item) => item.url)}
         />
+        <RelatedProjectsSlider projects={relatedProjects} />
       </div>
       <Footer />
       <JsonLd schema={projectPageSchema(project)} />

@@ -1,12 +1,13 @@
 .hero {
   position: relative;
   width: 100%;
-  min-height: calc(100vh - var(--header-height, 0px));
+  min-height: calc(100vh - var(--header-height, 0px) - 48px);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   padding-top: var(--header-height, 0px);
+  padding-bottom: 48px;
   box-sizing: border-box;
   opacity: 0;
   animation: heroFade 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;

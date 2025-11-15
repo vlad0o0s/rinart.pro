@@ -22,7 +22,11 @@
   }
 }
 
-body {
+body,
+button,
+input,
+textarea,
+select {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-neue-haas), "Helvetica Neue", Helvetica, Arial,

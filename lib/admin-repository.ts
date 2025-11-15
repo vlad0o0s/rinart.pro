@@ -1,4 +1,4 @@
-import { PoolConnection, RowDataPacket, ResultSetHeader, ensureDatabaseSchema, getPool, withTransaction } from "./db";
+import { PoolConnection, RowDataPacket, ResultSetHeader, ensureDatabaseSchema, withTransaction, runQuery } from "./db";
 
 export type AdminUserRecord = {
   id: number;
@@ -32,9 +32,8 @@ type AdminSessionRow = RowDataPacket & {
 
 export async function findAdminUserByLogin(login: string): Promise<AdminUserRecord | null> {
   await ensureDatabaseSchema();
-  const [rows] = await getPool().query<AdminUserRow[]>(
-    "SELECT id, login, passwordHash, createdAt FROM AdminUser WHERE login = ? LIMIT 1",
-    [login],
+  const [rows] = await runQuery((pool) =>
+    pool.query<AdminUserRow[]>("SELECT id, login, passwordHash, createdAt FROM AdminUser WHERE login = ? LIMIT 1", [login]),
   );
   if (!rows.length) {
     return null;
@@ -63,22 +62,21 @@ export async function createAdminUser(login: string, passwordHash: string): Prom
 
 export async function createAdminSession(userId: number, token: string, expiresAt: Date): Promise<void> {
   await ensureDatabaseSchema();
-  await getPool().execute(
-    "INSERT INTO AdminSession (userId, token, expiresAt) VALUES (?, ?, ?)",
-    [userId, token, expiresAt],
-  );
+  await runQuery((pool) => pool.execute("INSERT INTO AdminSession (userId, token, expiresAt) VALUES (?, ?, ?)", [userId, token, expiresAt]));
 }
 
 export async function getAdminSessionByToken(token: string): Promise<(AdminSessionRecord & { user: AdminUserRecord }) | null> {
   await ensureDatabaseSchema();
-  const [rows] = await getPool().query<(AdminSessionRow & { login: string; passwordHash: string; userCreatedAt: Date })[]>(
-    `SELECT s.id, s.userId, s.token, s.createdAt, s.expiresAt,
-            u.login, u.passwordHash, u.createdAt AS userCreatedAt
-       FROM AdminSession s
-       JOIN AdminUser u ON u.id = s.userId
-      WHERE s.token = ?
-      LIMIT 1`,
-    [token],
+  const [rows] = await runQuery((pool) =>
+    pool.query<(AdminSessionRow & { login: string; passwordHash: string; userCreatedAt: Date })[]>(
+      `SELECT s.id, s.userId, s.token, s.createdAt, s.expiresAt,
+              u.login, u.passwordHash, u.createdAt AS userCreatedAt
+         FROM AdminSession s
+         JOIN AdminUser u ON u.id = s.userId
+        WHERE s.token = ?
+        LIMIT 1`,
+      [token],
+    ),
   );
   if (!rows.length) {
     return null;
@@ -101,12 +99,12 @@ export async function getAdminSessionByToken(token: string): Promise<(AdminSessi
 
 export async function deleteAdminSession(token: string): Promise<void> {
   await ensureDatabaseSchema();
-  await getPool().execute("DELETE FROM AdminSession WHERE token = ?", [token]);
+  await runQuery((pool) => pool.execute("DELETE FROM AdminSession WHERE token = ?", [token]));
 }
 
 export async function deleteExpiredAdminSessions(): Promise<void> {
   await ensureDatabaseSchema();
-  await getPool().execute("DELETE FROM AdminSession WHERE expiresAt < NOW()", []);
+  await runQuery((pool) => pool.execute("DELETE FROM AdminSession WHERE expiresAt < NOW()", []));
 }
 
 function mapUser(row: AdminUserRow): AdminUserRecord {

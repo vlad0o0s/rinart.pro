@@ -2,13 +2,83 @@ import styles from "./footer.module.css";
 
 export function Footer() {
   return (
-    <footer className={styles.footer}>
-      <div className={styles.inner}>
-        <div className={styles.row}>
-          <div className={styles.column}>
+    <>
+      <footer className={styles.footer}>
+        <div className={styles.inner}>
+          <div className={styles.row}>
+            <div className={styles.column}>
+              <p className={styles.contactTitle}>Обсудим ваш проект:</p>
+              <a
+                className={styles.ctaButton}
+                href="https://wa.me/79031474430"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Написать в WhatsApp <span>→</span>
+              </a>
+            </div>
+
+            <div className={`${styles.column} ${styles.columnCenter}`}>
+              <span className={styles.city}>г. Москва</span>
+              <a className={`${styles.phone} ${styles.linkUnderline}`} href="tel:+79031474430">
+                +7 903 147-44-30
+              </a>
+            </div>
+
+            <div className={`${styles.column} ${styles.columnRight}`}>
+              <div className={styles.socials}>
+                <a
+                  className={styles.socialLink}
+                  href="https://www.instagram.com/rinart.buro/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram RINART"
+                >
+                  <span className={`${styles.icon} ${styles.iconInstagram}`} />
+                </a>
+                <a
+                  className={styles.socialLink}
+                  href="https://t.me/rinart_buro"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Telegram RINART"
+                >
+                  <span className={`${styles.icon} ${styles.iconTelegram}`} />
+                </a>
+                <a
+                  className={styles.socialLink}
+                  href="https://vk.com/rinart_buro"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="VK RINART"
+                >
+                  <span className={`${styles.icon} ${styles.iconVk}`} />
+                </a>
+              </div>
+            </div>
+
+            <div className={styles.backToTopWrapper}>
+              <a className={`${styles.backToTop} ${styles.linkUnderline}`} href="#">
+                В начало
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+      <FooterMobile />
+    </>
+  );
+}
+
+export function FooterMobile() {
+  return (
+    <footer className={styles.footerMobile}>
+      <div className={styles.footerMobileInner}>
+        <div className={styles.footerMobileColumns}>
+          <div className={styles.footerMobileColumnLeft}>
             <p className={styles.contactTitle}>Обсудим ваш проект:</p>
             <a
-              className={styles.ctaButton}
+              className={styles.footerMobileButton}
               href="https://wa.me/79031474430"
               target="_blank"
               rel="noopener noreferrer"
@@ -16,16 +86,11 @@ export function Footer() {
               Написать в WhatsApp <span>→</span>
             </a>
           </div>
-
-          <div className={`${styles.column} ${styles.columnCenter}`}>
-            <span className={styles.city}>г. Москва</span>
-            <a className={`${styles.phone} ${styles.linkUnderline}`} href="tel:+79031474430">
-              +7 903 147-44-30
+          <div className={styles.footerMobileColumnRight}>
+            <a className={`${styles.backToTop} ${styles.footerMobileBack}`} href="#">
+              В начало
             </a>
-          </div>
-
-          <div className={`${styles.column} ${styles.columnRight}`}>
-            <div className={styles.socials}>
+            <div className={styles.footerMobileSocials}>
               <a
                 className={styles.socialLink}
                 href="https://www.instagram.com/rinart.buro/"
@@ -54,12 +119,12 @@ export function Footer() {
                 <span className={`${styles.icon} ${styles.iconVk}`} />
               </a>
             </div>
-          </div>
-
-          <div className={styles.backToTopWrapper}>
-            <a className={`${styles.backToTop} ${styles.linkUnderline}`} href="#">
-              В начало
-            </a>
+            <div className={styles.footerMobileLocation}>
+              <span>г. Москва</span>
+              <a className={styles.phone} href="tel:+79031474430">
+                +7 903 147-44-30
+              </a>
+            </div>
           </div>
         </div>
       </div>
