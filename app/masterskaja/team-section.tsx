@@ -24,17 +24,17 @@ export function TeamSection({ members }: TeamSectionProps) {
     return prepared.sort((a, b) => a.order - b.order);
   }, [members]);
 
+  const defaultMemberId = normalizedMembers[0]?.clientId ?? null;
+  const [hoveredId, setHoveredId] = useState<string | null>(defaultMemberId);
+  const handleActivate = (id: string) => setHoveredId(id);
+  const handleDeactivate = () => setHoveredId(defaultMemberId);
+
   if (!normalizedMembers.length) {
     return null;
   }
 
-  const defaultMemberId = normalizedMembers[0]?.clientId ?? null;
-  const [hoveredId, setHoveredId] = useState<string | null>(defaultMemberId);
-
-  const handleActivate = (id: string) => setHoveredId(id);
-  const handleDeactivate = () => setHoveredId(defaultMemberId);
-
   return (
+
     <section ref={sectionRef} className={styles.section} id="team" data-visible="false">
       <div className={styles.wrapper}>
         <div className={styles.markerColumn}>
