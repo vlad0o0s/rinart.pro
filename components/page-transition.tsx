@@ -30,6 +30,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
   const pathname = usePathname();
   const [isActive, setIsActive] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
+  const [mode, setMode] = useState<"initial" | "route">("initial");
   const navigationRef = useRef<NodeJS.Timeout | null>(null);
   const initialTimerRef = useRef<NodeJS.Timeout | null>(null);
   const waitTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -57,6 +58,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
       clearNavigationTimer();
       clearWaitTimer();
       shouldAwaitRouteRef.current = Boolean(options?.awaitRoute);
+      setMode(shouldAwaitRouteRef.current ? "route" : "initial");
       if (!shouldAwaitRouteRef.current) {
         pendingPathRef.current = null;
         readyPathRef.current = null;
@@ -222,6 +224,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
     isActive ? styles.wrapperActive : "",
     phase === "close" ? styles.phaseClose : "",
     phase === "line" ? styles.phaseLine : "",
+    phase === "wait" ? styles.phaseWait : "",
     phase === "open" ? styles.phaseOpen : "",
   ]
     .filter(Boolean)
@@ -238,7 +241,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
   }, [logoUrl]);
 
   return (
-    <div className={wrapperClassName} aria-hidden={!isActive}>
+    <div className={wrapperClassName} aria-hidden={!isActive} data-mode={mode}>
       <div className={`${styles.panel} ${styles.panelTop}`}>
         <div className={styles.logoLineWrapper} style={logoStyle} />
         <div className={styles.line} />
