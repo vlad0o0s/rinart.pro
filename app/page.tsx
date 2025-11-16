@@ -45,8 +45,8 @@ export default async function Home() {
       <SiteHeader showDesktopBrand socialLinks={socialLinks} />
       <main className={`${styles.pageShell} min-h-screen bg-white text-neutral-900 antialiased`}>
         <div className={styles.stage}>
-            <div className={styles.stageLayer} data-stage="hero">
-        <Hero imageUrl={(blocks as any)?.["home-hero"]?.imageUrl ?? undefined} />
+          <div className={styles.stageLayer} data-stage="hero">
+        <Hero imageUrl={blocks["home-hero"]?.imageUrl ?? undefined} />
           </div>
           <div className={styles.stageLayer} data-stage="nav">
           <PrimaryNav />

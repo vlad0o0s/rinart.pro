@@ -16,7 +16,7 @@ export async function PUT(request: NextRequest) {
   try {
     const entries = Object.entries(blocks) as Array<[keyof GlobalBlocks, GlobalBlocks[keyof GlobalBlocks]]>;
     for (const [slug, data] of entries) {
-      await saveGlobalBlock(slug, data as any);
+      await saveGlobalBlock(slug, data);
     }
     const saved = await getGlobalBlocks();
     revalidatePath("/");

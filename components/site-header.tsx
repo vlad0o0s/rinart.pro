@@ -65,12 +65,7 @@ export function SiteHeader({
   breadcrumbLabel,
   socialLinks,
 }: SiteHeaderProps) {
-  try {
-    // Client-side log to verify passed links reach the header
-    // Will help diagnose footer/mobile menu mismatch
-    // eslint-disable-next-line no-console
-    console.log("[SiteHeader] received socialLinks", socialLinks);
-  } catch {}
+  // Debug log removed
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const burgerButtonRef = useRef<HTMLButtonElement | null>(null);

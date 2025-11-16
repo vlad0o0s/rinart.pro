@@ -2435,7 +2435,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                       <SeoListSkeleton />
                     ) : (
                       <SeoPageListItem
-                        page={{ slug: "social-block", label: "Социальные сети", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as any } as unknown as SeoPageState}
+                        page={{ slug: "social-block", label: "Социальные сети", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as SeoPageDefaults } as unknown as SeoPageState}
                         isActive={selectedSocialId === "__all__"}
                         onSelect={() => {
                           setSelectedContentSlug(null);
@@ -2445,7 +2445,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                     )}
 
                     <SeoPageListItem
-                      page={{ slug: "team-block", label: "Команда", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as any } as unknown as SeoPageState}
+                      page={{ slug: "team-block", label: "Команда", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as SeoPageDefaults } as unknown as SeoPageState}
                       isActive={selectedSocialId === "__team__"}
                       onSelect={() => {
                         setSelectedContentSlug(null);
