@@ -17,15 +17,12 @@
   position: absolute;
   inset: 0;
   background-color: #252525;
-  transform: translateX(0);
-  transition: transform 1s ease;
+  opacity: 1;
+  transition: opacity 0.4s ease;
 }
 
-.wrapper.phaseBig .bigColor,
-.wrapper.phaseClose .bigColor,
-.wrapper.phaseLine .bigColor,
 .wrapper.phaseOpen .bigColor {
-  transform: translateX(100%);
+  opacity: 0;
 }
 
 .panel {
@@ -76,6 +73,18 @@
 }
 .wrapper[data-mode="route"].phaseOpen .panelBottom {
   transform: translateY(-100%);
+}
+
+/* Initial load: keep panels off-screen (no closing stripes), show logo and bigColor */
+.wrapper[data-mode="initial"].phaseClose .panelTop,
+.wrapper[data-mode="initial"].phaseLine .panelTop,
+.wrapper[data-mode="initial"].phaseWait .panelTop {
+  transform: translateY(-100%);
+}
+.wrapper[data-mode="initial"].phaseClose .panelBottom,
+.wrapper[data-mode="initial"].phaseLine .panelBottom,
+.wrapper[data-mode="initial"].phaseWait .panelBottom {
+  transform: translateY(100%);
 }
 .wrapper.phaseOpen .panelTop {
   transform: translateY(-100%);

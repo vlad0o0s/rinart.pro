@@ -242,6 +242,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
 
   return (
     <div className={wrapperClassName} aria-hidden={!isActive} data-mode={mode}>
+      {mode === "initial" ? <div className={styles.bigColor} /> : null}
       <div className={`${styles.panel} ${styles.panelTop}`}>
         <div className={styles.logoLineWrapper} style={logoStyle} />
         <div className={styles.line} />
