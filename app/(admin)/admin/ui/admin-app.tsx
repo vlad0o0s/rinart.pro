@@ -4190,7 +4190,7 @@ function MediaLibraryModal({
                         aria-label={`Выбрать ${asset.title}`}
                       >
                         <div className={styles.mediaModalPreview}>
-                          <Image src={asset.url} alt={asset.title || "Медиа"} width={200} height={200} unoptimized />
+                          <Image src={asset.url} alt={asset.title || "Медиа"} width={200} height={200} />
                           {asset.origin === "library" ? (
                             <button
                               type="button"
