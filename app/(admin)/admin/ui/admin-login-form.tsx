@@ -15,7 +15,8 @@ export function AdminLoginForm() {
   const [submitting, setSubmitting] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState<string>("");
   const recaptchaRef = useRef<ReCAPTCHA | null>(null);
-  const siteKey = useMemo(() => process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? "", []);
+  // Captcha disabled
+  const siteKey = "";
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
@@ -93,37 +94,12 @@ export function AdminLoginForm() {
           />
         </label>
 
-        {siteKey ? (
-          <div className={styles.captchaWrapper}>
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              sitekey={siteKey}
-              onChange={(token) => setRecaptchaToken(token ?? "")}
-              onExpired={() => setRecaptchaToken("")}
-            />
-          </div>
-        ) : (
-          <p className={styles.statusBar}>reCAPTCHA не настроена.</p>
-        )}
+        {/* captcha disabled */}
 
         <button className={styles.loginButton} type="submit" disabled={submitting}>
           {submitting ? "Авторизация…" : "Войти в систему"}
         </button>
-        {siteKey ? (
-          <p className={styles.loginMeta}>
-            Этот вход защищён reCAPTCHA и действует{" "}
-            <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">
-              Политика конфиденциальности
-            </a>{" "}
-            и{" "}
-            <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer">
-              Условия использования
-            </a>{" "}
-            Google.
-          </p>
-        ) : (
-          <p className={styles.loginMeta}>reCAPTCHA не активирована. Обратитесь к администратору.</p>
-        )}
+        {/* captcha disabled */}
         <p className={styles.loginMeta}>Все попытки авторизации фиксируются в журнале безопасности.</p>
         {status ? <span className={styles.statusBar}>{status}</span> : null}
       </form>

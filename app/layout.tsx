@@ -103,7 +103,10 @@ export default async function RootLayout({
           </div>
         </noscript>
         <div className="site-shell">
-          <PageTransition enabled={!isBot} logoUrl={appearanceSettings.transitionImageUrl} />
+          <PageTransition
+            enabled={!isBot && process.env.NODE_ENV === "production"}
+            logoUrl={appearanceSettings.transitionImageUrl}
+          />
           <JsonLd schema={[organizationSchema(), webSiteSchema()]} />
           {children}
         </div>

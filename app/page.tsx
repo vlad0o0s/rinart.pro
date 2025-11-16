@@ -6,7 +6,7 @@ import { Footer } from "@/components/footer";
 import { HomeProjectsSection } from "./_components/home-page-content";
 import styles from "./page.module.css";
 import { getAllProjects } from "@/lib/projects";
-import { getAppearanceSettings, getSocialLinks } from "@/lib/site-settings";
+import { getSocialLinks } from "@/lib/site-settings";
 import { JsonLd } from "@/components/json-ld";
 import { homePageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
@@ -20,10 +20,20 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const [projects, socialLinks, appearanceSettings] = await Promise.all([
+  const [projects, socialLinks, blocks] = await Promise.all([
     getAllProjects(),
     getSocialLinks(),
-    getAppearanceSettings(),
+    (async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/settings/global-blocks`, {
+          cache: "no-store",
+        });
+        const data = await res.json().catch(() => ({}));
+        return data.blocks ?? {};
+      } catch {
+        return {};
+      }
+    })(),
   ]);
   const summaries = (projects as Array<{
     slug: string;
@@ -45,7 +55,7 @@ export default async function Home() {
       <main className={`${styles.pageShell} min-h-screen bg-white text-neutral-900 antialiased`}>
         <div className={styles.stage}>
           <div className={styles.stageLayer} data-stage="hero">
-        <Hero imageUrl={appearanceSettings.homeHeroImageUrl} />
+        <Hero imageUrl={blocks?.["home-hero"]?.imageUrl ?? undefined} />
           </div>
           <div className={styles.stageLayer} data-stage="nav">
           <PrimaryNav />

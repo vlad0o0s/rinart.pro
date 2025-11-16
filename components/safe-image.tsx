@@ -18,7 +18,13 @@ export function SafeImage(props: SafeImageProps) {
 		return value;
 	}, [src]);
 	const [currentSrc, setCurrentSrc] = useState<ImageProps["src"]>(initialSrc);
-	const [forceUnoptimized, setForceUnoptimized] = useState<boolean>(Boolean(unoptimized));
+	const [forceUnoptimized, setForceUnoptimized] = useState<boolean>(() => {
+		const s = typeof initialSrc === "string" ? initialSrc : "";
+		const isData = s.startsWith("data:");
+		const isRemote = /^https?:\/\//i.test(s) || s.startsWith("//");
+		// Do not optimize data: or remote images to avoid /_next/image proxy issues in dev/proxies
+		return Boolean(unoptimized) || isData || isRemote;
+	});
 
 	const handleError = useCallback<NonNullable<ImageProps["onError"]>>(
 		(event) => {

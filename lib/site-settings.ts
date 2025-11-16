@@ -1,4 +1,4 @@
-import { fetchAllSiteSettings, upsertSiteSetting } from "./site-settings-repository";
+import { fetchAllSiteSettings, upsertSiteSetting, findSiteSettingByKey } from "./site-settings-repository";
 import type { AppearanceSettings, ContactSettings, SocialLink, SocialPlatform } from "@/types/site";
 
 type CacheEntry<T> = {
@@ -94,25 +94,28 @@ export async function saveSocialLinks(payload: SocialLink[]): Promise<SocialLink
 }
 
 export async function getAppearanceSettings(): Promise<AppearanceSettings> {
-  const cached = readCache(appearanceCache);
-  if (cached) {
-    return cached;
+  // Read the single key directly to avoid any stale merged reads
+  const record = await findSiteSettingByKey("appearance");
+  let appearance = normalizeAppearanceSettings(record?.value);
+  if (!record) {
+    // Extra diagnostics to understand why value might be missing
+    const all = await fetchAllSiteSettings();
+    console.log(
+      "[SiteSettings] appearance not found; available keys:",
+      all.map((r) => r.key),
+    );
+    appearance = normalizeAppearanceSettings(null);
   }
-
-  const settings = await fetchAllSiteSettings();
-  const record = settings.find((item) => item.key === "appearance");
-  const appearance = normalizeAppearanceSettings(record?.value);
-  writeCache((entry) => {
-    appearanceCache = entry;
-  }, appearance);
+  // Optionally cache for short time if needed in the future
+  appearanceCache = null;
   return appearance;
 }
 
 export async function saveAppearanceSettings(payload: AppearanceSettings): Promise<AppearanceSettings> {
   const sanitized = normalizeAppearanceSettings(payload);
-  await upsertSiteSetting("appearance", sanitized);
+  const saved = await upsertSiteSetting("appearance", sanitized);
   appearanceCache = null;
-  return sanitized;
+  return normalizeAppearanceSettings(saved?.value);
 }
 
 export function normalizeContactSettings(value: unknown): ContactSettings {

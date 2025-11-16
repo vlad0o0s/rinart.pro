@@ -275,4 +275,16 @@ async function ensureSchema(connection: PoolConnection) {
       KEY TeamMember_order_idx (\`order\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   );
+
+  await connection.query(
+    `CREATE TABLE IF NOT EXISTS GlobalBlock (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      slug VARCHAR(191) NOT NULL,
+      data JSON NULL,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY GlobalBlock_slug_unique (slug)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  );
 }

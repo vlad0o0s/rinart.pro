@@ -26,7 +26,8 @@ export function Hero({ imageUrl }: { imageUrl?: string }) {
         loading="eager"
         sizes="100vw"
         className={styles.image}
-        unoptimized={isRemoteHero}
+        // грузим оригинальный файл без прокси Next/Image, чтобы не было кеша и 400 в dev
+        unoptimized
       />
       <div className={styles.overlay}>
         <Image

@@ -24,7 +24,7 @@
 .infoColumn {
   display: flex;
   flex-direction: column;
-  gap: clamp(18px, 3vw, 28px);
+  gap: 10px;
   padding-right: clamp(6px, 2vw, 18px);
   opacity: 0;
   transform: translateY(24px);
@@ -213,6 +213,7 @@
   text-decoration: none;
   color: inherit;
   width: 100%;
+  cursor: pointer;
 }
 
 .relatedTileImage {
@@ -237,7 +238,7 @@
 }
 
 .relatedTile:hover .relatedImage {
-  transform: scale(1.03);
+  transform: scale(1);
   filter: grayscale(0);
 }
 
@@ -355,7 +356,7 @@
   border-radius: 0;
   border: none;
   object-fit: cover;
-  cursor: zoom-in;
+  cursor: pointer;
   background-color: #ffffff;
   transform-origin: center;
   transform: scale(1);
@@ -367,8 +368,8 @@
 
 .mediaFrame:focus-within .mediaImage,
 .mediaFrame:hover .mediaImage {
-  transform: scale(1.035);
-  filter: saturate(1.05) contrast(1.05);
+  transform: scale(1);
+  filter: saturate(1) contrast(1);
 }
 
 .mediaFrame:focus-within::after,

@@ -176,7 +176,7 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
                       priority={index === 0}
                       fill
                       sizes="(max-width: 640px) 88vw, (max-width: 1200px) 40vw, 22vw"
-                      quality={70}
+                      quality={75}
                     />
                   ) : (
                     <span className={styles.portfolioImageFallback} aria-hidden />

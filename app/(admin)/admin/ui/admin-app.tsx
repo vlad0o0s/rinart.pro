@@ -14,6 +14,7 @@ import {
 } from "@dnd-kit/core";
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
 import Image from "next/image";
+import { SafeImage as ModalImage } from "@/components/safe-image";
 import {
   SortableContext,
   useSortable,
@@ -203,7 +204,9 @@ type MediaLibraryMode =
   | "seo"
   | "seo-page"
   | "team-image"
-  | "team-mobile-image";
+  | "team-mobile-image"
+  | "site-hero"
+  | "site-transition";
 
 type MediaLibraryState = {
   open: boolean;
@@ -983,7 +986,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     );
     setLibraryAssets((prev) => prev.filter((item) => item.id !== asset.id));
   };
-  const [activeView, setActiveView] = useState<"projects" | "seo" | "settings">("projects");
+  const [activeView, setActiveView] = useState<"projects" | "seo">("projects");
   const [seoPages, setSeoPages] = useState<SeoPageState[]>([]);
   const [selectedSeoSlug, setSelectedSeoSlug] = useState<string | null>(null);
   const [seoLoading, setSeoLoading] = useState(false);
@@ -1063,10 +1066,12 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const loadAppearanceSettings = useCallback(async () => {
     try {
       setAppearanceLoading(true);
-      const data = await fetchJson<{ appearance: AppearanceSettingsState }>("/api/admin/settings/appearance");
+      const data = await fetchJson<{ blocks: { ["home-hero"]?: { imageUrl?: string }; ["page-transition"]?: { imageUrl?: string } } }>(
+        "/api/admin/settings/global-blocks",
+      );
       setAppearanceSettings({
-        homeHeroImageUrl: data.appearance.homeHeroImageUrl ?? APPEARANCE_DEFAULTS.homeHeroImageUrl,
-        transitionImageUrl: data.appearance.transitionImageUrl ?? APPEARANCE_DEFAULTS.transitionImageUrl,
+        homeHeroImageUrl: data.blocks?.["home-hero"]?.imageUrl ?? APPEARANCE_DEFAULTS.homeHeroImageUrl,
+        transitionImageUrl: data.blocks?.["page-transition"]?.imageUrl ?? APPEARANCE_DEFAULTS.transitionImageUrl,
       });
       setAppearanceLoaded(true);
     } catch (error) {
@@ -1158,21 +1163,43 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     setAppearanceSettings((prev) => ({ ...prev, [field]: value }));
   }, []);
 
+  const persistAppearance = useCallback(
+    async (next: AppearanceSettingsState) => {
+      try {
+        setAppearanceSaving(true);
+        const payload = await fetchJson<{ blocks: { ["home-hero"]?: { imageUrl?: string }; ["page-transition"]?: { imageUrl?: string } } }>(
+          "/api/admin/settings/global-blocks",
+          {
+            method: "PUT",
+            body: JSON.stringify({
+              blocks: {
+                "home-hero": { imageUrl: next.homeHeroImageUrl ?? null },
+                "page-transition": { imageUrl: next.transitionImageUrl ?? null },
+              },
+            }),
+          },
+        );
+        setAppearanceSettings({
+          homeHeroImageUrl: payload.blocks?.["home-hero"]?.imageUrl ?? APPEARANCE_DEFAULTS.homeHeroImageUrl,
+          transitionImageUrl: payload.blocks?.["page-transition"]?.imageUrl ?? APPEARANCE_DEFAULTS.transitionImageUrl,
+        });
+        setStatus("Медиа обновлены");
+      } catch (error) {
+        reportError(error, "Не удалось сохранить изображения");
+      } finally {
+        setAppearanceSaving(false);
+      }
+    },
+    [reportError],
+  );
+
   const handleSaveAppearance = useCallback(async () => {
     try {
-      setAppearanceSaving(true);
-      const payload = await fetchJson<{ appearance: AppearanceSettingsState }>("/api/admin/settings/appearance", {
-        method: "PUT",
-        body: JSON.stringify({ appearance: appearanceSettings }),
-      });
-      setAppearanceSettings(payload.appearance);
-      setStatus("Медиа обновлены");
+      await persistAppearance(appearanceSettings);
     } catch (error) {
       reportError(error, "Не удалось сохранить изображения");
-    } finally {
-      setAppearanceSaving(false);
     }
-  }, [appearanceSettings, reportError]);
+  }, [appearanceSettings, persistAppearance, reportError]);
 
   const handleSelectTeamMember = useCallback(
     (id: number) => {
@@ -1442,6 +1469,21 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
 
       setLibraryAssets((prev) => mergeMediaAssets(prev, assets));
 
+      // Settings: site-wide media
+      if (mediaLibrary.mode === "site-hero") {
+        const asset = assets[0];
+        if (asset) {
+          const next = { ...appearanceSettings, homeHeroImageUrl: asset.url };
+          setAppearanceSettings(next);
+        }
+      } else if (mediaLibrary.mode === "site-transition") {
+        const asset = assets[0];
+        if (asset) {
+          const next = { ...appearanceSettings, transitionImageUrl: asset.url };
+          setAppearanceSettings(next);
+        }
+      }
+
       if (mediaLibrary.mode === "hero") {
         const heroAsset = assets[0];
         if (heroAsset) {
@@ -1644,31 +1686,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     }
   }, [activeView, selectedSeoSlug, seoPages]);
 
-  useEffect(() => {
-    if (activeView !== "settings") {
-      return;
-    }
-    if (!settingsLoaded && !settingsLoading) {
-      void loadContactSettings();
-    }
-    if (!appearanceLoaded && !appearanceLoading) {
-      void loadAppearanceSettings();
-    }
-    if (!teamLoaded && !teamLoading) {
-      void loadTeamMembers();
-    }
-  }, [
-    activeView,
-    loadContactSettings,
-    loadAppearanceSettings,
-    loadTeamMembers,
-    settingsLoaded,
-    settingsLoading,
-    appearanceLoaded,
-    appearanceLoading,
-    teamLoaded,
-    teamLoading,
-  ]);
+  // Settings view removed
 
   const handleSelect = useCallback(
     async (slug: string) => {
@@ -2123,13 +2141,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       <header className={styles.adminHeader}>
         <div className={styles.branding}>
           <span className={styles.brandTitle}>RINART Admin</span>
-          <span className={styles.brandSubtitle}>
-            {activeView === "projects"
-              ? "Управление портфолио"
-              : activeView === "seo"
-                ? "SEO сайта"
-                : "Контакты и команда"}
-          </span>
+          <span className={styles.brandSubtitle}>{activeView === "projects" ? "Управление портфолио" : "SEO сайта"}</span>
           <nav className={styles.viewTabs} aria-label="Разделы админки">
             <button
               type="button"
@@ -2149,15 +2161,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
             >
               SEO
             </button>
-            <button
-              type="button"
-              className={styles.viewTabButton}
-              data-active={activeView === "settings"}
-              onClick={() => setActiveView("settings")}
-              disabled={activeView === "settings"}
-            >
-              Контент
-            </button>
+            {/* Раздел Контент удалён */}
           </nav>
         </div>
         <div className={styles.headerActions}>
@@ -2199,10 +2203,10 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               </div>
 
               <div className={styles.projectColumnBody}>
-                <div className={styles.projectList}>
+                <div className={styles.projectList} suppressHydrationWarning>
                   {showProjectSkeleton ? (
                     <ProjectListSkeleton />
-                  ) : (
+                  ) : (typeof window !== "undefined") ? (
                     <DndContext
                       accessibility={PROJECTS_DND_ACCESSIBILITY}
                       sensors={sensors}
@@ -2238,7 +2242,8 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                         ) : null}
                       </DragOverlay>
                     </DndContext>
-                  )}
+                  ) : null}
+
                 </div>
               </div>
             </aside>
@@ -2329,45 +2334,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               )}
             </main>
           </>
-        ) : (
-          <SettingsView
-            contactSettings={contactSettings}
-            socialLinks={socialLinks}
-            onContactChange={handleContactFieldChange}
-            onSocialChange={handleSocialFieldChange}
-            onSaveContacts={handleSaveSettings}
-            onSaveSocials={handleSaveSettings}
-            settingsLoading={settingsLoading}
-            settingsSaving={settingsSaving}
-            appearanceSettings={appearanceSettings}
-            appearanceLoading={appearanceLoading}
-            appearanceSaving={appearanceSaving}
-            onAppearanceChange={handleAppearanceFieldChange}
-            onSaveAppearance={handleSaveAppearance}
-            teamMembers={teamMembers}
-            teamLoading={teamLoading}
-            teamSelectedId={teamSelectedId}
-            teamEditor={teamEditor}
-            onTeamSelect={handleSelectTeamMember}
-            onTeamFieldChange={handleTeamFieldChange}
-            onTeamSave={handleTeamSave}
-            onTeamDelete={handleTeamDelete}
-            onTeamCreate={() => setTeamCreateModalOpen(true)}
-            onTeamDragStart={handleTeamDragStart}
-            onTeamDragOver={handleTeamDragOver}
-            onTeamDragEnd={handleTeamDragEnd}
-            onTeamDragCancel={handleTeamDragCancel}
-            teamSaving={teamSaving}
-            teamDeleting={teamDeleting}
-            teamLoaded={teamLoaded}
-            sensors={sensors}
-            teamCreateModalOpen={teamCreateModalOpen}
-            onCloseCreateModal={() => setTeamCreateModalOpen(false)}
-            onCreateTeamMember={handleCreateTeamMember}
-            activeTeamMember={activeTeamMember}
-            onOpenMediaLibrary={openMediaLibrary}
-          />
-        )}
+        ) : null}
       </div>
 
       {mediaLibrary.open ? (
@@ -3261,6 +3228,7 @@ type SettingsViewProps = {
   onOpenMediaLibrary: (mode: MediaLibraryMode, options?: { targetId?: string; initialSelection?: string[] }) => void;
 };
 
+// Settings view removed
 function SettingsView({
   contactSettings,
   socialLinks,
@@ -3501,7 +3469,7 @@ function SettingsView({
                   className={styles.secondaryButton}
                   type="button"
                   onClick={() =>
-                    onOpenMediaLibrary("hero", {
+                    onOpenMediaLibrary("site-hero", {
                       initialSelection: appearanceSettings.homeHeroImageUrl ? [appearanceSettings.homeHeroImageUrl] : [],
                     })
                   }
@@ -3528,7 +3496,7 @@ function SettingsView({
                   className={styles.secondaryButton}
                   type="button"
                   onClick={() =>
-                    onOpenMediaLibrary("seo", {
+                    onOpenMediaLibrary("site-transition", {
                       initialSelection: appearanceSettings.transitionImageUrl ? [appearanceSettings.transitionImageUrl] : [],
                     })
                   }
@@ -3676,10 +3644,11 @@ function TeamManager({
           </button>
         </div>
         <div className={styles.projectColumnBody}>
-          <div className={styles.projectList}>
+          <div className={styles.projectList} suppressHydrationWarning>
             {loading && !loaded ? (
               <ProjectListSkeleton />
             ) : members.length ? (
+              (typeof window !== "undefined") ? (
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -3709,6 +3678,7 @@ function TeamManager({
                   ) : null}
                 </DragOverlay>
               </DndContext>
+              ) : null
             ) : (
               <div className={styles.emptyState}>Добавьте участников, чтобы показать их на странице.</div>
             )}
@@ -4190,30 +4160,30 @@ function MediaLibraryModal({
                         aria-label={`Выбрать ${asset.title}`}
                       >
                         <div className={styles.mediaModalPreview}>
-                          <Image src={asset.url} alt={asset.title || "Медиа"} width={200} height={200} />
-                          {asset.origin === "library" ? (
-                            <button
-                              type="button"
-                              className={styles.mediaModalDelete}
-                              aria-label="Удалить из библиотеки"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                setDeletingId(asset.id);
-                                try {
-                                  await onDeleteAsset(asset);
-                                } finally {
-                                  setDeletingId((prev) => (prev === asset.id ? null : prev));
-                                }
-                              }}
-                              disabled={deletingId === asset.id}
-                              title="Удалить из библиотеки"
-                            >
-                              <IconTrash aria-hidden="true" />
-                            </button>
-                          ) : null}
+                          <ModalImage src={asset.url} alt={asset.title || "Медиа"} width={200} height={200} />
                         </div>
                         <span className={styles.mediaModalItemTitle}>{asset.title}</span>
                       </button>
+                      {asset.origin === "library" ? (
+                        <button
+                          type="button"
+                          className={styles.mediaModalDelete}
+                          aria-label="Удалить из библиотеки"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            setDeletingId(asset.id);
+                            try {
+                              await onDeleteAsset(asset);
+                            } finally {
+                              setDeletingId((prev) => (prev === asset.id ? null : prev));
+                            }
+                          }}
+                          disabled={deletingId === asset.id}
+                          title="Удалить из библиотеки"
+                        >
+                          <IconTrash aria-hidden="true" />
+                        </button>
+                      ) : null}
                     </div>
                   );
                 })
