@@ -33,7 +33,7 @@ export function RouteReadyAnnouncer() {
       const candidates = Array.from(root.querySelectorAll("img")).filter(isElementVisible);
       const img = candidates[0] as HTMLImageElement | undefined;
       if (!img) return;
-      if ((img as any).complete && (img as any).naturalWidth > 0) return;
+      if (img.complete && img.naturalWidth > 0) return;
       if (typeof img.decode === "function") {
         await Promise.race([
           img.decode(),
