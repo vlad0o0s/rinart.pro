@@ -2461,7 +2461,14 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                 <div className={styles.settingsPanel}>
                   <div className={styles.fieldGroup}>
                     <label className={styles.fieldLabel}>{selectedContent.title}</label>
-                    <div className={styles.previewBox}>
+                    <div
+                      className={styles.previewBox}
+                      style={
+                        selectedContent.slug === "page-transition"
+                          ? { backgroundColor: "#e5e7eb" }
+                          : undefined
+                      }
+                    >
                       {selectedContent.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={selectedContent.imageUrl} alt={selectedContent.title} />
