@@ -13,17 +13,7 @@
   pointer-events: none;
 }
 
-.bigColor {
-  position: absolute;
-  inset: 0;
-  background-color: #252525;
-  opacity: 1;
-  transition: opacity 0.4s ease;
-}
-
-.wrapper.phaseOpen .bigColor {
-  opacity: 0;
-}
+/* reserved for potential full-screen color, not used now */
 
 .panel {
   position: absolute;
@@ -49,6 +39,11 @@
 .wrapper.phaseClose .panelBottom,
 .wrapper.phaseLine .panelBottom {
   transform: translateY(0);
+}
+.wrapper.phaseCover .panelTop,
+.wrapper.phaseCover .panelBottom {
+  transform: translateY(0);
+  transition: none;
 }
 .wrapper.phaseWait .panelTop,
 .wrapper.phaseWait .panelBottom {
@@ -76,16 +71,7 @@
 }
 
 /* Initial load: keep panels off-screen (no closing stripes), show logo and bigColor */
-.wrapper[data-mode="initial"].phaseClose .panelTop,
-.wrapper[data-mode="initial"].phaseLine .panelTop,
-.wrapper[data-mode="initial"].phaseWait .panelTop {
-  transform: translateY(-100%);
-}
-.wrapper[data-mode="initial"].phaseClose .panelBottom,
-.wrapper[data-mode="initial"].phaseLine .panelBottom,
-.wrapper[data-mode="initial"].phaseWait .panelBottom {
-  transform: translateY(100%);
-}
+/* Initial load keeps default behavior: panels are already closed (phaseClose/line show covered screen) */
 .wrapper.phaseOpen .panelTop {
   transform: translateY(-100%);
 }

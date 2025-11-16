@@ -11,7 +11,7 @@ const CLOSE_DURATION = 800;
 const LINE_DURATION = 600;
 const OPEN_DURATION = 800;
 const MAX_WAIT_DURATION = 8000;
-type Phase = "idle" | "close" | "line" | "wait" | "open";
+type Phase = "idle" | "cover" | "close" | "line" | "wait" | "open";
 
 type PageTransitionProps = {
   enabled?: boolean;
@@ -60,16 +60,24 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
       shouldAwaitRouteRef.current = Boolean(options?.awaitRoute);
       setMode(shouldAwaitRouteRef.current ? "route" : "initial");
       if (!shouldAwaitRouteRef.current) {
+        // Initial load: instantly cover, then proceed to line without "closing" animation
         pendingPathRef.current = null;
         readyPathRef.current = null;
+        setPhase("idle");
+        setIsActive(true);
+        requestAnimationFrame(() => {
+          setPhase("cover");
+          requestAnimationFrame(() => setPhase("line"));
+        });
       } else {
+        // Route change: normal close → line sequence
         readyPathRef.current = null;
+        setPhase("idle");
+        setIsActive(true);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => setPhase("close"));
+        });
       }
-      setPhase("idle");
-      setIsActive(true);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setPhase("close"));
-      });
     },
     [clearNavigationTimer, clearWaitTimer],
   );
@@ -222,6 +230,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
   const wrapperClassName = [
     styles.wrapper,
     isActive ? styles.wrapperActive : "",
+    phase === "cover" ? styles.phaseCover : "",
     phase === "close" ? styles.phaseClose : "",
     phase === "line" ? styles.phaseLine : "",
     phase === "wait" ? styles.phaseWait : "",
@@ -242,7 +251,6 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
 
   return (
     <div className={wrapperClassName} aria-hidden={!isActive} data-mode={mode}>
-      {mode === "initial" ? <div className={styles.bigColor} /> : null}
       <div className={`${styles.panel} ${styles.panelTop}`}>
         <div className={styles.logoLineWrapper} style={logoStyle} />
         <div className={styles.line} />
