@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assertAdmin } from "@/lib/admin-auth";
-import { createMediaAssetRecord, fetchMediaAssets, deleteMediaAssetById } from "@/lib/media-library-repository";
+import { createMediaAssetRecord, fetchMediaAssets, deleteMediaAssetById, findMediaAssetByUrl } from "@/lib/media-library-repository";
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
@@ -135,6 +135,11 @@ export async function DELETE(request: NextRequest) {
     // Delete DB record by id when provided
     if (id) {
       await deleteMediaAssetById(id);
+    } else if (url) {
+      const existing = await findMediaAssetByUrl(url);
+      if (existing) {
+        await deleteMediaAssetById(existing.id);
+      }
     }
 
     // Best-effort: delete file from /public/uploads when url points there

@@ -1405,15 +1405,20 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         });
         if (!response.ok) {
           let message = "Не удалось загрузить файл";
+          const clone = response.clone();
           try {
-            const data = await response.json();
+            const data = await clone.json();
             if (data?.error) {
               message = data.error;
             }
           } catch {
-            const text = await response.text();
-            if (text) {
-              message = text;
+            try {
+              const text = await response.text();
+              if (text) {
+                message = text;
+              }
+            } catch {
+              // ignore
             }
           }
           throw new Error(message);
@@ -3322,7 +3327,10 @@ function SettingsView({
         </div>
         <div className={`${styles.formGrid} ${styles.gridTwo}`}>
           <label className={styles.inputGroup}>
-            <span className={styles.inputLabel}>Телефон</span>
+            <LabelWithHint
+              label="Телефон"
+              hint="Номер будет показан в подвале и на странице контактов."
+            />
             <input
               className={styles.textInput}
               value={contactSettings.phoneLabel}
@@ -3332,7 +3340,10 @@ function SettingsView({
             />
           </label>
           <label className={styles.inputGroup}>
-            <span className={styles.inputLabel}>Email</span>
+            <LabelWithHint
+              label="Email"
+              hint="Почта для обратной связи. Используется в контактах и подвале."
+            />
             <input
               className={styles.textInput}
               value={contactSettings.emailLabel}
@@ -3344,7 +3355,10 @@ function SettingsView({
         </div>
         <div className={`${styles.formGrid} ${styles.gridTwo}`}>
           <label className={styles.inputGroup}>
-            <span className={styles.inputLabel}>CTA WhatsApp</span>
+            <LabelWithHint
+              label="CTA WhatsApp"
+              hint="Текст кнопки для связи через WhatsApp (например «Написать в WhatsApp»)."
+            />
             <input
               className={styles.textInput}
               value={contactSettings.whatsappLabel}
@@ -3353,7 +3367,10 @@ function SettingsView({
             />
           </label>
           <label className={styles.inputGroup}>
-            <span className={styles.inputLabel}>Ссылка WhatsApp</span>
+            <LabelWithHint
+              label="Ссылка WhatsApp"
+              hint="Ссылка формата https://wa.me/номер для открытия чата."
+            />
             <input
               className={styles.textInput}
               value={contactSettings.whatsappUrl}
@@ -3364,7 +3381,10 @@ function SettingsView({
         </div>
         <div className={`${styles.formGrid} ${styles.gridTwo}`}>
           <label className={styles.inputGroup}>
-            <span className={styles.inputLabel}>Город в подвале</span>
+            <LabelWithHint
+              label="Город в подвале"
+              hint="Краткий указатель города/локации в подвале сайта."
+            />
             <input
               className={styles.textInput}
               value={contactSettings.cityLabel}
@@ -3373,7 +3393,10 @@ function SettingsView({
             />
           </label>
           <label className={styles.inputGroup}>
-            <span className={styles.inputLabel}>Адрес / локация</span>
+            <LabelWithHint
+              label="Адрес / локация"
+              hint="Произвольный адрес или описание локации, показывается в контактах."
+            />
             <input
               className={styles.textInput}
               value={contactSettings.locationLabel}
@@ -3420,7 +3443,10 @@ function SettingsView({
                 </div>
                 <div className={styles.socialFields}>
                   <label className={styles.inputGroup}>
-                    <span className={styles.inputLabel}>Текст ссылки</span>
+                    <LabelWithHint
+                      label="Текст ссылки"
+                      hint="Подпись для кнопки/ссылки соцсети. Например: «Мы в Telegram»."
+                    />
                     <input
                       className={styles.textInput}
                       value={link.label}
@@ -3429,7 +3455,10 @@ function SettingsView({
                     />
                   </label>
                   <label className={styles.inputGroup}>
-                    <span className={styles.inputLabel}>URL</span>
+                    <LabelWithHint
+                      label="URL"
+                      hint="Адрес страницы вашей соцсети. Например: https://t.me/ваш_канал"
+                    />
                     <input
                       className={styles.textInput}
                       value={link.url}
@@ -3463,7 +3492,10 @@ function SettingsView({
         </div>
         <div className={styles.appearanceGrid}>
           <div className={styles.appearanceItem}>
-              <span className={styles.inputLabel}>Изображение на главной странице</span>
+              <LabelWithHint
+                label="Изображение на главной странице"
+                hint="Фоновая картинка в шапке главной страницы. Выберите из медиа‑библиотеки."
+              />
               <div className={styles.sectionActions}>
                 <button
                   className={styles.secondaryButton}
@@ -3477,15 +3509,6 @@ function SettingsView({
                   Выбрать из библиотеки
                 </button>
               </div>
-            <label className={styles.inputGroup}>
-              <input
-                className={styles.textInput}
-                value={appearanceSettings.homeHeroImageUrl}
-                onChange={(event) => onAppearanceChange("homeHeroImageUrl", event.target.value)}
-                disabled={appearanceLoading}
-                placeholder="/img/hero.webp"
-              />
-            </label>
             <div className={styles.appearancePreview}>
               {appearanceSettings.homeHeroImageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -3496,7 +3519,10 @@ function SettingsView({
             </div>
           </div>
           <div className={styles.appearanceItem}>
-              <span className={styles.inputLabel}>Изображение перехода между страницами</span>
+              <LabelWithHint
+                label="Изображение перехода между страницами"
+                hint="Логотип/картинка, которая кратко отображается при переходах. Выберите из медиа‑библиотеки."
+              />
               <div className={styles.sectionActions}>
                 <button
                   className={styles.secondaryButton}
@@ -3510,15 +3536,6 @@ function SettingsView({
                   Выбрать из библиотеки
                 </button>
               </div>
-            <label className={styles.inputGroup}>
-              <input
-                className={styles.textInput}
-                value={appearanceSettings.transitionImageUrl}
-                onChange={(event) => onAppearanceChange("transitionImageUrl", event.target.value)}
-                disabled={appearanceLoading}
-                placeholder="https://..."
-              />
-            </label>
             <div className={styles.appearancePreview}>
               {appearanceSettings.transitionImageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element

@@ -3,7 +3,9 @@
 import Image, { type ImageProps } from "next/image";
 import { useMemo, useState, useCallback } from "react";
 
-const PLACEHOLDER_SRC = "/file.svg";
+// 1x1 white PNG
+const PLACEHOLDER_SRC =
+	"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9YkqQ3sAAAAASUVORK5CYII=";
 
 type SafeImageProps = ImageProps & {
 	placeholderSrc?: string;
