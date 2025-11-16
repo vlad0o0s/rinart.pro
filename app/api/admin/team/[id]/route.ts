@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assertAdmin } from "@/lib/admin-auth";
 import { deleteTeamMemberEntry, updateTeamMemberEntry } from "@/lib/team";
-import { invalidateTeamCache } from "@/lib/team";
 import { revalidatePath } from "next/cache";
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -31,7 +30,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       order: typeof payload.order === "number" ? payload.order : undefined,
     });
 
-    invalidateTeamCache();
     revalidateTeamPages();
     return NextResponse.json({ member });
   } catch (error) {
@@ -50,7 +48,6 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
 
   try {
     await deleteTeamMemberEntry(numericId);
-    invalidateTeamCache();
     revalidateTeamPages();
     return NextResponse.json({ success: true });
   } catch (error) {
