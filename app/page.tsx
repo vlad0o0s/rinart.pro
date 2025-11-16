@@ -11,6 +11,7 @@ import { JsonLd } from "@/components/json-ld";
 import { homePageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
+import { getGlobalBlocks } from "@/lib/global-blocks";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -23,17 +24,7 @@ export default async function Home() {
   const [projects, socialLinks, blocks] = await Promise.all([
     getAllProjects(),
     getSocialLinks(),
-    (async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/settings/global-blocks`, {
-          cache: "no-store",
-        });
-        const data = await res.json().catch(() => ({}));
-        return data.blocks ?? {};
-      } catch {
-        return {};
-      }
-    })(),
+    getGlobalBlocks(),
   ]);
   const summaries = (projects as Array<{
     slug: string;
@@ -54,8 +45,8 @@ export default async function Home() {
       <SiteHeader showDesktopBrand socialLinks={socialLinks} />
       <main className={`${styles.pageShell} min-h-screen bg-white text-neutral-900 antialiased`}>
         <div className={styles.stage}>
-          <div className={styles.stageLayer} data-stage="hero">
-        <Hero imageUrl={blocks?.["home-hero"]?.imageUrl ?? undefined} />
+            <div className={styles.stageLayer} data-stage="hero">
+        <Hero imageUrl={(blocks as any)?.["home-hero"]?.imageUrl ?? undefined} />
           </div>
           <div className={styles.stageLayer} data-stage="nav">
           <PrimaryNav />

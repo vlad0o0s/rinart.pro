@@ -8,7 +8,7 @@ export type GlobalBlockRecord = {
 
 type GlobalBlockRow = RowDataPacket & {
   slug: string;
-  data: string | null;
+  data: unknown | null;
   updatedAt: Date;
 };
 
@@ -56,15 +56,27 @@ export async function upsertGlobalBlock(slug: string, data: unknown): Promise<Gl
   return record;
 }
 
-function parseJsonValue(value: string | null): unknown {
-  if (!value) {
+function parseJsonValue(value: unknown): unknown {
+  if (value === null || typeof value === "undefined") {
     return null;
   }
-  try {
-    return JSON.parse(value);
-  } catch {
-    return null;
+  // Some MySQL drivers may already hydrate JSON columns into objects
+  if (typeof value === "object") {
+    return value as Record<string, unknown>;
   }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return null;
+    }
+  }
+  // Fallback: unsupported type
+  return null;
 }
 
 

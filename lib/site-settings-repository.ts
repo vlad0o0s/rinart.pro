@@ -8,7 +8,7 @@ export type SiteSettingRecord = {
 
 type SiteSettingRow = RowDataPacket & {
   key: string;
-  value: string | null;
+  value: unknown | null;
   updatedAt: Date;
 };
 
@@ -43,7 +43,7 @@ export async function findSiteSettingByKey(key: string): Promise<SiteSettingReco
 
 export async function upsertSiteSetting(key: string, value: unknown): Promise<SiteSettingRecord> {
   await ensureDatabaseSchema();
-  await runQuery((pool) =>
+  const [result] = await runQuery((pool) =>
     pool.execute<ResultSetHeader>(
       `INSERT INTO SiteSetting (\`key\`, value)
        VALUES (?, ?)
@@ -51,6 +51,24 @@ export async function upsertSiteSetting(key: string, value: unknown): Promise<Si
       [key, JSON.stringify(value ?? null)],
     ),
   );
+  try {
+    console.log("[SiteSettingsRepo] upsertSiteSetting", {
+      key,
+      affectedRows: (result as ResultSetHeader)?.affectedRows,
+    });
+  } catch {}
+
+  // Read raw DB value to verify persistence
+  try {
+    const [rows] = await runQuery((pool) =>
+      pool.query<Array<{ value: unknown; updatedAt: Date }>>(
+        "SELECT value, updatedAt FROM SiteSetting WHERE `key` = ? LIMIT 1",
+        [key],
+      ),
+    );
+    const raw = rows?.[0] ?? null;
+    console.log("[SiteSettingsRepo] after-upsert raw", { key, raw });
+  } catch {}
 
   const record = await findSiteSettingByKey(key);
   if (!record) {
@@ -59,14 +77,24 @@ export async function upsertSiteSetting(key: string, value: unknown): Promise<Si
   return record;
 }
 
-function parseJsonValue(value: string | null): unknown {
-  if (!value) {
+function parseJsonValue(value: unknown): unknown {
+  if (value === null || typeof value === "undefined") {
     return null;
   }
-  try {
-    return JSON.parse(value);
-  } catch {
-    return null;
+  if (typeof value === "object") {
+    return value as Record<string, unknown>;
   }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 

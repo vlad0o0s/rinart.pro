@@ -65,17 +65,22 @@ export async function getContactSettings(): Promise<ContactSettings> {
 }
 
 export async function getSocialLinks(): Promise<SocialLink[]> {
-  const cached = readCache(socialCache);
-  if (cached) {
-    return cached;
-  }
-
+  // Always read fresh to reflect admin changes immediately across the site
   const settings = await fetchAllSiteSettings();
   const record = settings.find((item) => item.key === "socialLinks");
+  try {
+    console.log("[SiteSettings] getSocialLinks -> raw record", {
+      keys: settings.map((s) => s.key),
+      recordValue: record?.value,
+      updatedAt: record?.updatedAt,
+    });
+  } catch {}
   const links = normalizeSocialLinks(record?.value);
-  writeCache((entry) => {
-    socialCache = entry;
-  }, links);
+  try {
+    console.log("[SiteSettings] getSocialLinks -> normalized", links);
+  } catch {}
+  // Do not cache to avoid any delay in propagation
+  socialCache = null;
   return links;
 }
 
@@ -89,6 +94,9 @@ export async function saveContactSettings(payload: ContactSettings): Promise<Con
 export async function saveSocialLinks(payload: SocialLink[]): Promise<SocialLink[]> {
   const sanitized = normalizeSocialLinks(payload);
   await upsertSiteSetting("socialLinks", sanitized);
+  try {
+    console.log("[SiteSettings] saveSocialLinks -> upserted", sanitized);
+  } catch {}
   socialCache = null;
   return sanitized;
 }

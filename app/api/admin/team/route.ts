@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assertAdmin } from "@/lib/admin-auth";
 import { createTeamMemberEntry, getTeamMembers } from "@/lib/team";
-import { invalidateTeamCache } from "@/lib/team";
 import { revalidatePath } from "next/cache";
 
 export async function GET(request: NextRequest) {
@@ -31,7 +30,6 @@ export async function POST(request: NextRequest) {
       order: members.length,
     });
 
-    invalidateTeamCache();
     revalidateTeamPages();
     return NextResponse.json({ member }, { status: 201 });
   } catch (error) {

@@ -9,12 +9,21 @@ import { buildPageMetadata } from "@/lib/page-seo";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 import { getContactSettings, getSocialLinks } from "@/lib/site-settings";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("kontakty");
 }
 
 export default async function KontaktyPage() {
   const [contactSettings, socialLinks] = await Promise.all([getContactSettings(), getSocialLinks()]);
+  try {
+    console.log("[Contacts/Page] SSR data", {
+      contact: contactSettings,
+      socialLinks,
+    });
+  } catch {}
 
   return (
     <>

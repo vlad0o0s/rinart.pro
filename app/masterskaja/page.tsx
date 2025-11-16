@@ -13,6 +13,9 @@ import { getSocialLinks } from "@/lib/site-settings";
 import { getTeamMembers } from "@/lib/team";
 import type { TeamMember } from "@/types/site";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("masterskaja");
 }

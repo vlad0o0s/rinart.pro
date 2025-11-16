@@ -962,6 +962,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const [saving, setSaving] = useState(false);
   const [mediaSaving, setMediaSaving] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const [editorLoading, setEditorLoading] = useState(false);
   const [libraryAssets, setLibraryAssets] = useState<MediaAsset[]>([]);
   const [mediaLibrary, setMediaLibrary] = useState<MediaLibraryState>({ open: false, mode: "hero", initialSelection: [] });
@@ -986,7 +987,26 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     );
     setLibraryAssets((prev) => prev.filter((item) => item.id !== asset.id));
   };
-  const [activeView, setActiveView] = useState<"projects" | "seo">("projects");
+  const [activeView, setActiveView] = useState<"projects" | "seo" | "content">("projects");
+
+  // Content (site-wide) state
+  type ContentItemState = { slug: "home-hero" | "page-transition"; title: string; imageUrl: string | null };
+  const [contentItems, setContentItems] = useState<ContentItemState[]>([]);
+  const [contentLoading, setContentLoading] = useState(false);
+  const [contentSaving, setContentSaving] = useState(false);
+  const [selectedContentSlug, setSelectedContentSlug] = useState<ContentItemState["slug"] | null>(null);
+  const selectedContent = useMemo(
+    () => (selectedContentSlug ? contentItems.find((i) => i.slug === selectedContentSlug) ?? null : null),
+    [contentItems, selectedContentSlug],
+  );
+  const [contentSocialLinks, setContentSocialLinks] = useState<SocialLinkState[]>([]);
+  const [socialLoading, setSocialLoading] = useState(false);
+  const [socialSaving, setSocialSaving] = useState(false);
+  const [selectedSocialId, setSelectedSocialId] = useState<string | null>(null);
+  const selectedSocial = useMemo(
+    () => (selectedSocialId ? contentSocialLinks.find((l) => l.id === selectedSocialId) ?? null : null),
+    [contentSocialLinks, selectedSocialId],
+  );
   const [seoPages, setSeoPages] = useState<SeoPageState[]>([]);
   const [selectedSeoSlug, setSelectedSeoSlug] = useState<string | null>(null);
   const [seoLoading, setSeoLoading] = useState(false);
@@ -1099,6 +1119,13 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       setTeamLoading(false);
     }
   }, [reportError]);
+
+  // Ensure team is loaded when opening Team block in Content
+  useEffect(() => {
+    if (activeView === "content" && selectedSocialId === "__team__" && !teamLoaded && !teamLoading) {
+      loadTeamMembers();
+    }
+  }, [activeView, selectedSocialId, teamLoaded, teamLoading, loadTeamMembers]);
 
   const handleContactFieldChange = useCallback(<K extends keyof ContactSettingsState>(field: K, value: string) => {
     setContactSettings((prev) => {
@@ -1469,18 +1496,19 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
 
       setLibraryAssets((prev) => mergeMediaAssets(prev, assets));
 
-      // Settings: site-wide media
-      if (mediaLibrary.mode === "site-hero") {
+      // Content tab: direct content item update
+      if (mediaLibrary.mode === "site-hero" || mediaLibrary.mode === "site-transition") {
         const asset = assets[0];
         if (asset) {
-          const next = { ...appearanceSettings, homeHeroImageUrl: asset.url };
-          setAppearanceSettings(next);
-        }
-      } else if (mediaLibrary.mode === "site-transition") {
-        const asset = assets[0];
-        if (asset) {
-          const next = { ...appearanceSettings, transitionImageUrl: asset.url };
-          setAppearanceSettings(next);
+          setContentItems((prev) =>
+            prev.map((item) =>
+              item.slug === "home-hero" && mediaLibrary.mode === "site-hero"
+                ? { ...item, imageUrl: asset.url }
+                : item.slug === "page-transition" && mediaLibrary.mode === "site-transition"
+                  ? { ...item, imageUrl: asset.url }
+                  : item,
+            ),
+          );
         }
       }
 
@@ -2129,6 +2157,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   }, [redirectToLogin]);
 
   useEffect(() => {
+    setIsClient(true);
     if (!status) {
       return;
     }
@@ -2136,12 +2165,44 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     return () => window.clearTimeout(timer);
   }, [status]);
 
+  useEffect(() => {
+    if (activeView !== "content") {
+      return;
+    }
+    setContentLoading(true);
+    fetchJson<{ items: ContentItemState[] }>("/api/admin/content")
+      .then((data) => {
+        const items = (data.items ?? []) as ContentItemState[];
+        setContentItems(items);
+      })
+      .catch((error) => reportError(error, "Не удалось загрузить контент"))
+      .finally(() => setContentLoading(false));
+
+    setSocialLoading(true);
+    fetchJson<{ links: SocialLinkState[] }>("/api/admin/social")
+      .then((data) => {
+        const links = Array.isArray(data.links) ? data.links : [];
+        setContentSocialLinks(links);
+        if (!selectedContentSlug && !selectedSocialId) {
+          setSelectedContentSlug(itemsSafeFirstSlug());
+        }
+      })
+      .catch((error) => reportError(error, "Не удалось загрузить соцсети"))
+      .finally(() => setSocialLoading(false));
+
+    function itemsSafeFirstSlug(): ContentItemState["slug"] | null {
+      return (Array.isArray(contentItems) && contentItems[0]?.slug) ? contentItems[0].slug : null;
+    }
+  }, [activeView, reportError]);
+
   return (
     <div className={styles.adminShell}>
       <header className={styles.adminHeader}>
         <div className={styles.branding}>
           <span className={styles.brandTitle}>RINART Admin</span>
-          <span className={styles.brandSubtitle}>{activeView === "projects" ? "Управление портфолио" : "SEO сайта"}</span>
+          <span className={styles.brandSubtitle}>
+            {activeView === "projects" ? "Управление портфолио" : activeView === "seo" ? "SEO сайта" : "Контент сайта"}
+          </span>
           <nav className={styles.viewTabs} aria-label="Разделы админки">
             <button
               type="button"
@@ -2161,7 +2222,15 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
             >
               SEO
             </button>
-            {/* Раздел Контент удалён */}
+            <button
+              type="button"
+              className={styles.viewTabButton}
+              data-active={activeView === "content"}
+              onClick={() => setActiveView("content")}
+              disabled={activeView === "content"}
+            >
+              Контент
+            </button>
           </nav>
         </div>
         <div className={styles.headerActions}>
@@ -2206,7 +2275,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                 <div className={styles.projectList} suppressHydrationWarning>
                   {showProjectSkeleton ? (
                     <ProjectListSkeleton />
-                  ) : (typeof window !== "undefined") ? (
+                  ) : isClient ? (
                     <DndContext
                       accessibility={PROJECTS_DND_ACCESSIBILITY}
                       sensors={sensors}
@@ -2334,7 +2403,205 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               )}
             </main>
           </>
-        ) : null}
+        ) : (
+          <>
+            <aside className={`${styles.projectColumn} ${styles.seoListColumn}`}>
+              <div className={styles.projectColumnHeader}>
+                <div>
+                  <h2 className={styles.columnTitle}>Контент</h2>
+                  <p className={styles.columnSubtitle}>Выберите элемент и обновите изображение.</p>
+                </div>
+              </div>
+              <div className={styles.projectColumnBody}>
+                {contentLoading ? (
+                  <SeoListSkeleton />
+                ) : (
+                  <div className={styles.seoPageList}>
+                    {contentItems.map((item) => (
+                      <SeoPageListItem
+                        key={item.slug}
+                        page={{ slug: item.slug, label: item.title, path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: { title: "", description: "", keywords: [], ogImageUrl: "" } } as unknown as SeoPageState}
+                        isActive={item.slug === selectedContentSlug}
+                        onSelect={(slug) => {
+                          setSelectedSocialId(null);
+                          setSelectedContentSlug(slug as ContentItemState["slug"]);
+                        }}
+                      />
+                    ))}
+
+                    <div className={styles.sectionDivider} />
+
+                    {(socialLoading && !contentSocialLinks.length) ? (
+                      <SeoListSkeleton />
+                    ) : (
+                      <SeoPageListItem
+                        page={{ slug: "social-block", label: "Социальные сети", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as any } as unknown as SeoPageState}
+                        isActive={selectedSocialId === "__all__"}
+                        onSelect={() => {
+                          setSelectedContentSlug(null);
+                          setSelectedSocialId("__all__");
+                        }}
+                      />
+                    )}
+
+                    <SeoPageListItem
+                      page={{ slug: "team-block", label: "Команда", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as any } as unknown as SeoPageState}
+                      isActive={selectedSocialId === "__team__"}
+                      onSelect={() => {
+                        setSelectedContentSlug(null);
+                        setSelectedSocialId("__team__");
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </aside>
+            <main className={`${styles.editorColumn} ${styles.seoEditorColumn}`}>
+              {selectedContent ? (
+                <div className={styles.settingsPanel}>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>{selectedContent.title}</label>
+                    <div className={styles.previewBox}>
+                      {selectedContent.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={selectedContent.imageUrl} alt={selectedContent.title} />
+                      ) : (
+                        <div className={styles.previewPlaceholder}>Изображение не выбрано</div>
+                      )}
+                    </div>
+                    <div className={styles.fieldActions}>
+                      <button
+                        className={styles.secondaryButton}
+                        type="button"
+                        onClick={() =>
+                          openMediaLibrary(
+                            selectedContent.slug === "home-hero" ? "site-hero" : "site-transition",
+                            { initialSelection: selectedContent.imageUrl ? [selectedContent.imageUrl] : [] },
+                          )
+                        }
+                        disabled={contentSaving}
+                      >
+                        Выбрать изображение
+                      </button>
+                    </div>
+                  </div>
+                  <div className={styles.formActions}>
+                    <button
+                      className={styles.primaryButton}
+                      type="button"
+                      onClick={async () => {
+                        if (!selectedContent) return;
+                        try {
+                          setContentSaving(true);
+                          const payload = await fetchJson<{ item: ContentItemState }>(`/api/admin/content/${selectedContent.slug}`, {
+                            method: "PATCH",
+                            body: JSON.stringify({ imageUrl: selectedContent.imageUrl ?? null }),
+                          });
+                          setContentItems((prev) => prev.map((i) => (i.slug === payload.item.slug ? payload.item : i)));
+                          setStatus("Контент обновлён");
+                        } catch (error) {
+                          reportError(error, "Не удалось сохранить");
+                        } finally {
+                          setContentSaving(false);
+                        }
+                      }}
+                      disabled={contentSaving}
+                    >
+                      {contentSaving ? "Сохраняем..." : "Сохранить"}
+                    </button>
+                  </div>
+                </div>
+              ) : selectedSocialId === "__all__" ? (
+                <div className={styles.settingsPanel}>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>Социальные сети</label>
+                    <div className={styles.formGrid}>
+                      {contentSocialLinks.map((link) => (
+                        <div key={link.id} className={styles.inputGroup}>
+                          <div className={styles.socialRow}>
+                            <input
+                              className={styles.textInput}
+                              value={link.label}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setContentSocialLinks((prev) => prev.map((l) => (l.id === link.id ? { ...l, label: value } : l)));
+                              }}
+                              placeholder="Подпись"
+                            />
+                            <input
+                              className={styles.textInput}
+                              value={link.url}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setContentSocialLinks((prev) => prev.map((l) => (l.id === link.id ? { ...l, url: value } : l)));
+                              }}
+                              placeholder="https://..."
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={styles.formActions}>
+                    <button
+                      className={styles.primaryButton}
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          setSocialSaving(true);
+                          const response = await fetchJson<{ links: SocialLinkState[] }>(`/api/admin/social`, {
+                            method: "PUT",
+                            body: JSON.stringify({ links: contentSocialLinks }),
+                          });
+                          setContentSocialLinks(response.links ?? []);
+                          setStatus("Соцсетки обновлены");
+                        } catch (error) {
+                          reportError(error, "Не удалось сохранить соцсети");
+                        } finally {
+                          setSocialSaving(false);
+                        }
+                      }}
+                      disabled={socialSaving}
+                    >
+                      {socialSaving ? "Сохраняем..." : "Сохранить все"}
+                    </button>
+                  </div>
+                </div>
+              ) : selectedSocialId === "__team__" ? (
+                <>
+                  <TeamManager
+                    members={teamMembers}
+                    loading={teamLoading}
+                    selectedId={teamSelectedId}
+                    editor={teamEditor}
+                    onSelect={handleSelectTeamMember}
+                    onFieldChange={handleTeamFieldChange}
+                    onSave={handleTeamSave}
+                    onDelete={handleTeamDelete}
+                    onCreate={() => setTeamCreateModalOpen(true)}
+                    onDragStart={handleTeamDragStart}
+                    onDragOver={handleTeamDragOver}
+                    onDragEnd={handleTeamDragEnd}
+                    onDragCancel={handleTeamDragCancel}
+                    saving={teamSaving}
+                    deleting={teamDeleting}
+                    sensors={sensors}
+                    loaded={teamLoaded}
+                    activeDragMember={activeTeamMember}
+                    onOpenMediaLibrary={(mode, options) => openMediaLibrary(mode, options)}
+                  />
+                  {teamCreateModalOpen ? (
+                    <CreateTeamMemberModal onClose={() => setTeamCreateModalOpen(false)} onCreate={handleCreateTeamMember} />
+                  ) : null}
+                </>
+              ) : contentLoading || socialLoading ? (
+                <SeoEditorSkeleton />
+              ) : (
+                <div className={styles.emptyState}>Выберите элемент контента.</div>
+              )}
+            </main>
+          </>
+        )}
       </div>
 
       {mediaLibrary.open ? (
@@ -3773,6 +4040,11 @@ function SortableTeamItem({
         >
           <span className={styles.dragIcon} aria-hidden="true" />
         </button>
+          {member.imageUrl ? (
+            <div style={{ width: 48, height: 48, marginRight: 12, borderRadius: 6, overflow: "hidden", flex: "0 0 auto" }}>
+              <Image src={member.imageUrl} alt={member.name} width={48} height={48} unoptimized />
+            </div>
+          ) : null}
         <div className={styles.projectMeta}>
           <div className={styles.projectTitleRow}>
             <span className={styles.projectOrder}>{String(index + 1).padStart(2, "0")}</span>
@@ -3793,6 +4065,11 @@ function TeamListCard({ member, index }: { member: TeamMemberState; index: numbe
         <div className={`${styles.dragHandle} ${styles.dragHandleStatic}`}>
           <span className={styles.dragIcon} aria-hidden="true" />
         </div>
+        {member.imageUrl ? (
+          <div style={{ width: 48, height: 48, marginRight: 12, borderRadius: 6, overflow: "hidden", flex: "0 0 auto" }}>
+            <Image src={member.imageUrl} alt={member.name} width={48} height={48} unoptimized />
+          </div>
+        ) : null}
         <div className={styles.projectMeta}>
           <div className={styles.projectTitleRow}>
             <span className={styles.projectOrder}>{String(index + 1).padStart(2, "0")}</span>
@@ -3863,53 +4140,44 @@ function TeamEditorPanel({
       <section className={styles.formSection}>
         <div className={styles.sectionHeader}>
           <div>
-            <h3 className={styles.sectionTitle}>Фотографии</h3>
-            <p className={styles.sectionSubtitle}>Ссылки на изображения для десктопной и мобильной версии.</p>
+            <h3 className={styles.sectionTitle}>Фотография</h3>
+            <p className={styles.sectionSubtitle}>Предпросмотр и выбор изображения участника.</p>
           </div>
         </div>
-        <div className={`${styles.formGrid} ${styles.gridTwo}`}>
-          <label className={styles.inputGroup}>
-            <span className={styles.inputLabel}>Фото (desktop)</span>
-            {onPickDesktopImage ? (
-              <div className={styles.sectionActions}>
-                <button type="button" className={styles.secondaryButton} onClick={onPickDesktopImage}>
-                  Выбрать из библиотеки
-                </button>
-              </div>
-            ) : null}
-            <input
-              className={styles.textInput}
-              value={member.imageUrl}
-              onChange={(event) => onFieldChange("imageUrl", event.target.value)}
-              placeholder="/img/team-rinat.webp"
-            />
-          </label>
-          <label className={styles.inputGroup}>
-            <span className={styles.inputLabel}>Фото (mobile, опционально)</span>
-            {onPickMobileImage ? (
-              <div className={styles.sectionActions}>
-                <button type="button" className={styles.secondaryButton} onClick={onPickMobileImage}>
-                  Выбрать из библиотеки
-                </button>
-              </div>
-            ) : null}
-            <input
-              className={styles.textInput}
-              value={member.mobileImageUrl}
-              onChange={(event) => onFieldChange("mobileImageUrl", event.target.value)}
-              placeholder="/img/team-rinat.webp"
-            />
-          </label>
+        <div className={styles.heroPreview}>
+          {member.imageUrl ? (
+            <div className={styles.heroImageWrap}>
+              <Image src={member.imageUrl} alt={member.name} width={640} height={400} unoptimized />
+            </div>
+          ) : (
+            <div className={styles.heroPlaceholder}>Изображение не выбрано</div>
+          )}
         </div>
-        <label className={styles.checkboxRow}>
-          <input
-            type="checkbox"
-            checked={member.isFeatured}
-            onChange={(event) => onFieldChange("isFeatured", event.target.checked)}
-          />
-          <span>Показывать как главное фото (крупный портрет)</span>
-        </label>
+        <div className={styles.sectionActions}>
+          {onPickDesktopImage ? (
+            <button type="button" className={styles.secondaryButton} onClick={onPickDesktopImage}>
+              Выбрать из библиотеки
+            </button>
+          ) : null}
+          {member.imageUrl ? (
+            <button
+              type="button"
+              className={styles.ghostButton}
+              onClick={() => onFieldChange("imageUrl", "")}
+            >
+              Удалить фото
+            </button>
+          ) : null}
+        </div>
       </section>
+      <label className={styles.checkboxRow}>
+        <input
+          type="checkbox"
+          checked={member.isFeatured}
+          onChange={(event) => onFieldChange("isFeatured", event.target.checked)}
+        />
+        <span>Показывать как главное фото (крупный портрет)</span>
+      </label>
       <div className={styles.saveBar}>
         <button className={styles.primaryButton} type="button" onClick={onSave} disabled={saving || deleting}>
           {saving ? "Сохраняем..." : "Сохранить"}

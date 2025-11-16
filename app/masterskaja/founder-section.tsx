@@ -73,7 +73,7 @@ export function FounderSection() {
       <div className={styles.wrapper}>
         <div className={styles.columnMarker}>
           <p className={styles.marker}>
-            <em>(I)</em> ОСНОВАТЕЛЬ
+            ОСНОВАТЕЛЬ
           </p>
         </div>
 
