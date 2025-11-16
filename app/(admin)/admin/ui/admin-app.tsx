@@ -2592,7 +2592,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                   />
                   {teamCreateModalOpen ? (
                     <CreateTeamMemberModal onClose={() => setTeamCreateModalOpen(false)} onCreate={handleCreateTeamMember} />
-                  ) : null}
+        ) : null}
                 </>
               ) : contentLoading || socialLoading ? (
                 <SeoEditorSkeleton />
@@ -4153,12 +4153,12 @@ function TeamEditorPanel({
             <div className={styles.heroPlaceholder}>Изображение не выбрано</div>
           )}
         </div>
-        <div className={styles.sectionActions}>
+              <div className={styles.sectionActions}>
           {onPickDesktopImage ? (
-            <button type="button" className={styles.secondaryButton} onClick={onPickDesktopImage}>
-              Выбрать из библиотеки
-            </button>
-          ) : null}
+                <button type="button" className={styles.secondaryButton} onClick={onPickDesktopImage}>
+                  Выбрать из библиотеки
+                </button>
+            ) : null}
           {member.imageUrl ? (
             <button
               type="button"
@@ -4166,18 +4166,18 @@ function TeamEditorPanel({
               onClick={() => onFieldChange("imageUrl", "")}
             >
               Удалить фото
-            </button>
-          ) : null}
+                </button>
+            ) : null}
         </div>
       </section>
-      <label className={styles.checkboxRow}>
-        <input
-          type="checkbox"
-          checked={member.isFeatured}
-          onChange={(event) => onFieldChange("isFeatured", event.target.checked)}
-        />
-        <span>Показывать как главное фото (крупный портрет)</span>
-      </label>
+        <label className={styles.checkboxRow}>
+          <input
+            type="checkbox"
+            checked={member.isFeatured}
+            onChange={(event) => onFieldChange("isFeatured", event.target.checked)}
+          />
+          <span>Показывать как главное фото (крупный портрет)</span>
+        </label>
       <div className={styles.saveBar}>
         <button className={styles.primaryButton} type="button" onClick={onSave} disabled={saving || deleting}>
           {saving ? "Сохраняем..." : "Сохранить"}
