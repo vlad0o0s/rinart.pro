@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assertAdmin } from "@/lib/admin-auth";
-import { createMediaAssetRecord, fetchMediaAssets } from "@/lib/media-library-repository";
+import { createMediaAssetRecord, fetchMediaAssets, deleteMediaAssetById } from "@/lib/media-library-repository";
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
@@ -117,6 +117,41 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ asset });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Не удалось сохранить изображение";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  await assertAdmin(request);
+  const body = await request.json().catch(() => null);
+  const id = Number(body?.id);
+  const url = typeof body?.url === "string" ? body.url.trim() : "";
+
+  if (!id && !url) {
+    return NextResponse.json({ error: "Не передан идентификатор или URL" }, { status: 400 });
+  }
+
+  try {
+    // Delete DB record by id when provided
+    if (id) {
+      await deleteMediaAssetById(id);
+    }
+
+    // Best-effort: delete file from /public/uploads when url points there
+    const targetUrl = url;
+    if (targetUrl && targetUrl.startsWith("/uploads/")) {
+      const uploadDir = path.join(process.cwd(), "public");
+      const filePath = path.join(uploadDir, targetUrl);
+      try {
+        await fs.unlink(filePath);
+      } catch {
+        // ignore missing files or fs errors
+      }
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Не удалось удалить изображение";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

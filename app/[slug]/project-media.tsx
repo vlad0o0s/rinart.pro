@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage as Image } from "@/components/safe-image";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";

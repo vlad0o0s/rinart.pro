@@ -2026,6 +2026,45 @@
   object-fit: cover;
 }
 
+.mediaModalDelete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: rgba(15, 23, 42, 0.8);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-6px);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+  z-index: 2;
+}
+
+.mediaModalDelete svg {
+  width: 14px;
+  height: 14px;
+}
+
+.mediaModalItem:hover .mediaModalDelete,
+.mediaModalDelete:focus-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mediaModalDelete:hover,
+.mediaModalDelete:focus-visible {
+  background: rgba(255, 255, 255, 0.96);
+  color: rgba(15, 23, 42, 0.95);
+}
+
 .mediaModalItemTitle {
   font-size: 12px;
   font-weight: 600;

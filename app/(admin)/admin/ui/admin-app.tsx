@@ -965,6 +965,24 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const deleteLibraryAsset = async (asset: MediaAsset) => {
+    if (asset.origin !== "library") {
+      return;
+    }
+    const idPart = asset.id.startsWith("library-") ? asset.id.slice("library-".length) : "";
+    const dbId = Number(idPart);
+    if (!dbId) {
+      return;
+    }
+    await fetchJson<{ ok: boolean }>(
+      "/api/admin/media/library",
+      {
+        method: "DELETE",
+        body: JSON.stringify({ id: dbId, url: asset.url }),
+      },
+    );
+    setLibraryAssets((prev) => prev.filter((item) => item.id !== asset.id));
+  };
   const [activeView, setActiveView] = useState<"projects" | "seo" | "settings">("projects");
   const [seoPages, setSeoPages] = useState<SeoPageState[]>([]);
   const [selectedSeoSlug, setSelectedSeoSlug] = useState<string | null>(null);
@@ -2348,7 +2366,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       </div>
 
       {mediaLibrary.open ? (
-        <MediaLibraryModal
+          <MediaLibraryModal
           key={`media-modal-${mediaLibrary.mode}`}
           assets={libraryAssets}
           allowMultiple={mediaLibrary.mode === "gallery-add"}
@@ -2357,6 +2375,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
           onApply={handleLibraryApply}
           onCreateAsset={createLibraryAssetFromUrl}
           onUploadFile={uploadLibraryFile}
+          onDeleteAsset={deleteLibraryAsset}
         />
       ) : null}
       {createModalOpen ? (
@@ -3058,7 +3077,6 @@ function ProjectEditor({
                       unoptimized
                     />
                   </div>
-                  <code className={styles.mediaInfoValue}>{state.seoOgImageUrl}</code>
                 </div>
               ) : (
                 <div className={styles.ogEmpty}>Изображение не выбрано</div>
@@ -3135,14 +3153,7 @@ function MediaPanel({
             <div className={styles.heroPlaceholder}>Изображение не выбрано</div>
           )}
         </div>
-        {state.heroImageUrl ? (
-          <div className={styles.mediaInfo}>
-            <span className={styles.mediaInfoLabel}>Выбранный файл</span>
-            <code className={styles.mediaInfoValue}>{state.heroImageUrl}</code>
-          </div>
-        ) : (
-          <p className={styles.mediaHint}>Выберите изображение из медиа-библиотеки.</p>
-        )}
+        <p className={styles.mediaHint}>Выберите изображение из медиа-библиотеки.</p>
       </section>
 
       <section className={styles.mediaSection}>
@@ -4014,6 +4025,7 @@ type MediaLibraryModalProps = {
   onApply: (assets: MediaAsset[]) => void;
   onCreateAsset: (payload: { url: string; title?: string }) => Promise<MediaAsset>;
   onUploadFile: (file: File) => Promise<MediaAsset>;
+  onDeleteAsset: (asset: MediaAsset) => Promise<void>;
 };
 
 function MediaLibraryModal({
@@ -4024,14 +4036,13 @@ function MediaLibraryModal({
   onApply,
   onCreateAsset,
   onUploadFile,
+  onDeleteAsset,
 }: MediaLibraryModalProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set(initialSelection));
-  const [newUrl, setNewUrl] = useState("");
-  const [newTitle, setNewTitle] = useState("");
-  const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     setSelected(new Set(initialSelection));
@@ -4073,27 +4084,6 @@ function MediaLibraryModal({
       next.add(asset.url);
       return next;
     });
-  };
-
-  const handleCreateAsset = async () => {
-    const url = newUrl.trim();
-    if (!url) {
-      setError("Укажите ссылку на изображение");
-      return;
-    }
-    setCreating(true);
-    setError(null);
-    try {
-      const asset = await onCreateAsset({ url, title: newTitle.trim() });
-      selectAsset(asset);
-      setNewUrl("");
-      setNewTitle("");
-    } catch (err) {
-      const message = err instanceof Error && err.message ? err.message : "Не удалось сохранить ссылку";
-      setError(message);
-    } finally {
-      setCreating(false);
-    }
   };
 
   const handleFileInputChange = async (event: ReactChangeEvent<HTMLInputElement>) => {
@@ -4156,37 +4146,9 @@ function MediaLibraryModal({
               </label>
               <p className={styles.uploadHint}>Поддерживаются JPG, PNG, WEBP, GIF до 15 МБ. Можно выбрать до 10 файлов за раз.</p>
             </div>
-            <label className={styles.inputGroup}>
-              <span className={styles.inputLabel}>URL изображения</span>
-              <input
-                className={styles.textInput}
-                value={newUrl}
-                onChange={(event) => setNewUrl(event.target.value)}
-                placeholder="https://..."
-                disabled={creating}
-              />
-            </label>
-            <label className={styles.inputGroup}>
-              <span className={styles.inputLabel}>Подпись</span>
-              <input
-                className={styles.textInput}
-                value={newTitle}
-                onChange={(event) => setNewTitle(event.target.value)}
-                placeholder="Подпись для медиа (опционально)"
-                disabled={creating}
-              />
-            </label>
-            <button
-              className={styles.secondaryButton}
-              type="button"
-              onClick={handleCreateAsset}
-              disabled={creating}
-            >
-              {creating ? "Добавляем..." : "Сохранить ссылку"}
-            </button>
             {error ? <p className={styles.modalError}>{error}</p> : null}
             <p className={styles.modalHint}>
-              Добавленные изображения появляются в библиотеке и доступны для всех проектов.
+              Изображения, загруженные сюда, появляются в библиотеке и доступны для всех проектов.
             </p>
           </aside>
 
@@ -4196,23 +4158,45 @@ function MediaLibraryModal({
                 assets.map((asset) => {
                   const isSelected = selected.has(asset.url);
                   return (
-                    <button
-                      key={asset.url}
-                      type="button"
-                      className={`${styles.mediaModalItem} ${isSelected ? styles.mediaModalItemSelected : ""}`}
-                      onClick={() => toggleSelection(asset)}
-                      draggable
-                      onDragStart={(event) => {
-                        event.dataTransfer.setData("text/uri-list", asset.url);
-                        event.dataTransfer.setData("text/plain", asset.url);
-                        event.dataTransfer.effectAllowed = "copy";
-                      }}
-                    >
-                      <div className={styles.mediaModalPreview}>
-                        <Image src={asset.url} alt={asset.title || "Медиа"} width={200} height={200} unoptimized />
-                      </div>
-                      <span className={styles.mediaModalItemTitle}>{asset.title}</span>
-                    </button>
+                    <div key={asset.id} className={`${styles.mediaModalItem} ${isSelected ? styles.mediaModalItemSelected : ""}`}>
+                      <button
+                        type="button"
+                        className={styles.mediaModalSelectable}
+                        onClick={() => toggleSelection(asset)}
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.setData("text/uri-list", asset.url);
+                          event.dataTransfer.setData("text/plain", asset.url);
+                          event.dataTransfer.effectAllowed = "copy";
+                        }}
+                        aria-label={`Выбрать ${asset.title}`}
+                      >
+                        <div className={styles.mediaModalPreview}>
+                          <Image src={asset.url} alt={asset.title || "Медиа"} width={200} height={200} unoptimized />
+                          {asset.origin === "library" ? (
+                            <button
+                              type="button"
+                              className={styles.mediaModalDelete}
+                              aria-label="Удалить из библиотеки"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                setDeletingId(asset.id);
+                                try {
+                                  await onDeleteAsset(asset);
+                                } finally {
+                                  setDeletingId((prev) => (prev === asset.id ? null : prev));
+                                }
+                              }}
+                              disabled={deletingId === asset.id}
+                              title="Удалить из библиотеки"
+                            >
+                              <IconTrash aria-hidden="true" />
+                            </button>
+                          ) : null}
+                        </div>
+                        <span className={styles.mediaModalItemTitle}>{asset.title}</span>
+                      </button>
+                    </div>
                   );
                 })
               ) : (

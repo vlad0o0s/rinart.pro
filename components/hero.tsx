@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage as Image } from "@/components/safe-image";
 import { useMemo } from "react";
 import styles from "./hero.module.css";
 

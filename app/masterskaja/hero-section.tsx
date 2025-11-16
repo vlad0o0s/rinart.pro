@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage as Image } from "@/components/safe-image";
 import { useReveal } from "@/lib/use-reveal";
 import styles from "./hero-section.module.css";
 

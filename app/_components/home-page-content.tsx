@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage as Image } from "@/components/safe-image";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "../page.module.css";

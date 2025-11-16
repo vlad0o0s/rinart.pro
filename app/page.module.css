@@ -26,7 +26,10 @@
 
 @media (max-width: 767px) {
   .stageLayer {
-    display: none;
+    display: block;
+    opacity: 1;
+    transform: none;
+    animation: none;
   }
 }
 
