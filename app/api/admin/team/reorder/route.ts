@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assertAdmin } from "@/lib/admin-auth";
 import { reorderTeamMembersEntries } from "@/lib/team";
-import { invalidateTeamCache } from "@/lib/team";
 import { revalidatePath } from "next/cache";
 
 export async function POST(request: NextRequest) {
@@ -18,7 +17,6 @@ export async function POST(request: NextRequest) {
 
   try {
     await reorderTeamMembersEntries(ids);
-    invalidateTeamCache();
     revalidatePath("/masterskaja");
     revalidatePath("/");
     return NextResponse.json({ success: true });
