@@ -4060,6 +4060,7 @@ function MediaLibraryModal({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const visibleAssets = useMemo(() => assets.filter((a) => a.origin === "library"), [assets]);
 
   useEffect(() => {
     setSelected(new Set(initialSelection));
@@ -4171,8 +4172,8 @@ function MediaLibraryModal({
 
           <div className={styles.mediaModalContent}>
             <div className={styles.mediaModalGrid}>
-              {assets.length ? (
-                assets.map((asset) => {
+              {visibleAssets.length ? (
+                visibleAssets.map((asset) => {
                   const isSelected = selected.has(asset.url);
                   return (
                     <div key={asset.id} className={`${styles.mediaModalItem} ${isSelected ? styles.mediaModalItemSelected : ""}`}>
