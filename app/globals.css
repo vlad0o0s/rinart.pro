@@ -38,6 +38,8 @@ select {
 
 .site-shell {
   width: min(100%, 1920px);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 html {
