@@ -15,7 +15,7 @@ import {
 } from "@dnd-kit/core";
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
 import Image from "next/image";
-import { SafeImage as ModalImage } from "@/components/safe-image";
+import { SafeImage, SafeImage as ModalImage } from "@/components/safe-image";
 import {
   SortableContext,
   useSortable,
@@ -971,7 +971,7 @@ function MediaLibraryItemSkeleton() {
     <div className={styles.mediaModalItem}>
       <div className={styles.mediaModalSelectable} style={{ cursor: "default", pointerEvents: "none" }}>
         <div className={styles.mediaModalPreview}>
-          <div className={`${styles.skeleton} ${styles.skeletonThumb}`} style={{ width: "100%", height: "200px", borderRadius: "8px" }} />
+          <div className={`${styles.skeleton} ${styles.skeletonThumb}`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", borderRadius: "8px" }} />
         </div>
         <span className={`${styles.skeleton} ${styles.skeletonLineShort}`} style={{ marginTop: "8px", height: "16px", width: "80%" }} />
       </div>
@@ -1073,12 +1073,11 @@ function SortableGalleryItem({
         aria-label="Заменить изображение из галереи"
       >
         {item.url ? (
-          <Image
+          <SafeImage
             src={item.url}
             alt={item.caption || "Изображение галереи"}
             width={320}
             height={200}
-            unoptimized
           />
         ) : (
           <span className={styles.galleryThumbPlaceholder}>Изображение не выбрано</span>
@@ -1115,12 +1114,11 @@ function GalleryItemCard({ item }: { item: GalleryItem; index: number }) {
         aria-label="Заменить изображение из галереи"
       >
         {item.url ? (
-          <Image
+          <SafeImage
             src={item.url}
             alt={item.caption || "Изображение галереи"}
             width={320}
             height={200}
-            unoptimized
           />
         ) : (
           <span className={styles.galleryThumbPlaceholder}>Изображение не выбрано</span>
@@ -1710,7 +1708,16 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
           throw new Error(message);
         }
         const data = (await response.json()) as { url: string };
-        return await createLibraryAssetFromUrl({ url: data.url, title: file.name });
+        const asset = await createLibraryAssetFromUrl({ url: data.url, title: file.name });
+        // Убеждаемся, что библиотека обновлена
+        setLibraryAssets((prev) => {
+          const exists = prev.some((a) => a.url === asset.url);
+          if (exists) {
+            return prev;
+          }
+          return mergeMediaAssets(prev, [asset]);
+        });
+        return asset;
       } catch (error) {
         reportError(error, "Не удалось загрузить файл");
         throw error;
@@ -3064,13 +3071,12 @@ function SeoEditorPanel({
         />
         <div className={styles.seoOgPreview}>
           {hasOgImage ? (
-            <Image
+            <SafeImage
               src={page.ogImageUrl}
               alt="OG-превью"
               className={styles.seoOgPreviewImage}
               width={640}
               height={360}
-              unoptimized
             />
           ) : (
             <div className={styles.seoOgEmpty}>Изображение не выбрано</div>
@@ -3632,7 +3638,7 @@ function ProjectEditor({
                     >
                       <IconX aria-hidden="true" />
                     </button>
-                    <Image
+                    <SafeImage
                       src={state.seoOgImageUrl}
                       alt="Предпросмотр OG"
                       width={640}
@@ -3787,7 +3793,7 @@ function MediaPanel({
               >
                 <IconX aria-hidden="true" />
               </button>
-              <Image src={state.heroImageUrl} alt="Главное изображение проекта" width={640} height={400} unoptimized />
+              <SafeImage src={state.heroImageUrl} alt="Главное изображение проекта" width={640} height={400} />
             </div>
           ) : (
             <div className={styles.heroPlaceholder}>Изображение не выбрано</div>
@@ -4075,12 +4081,11 @@ function SettingsView({
                 >
                   <IconX aria-hidden="true" />
                 </button>
-                <Image
+                <SafeImage
                   src={contactSettings.heroImageUrl}
                   alt="Изображение героя контактов"
                   width={640}
                   height={400}
-                  unoptimized
                 />
               </div>
             ) : (
@@ -4491,7 +4496,7 @@ function SortableTeamItem({
         </button>
           {member.imageUrl ? (
             <div style={{ width: 48, height: 48, marginRight: 12, borderRadius: 6, overflow: "hidden", flex: "0 0 auto" }}>
-              <Image src={member.imageUrl} alt={member.name} width={48} height={48} unoptimized />
+              <SafeImage src={member.imageUrl} alt={member.name} width={48} height={48} />
             </div>
           ) : null}
         <div className={styles.projectMeta}>
@@ -4596,7 +4601,7 @@ function TeamEditorPanel({
         <div className={styles.heroPreview}>
           {member.imageUrl ? (
             <div className={styles.heroImageWrap}>
-              <Image src={member.imageUrl} alt={member.name} width={640} height={400} unoptimized />
+              <SafeImage src={member.imageUrl} alt={member.name} width={640} height={400} />
             </div>
           ) : (
             <div className={styles.heroPlaceholder}>Изображение не выбрано</div>
@@ -4836,7 +4841,7 @@ function MediaLibraryModal({
           <div>
             <div className={styles.sectionTitleRow} style={{ marginBottom: "8px" }}>
               <h3 className={styles.mediaModalTitle}>Библиотека медиа</h3>
-              <FieldHint text="Загруженные изображения автоматически конвертируются в формат AVIF для быстрой загрузки на сайте." />
+              <FieldHint text="Загруженные изображения автоматически конвертируются в формат WebP для быстрой загрузки на сайте." />
             </div>
             <p className={styles.mediaModalSubtitle}>
               Загрузите изображение или добавьте ссылку. Выбранные элементы отображаются справа.
@@ -4879,6 +4884,11 @@ function MediaLibraryModal({
 
           <div className={styles.mediaModalContent}>
             <div className={styles.mediaModalGrid}>
+              {uploadingCount > 0
+                ? Array.from({ length: uploadingCount }).map((_, index) => (
+                    <MediaLibraryItemSkeleton key={`uploading-skeleton-${index}`} />
+                  ))
+                : null}
               {visibleAssets.length ? (
                 visibleAssets.map((asset) => {
                   const isSelected = selected.has(asset.url);
@@ -4925,12 +4935,7 @@ function MediaLibraryModal({
                   );
                 })
               ) : null}
-              {uploadingCount > 0
-                ? Array.from({ length: uploadingCount }).map((_, index) => (
-                    <MediaLibraryItemSkeleton key={`uploading-skeleton-${index}`} />
-                  ))
-                : null}
-              {!visibleAssets.length && !uploading ? (
+              {!visibleAssets.length && !uploading && uploadingCount === 0 ? (
                 <div className={styles.emptyState}>В библиотеке пока нет изображений.</div>
               ) : null}
             </div>

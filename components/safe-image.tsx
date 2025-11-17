@@ -18,22 +18,22 @@ export function SafeImage(props: SafeImageProps) {
 		return value;
 	}, [src]);
 	const [currentSrc, setCurrentSrc] = useState<ImageProps["src"]>(initialSrc);
-	const [forceUnoptimized, setForceUnoptimized] = useState<boolean>(() => {
+	const [hasError, setHasError] = useState(false);
+	
+	const isLocal = useMemo(() => {
 		const s = typeof initialSrc === "string" ? initialSrc : "";
-		const isData = s.startsWith("data:");
-		const isRemote = /^https?:\/\//i.test(s) || s.startsWith("//");
-		const isLocal = s.startsWith("/uploads/") || s.startsWith("/");
-		// Do not optimize data:, remote, or local images to avoid /_next/image proxy issues
-		return Boolean(unoptimized) || isData || isRemote || isLocal;
-	});
+		// Используем обычный img для всех локальных файлов (начинающихся с /, но не //)
+		// Это нужно, так как файлы могут обновляться после билда
+		return s.startsWith("/") && !s.startsWith("//");
+	}, [initialSrc]);
 
 	const handleError = useCallback<NonNullable<ImageProps["onError"]>>(
 		(event) => {
 			try {
 				// Swap to placeholder once to avoid loops
-				if (currentSrc !== placeholderSrc) {
+				if (!hasError) {
+					setHasError(true);
 					setCurrentSrc(placeholderSrc);
-					setForceUnoptimized(true);
 				}
 			} catch {
 				// noop
@@ -42,9 +42,35 @@ export function SafeImage(props: SafeImageProps) {
 				onError(event);
 			}
 		},
-		[currentSrc, onError, placeholderSrc],
+		[hasError, onError, placeholderSrc],
 	);
 
-	return <Image src={currentSrc} alt={alt} onError={handleError} unoptimized={forceUnoptimized} {...rest} />;
+	// Для локальных файлов используем обычный img, чтобы избежать проблем с Next.js Image оптимизацией
+	if (isLocal && typeof currentSrc === "string") {
+		const { width, height, ...imgProps } = rest;
+		// Добавляем timestamp для обхода кеша, если файл не загружается
+		const srcWithCache = hasError ? currentSrc : `${currentSrc}${currentSrc.includes("?") ? "&" : "?"}t=${Date.now()}`;
+		return (
+			<img
+				src={hasError ? currentSrc : srcWithCache}
+				alt={alt || ""}
+				onError={(e) => {
+					// Если файл не загрузился, пробуем без timestamp
+					if (!hasError && currentSrc !== placeholderSrc) {
+						setHasError(true);
+						setCurrentSrc(currentSrc);
+					} else {
+						handleError(e);
+					}
+				}}
+				width={width}
+				height={height}
+				style={{ objectFit: "cover", width: "100%", height: "100%" }}
+				{...imgProps}
+			/>
+		);
+	}
+
+	return <Image src={currentSrc} alt={alt} onError={handleError} unoptimized={true} {...rest} />;
 }
 
