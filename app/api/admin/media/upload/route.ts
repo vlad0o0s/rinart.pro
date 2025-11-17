@@ -58,9 +58,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Не удалось обработать изображение: результат конвертации пустой" }, { status: 500 });
     }
 
-    // Убеждаемся, что расширение .avif (всегда должно быть после наших изменений)
-    const finalExtension = optimizedExtension === ".avif" ? ".avif" : optimizedExtension;
-    const finalMimeType = optimizedMime === "image/avif" ? "image/avif" : optimizedMime;
+    // Используем результат оптимизации (AVIF или WebP в зависимости от поддержки)
+    const finalExtension = optimizedExtension;
+    const finalMimeType = optimizedMime;
 
     const storedName = `${baseName || "image"}-${crypto.randomUUID()}${finalExtension}`;
     const filePath = path.join(uploadDir, storedName);

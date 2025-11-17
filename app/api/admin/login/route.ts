@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Введите логин и пароль" }, { status: 400 });
     }
 
-    // Captcha disabled
-    const shouldVerifyRecaptcha = false;
+    // Captcha enabled
+    const shouldVerifyRecaptcha = true;
     if (shouldVerifyRecaptcha) {
       const forwardedFor = request.headers.get("x-forwarded-for");
       const remoteIp = forwardedFor?.split(",")[0]?.trim();
