@@ -1,0 +1,9 @@
+# Бинарные файлы - без нормализации окончаний строк
+*.avif binary
+*.webp binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.svg binary
+
