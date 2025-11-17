@@ -22,8 +22,9 @@ export function SafeImage(props: SafeImageProps) {
 		const s = typeof initialSrc === "string" ? initialSrc : "";
 		const isData = s.startsWith("data:");
 		const isRemote = /^https?:\/\//i.test(s) || s.startsWith("//");
-		// Do not optimize data: or remote images to avoid /_next/image proxy issues in dev/proxies
-		return Boolean(unoptimized) || isData || isRemote;
+		const isLocal = s.startsWith("/uploads/") || s.startsWith("/");
+		// Do not optimize data:, remote, or local images to avoid /_next/image proxy issues
+		return Boolean(unoptimized) || isData || isRemote || isLocal;
 	});
 
 	const handleError = useCallback<NonNullable<ImageProps["onError"]>>(

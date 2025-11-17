@@ -73,8 +73,8 @@ async function downloadToUploads(remoteUrl: string, desiredName?: string) {
     throw new Error("Не удалось обработать изображение: результат конвертации пустой");
   }
 
-  // Убеждаемся, что расширение .avif (всегда должно быть после наших изменений)
-  const finalExtension = optimizedExtension === ".avif" ? ".avif" : optimizedExtension;
+  // Используем результат оптимизации (WebP)
+  const finalExtension = optimizedExtension;
 
   const storedName = `${baseName || "image"}-${crypto.randomUUID()}${finalExtension}`;
   const filePath = path.join(uploadDir, storedName);

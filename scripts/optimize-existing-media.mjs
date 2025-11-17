@@ -45,7 +45,7 @@ const EXT_MIME_MAP = {
   ".avif": "image/avif",
 };
 
-const NON_CONVERTIBLE_EXT = new Set([".svg", ".gif", ".avif", ".webp"]);
+const NON_CONVERTIBLE_EXT = new Set([".svg", ".gif", ".webp"]);
 const NON_CONVERTIBLE_MIME = new Set(["image/svg+xml", "image/gif"]);
 
 async function convertBuffer(buffer, mimeType) {
@@ -55,16 +55,12 @@ async function convertBuffer(buffer, mimeType) {
 
   const instance = sharp(buffer, { failOnError: false }).rotate();
 
+  // Используем только WebP для конвертации
   try {
-    const avif = await instance.clone().avif({ quality: 60, effort: 4 }).toBuffer();
-    return { buffer: avif, extension: ".avif", mimeType: "image/avif" };
+    const webp = await instance.clone().webp({ quality: 75, effort: 4 }).toBuffer();
+    return { buffer: webp, extension: ".webp", mimeType: "image/webp" };
   } catch {
-    try {
-      const webp = await instance.clone().webp({ quality: 75, effort: 4 }).toBuffer();
-      return { buffer: webp, extension: ".webp", mimeType: "image/webp" };
-    } catch {
-      return { buffer, extension: null, mimeType };
-    }
+    return { buffer, extension: null, mimeType };
   }
 }
 
