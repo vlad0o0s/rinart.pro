@@ -38,19 +38,43 @@ export async function optimizeImage(
     return { buffer, extension: defaultExtension, mimeType };
   }
 
+  // Всегда конвертируем в AVIF, даже если входной файл уже WEBP
+  // Сначала пробуем нормальные настройки
   const candidate = sharp(buffer, { failOnError: false }).rotate();
 
+  // Попытка 1: нормальные настройки AVIF
   try {
     const avifBuffer = await candidate.clone().avif({ quality: 60, effort: 4 }).toBuffer();
-    return { buffer: avifBuffer, extension: ".avif", mimeType: "image/avif" };
-  } catch {
-    try {
-      const webpBuffer = await candidate.webp({ quality: 75, effort: 4 }).toBuffer();
-      return { buffer: webpBuffer, extension: ".webp", mimeType: "image/webp" };
-    } catch {
-      return { buffer, extension: defaultExtension, mimeType };
+    if (avifBuffer.length > 0) {
+      return { buffer: avifBuffer, extension: ".avif", mimeType: "image/avif" };
     }
+  } catch (error) {
+    // Продолжаем попытки
   }
+
+  // Попытка 2: более агрессивные настройки AVIF (ниже quality, выше effort)
+  try {
+    const avifBuffer = await candidate.clone().avif({ quality: 50, effort: 6 }).toBuffer();
+    if (avifBuffer.length > 0) {
+      return { buffer: avifBuffer, extension: ".avif", mimeType: "image/avif" };
+    }
+  } catch (error) {
+    // Продолжаем попытки
+  }
+
+  // Попытка 3: максимально агрессивные настройки AVIF
+  try {
+    const avifBuffer = await candidate.clone().avif({ quality: 40, effort: 9 }).toBuffer();
+    if (avifBuffer.length > 0) {
+      return { buffer: avifBuffer, extension: ".avif", mimeType: "image/avif" };
+    }
+  } catch (error) {
+    // Если даже это не помогло, выбрасываем ошибку
+    throw new Error(`Не удалось конвертировать изображение в AVIF: ${error instanceof Error ? error.message : "неизвестная ошибка"}`);
+  }
+
+  // Этот код не должен выполняться, но на случай если все попытки вернули пустой буфер
+  throw new Error("Не удалось конвертировать изображение в AVIF: результат конвертации пустой");
 }
 
 export function getMimeExtension(mimeType: string | null | undefined): string | undefined {

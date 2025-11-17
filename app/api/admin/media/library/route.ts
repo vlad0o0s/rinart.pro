@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { assertAdmin } from "@/lib/admin-auth";
 import { createMediaAssetRecord, fetchMediaAssets, deleteMediaAssetById, findMediaAssetByUrl } from "@/lib/media-library-repository";
+import { invalidateAllProjectsCache } from "@/lib/projects";
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
@@ -67,7 +69,14 @@ async function downloadToUploads(remoteUrl: string, desiredName?: string) {
     originalExtension: sourceExtension || getMimeExtension(contentType) || ".bin",
   });
 
-  const storedName = `${baseName || "image"}-${crypto.randomUUID()}${optimizedExtension}`;
+  if (!optimizedBuffer || optimizedBuffer.length === 0) {
+    throw new Error("Не удалось обработать изображение: результат конвертации пустой");
+  }
+
+  // Убеждаемся, что расширение .avif (всегда должно быть после наших изменений)
+  const finalExtension = optimizedExtension === ".avif" ? ".avif" : optimizedExtension;
+
+  const storedName = `${baseName || "image"}-${crypto.randomUUID()}${finalExtension}`;
   const filePath = path.join(uploadDir, storedName);
 
   await fs.writeFile(filePath, optimizedBuffer);
@@ -76,7 +85,7 @@ async function downloadToUploads(remoteUrl: string, desiredName?: string) {
   const displayName =
     originalName && originalName.length
       ? originalName
-      : `${(baseName || "image").replace(/-+/g, " ")}${optimizedExtension}`;
+      : `${(baseName || "image").replace(/-+/g, " ")}${finalExtension}`;
 
   return { publicUrl, displayName };
 }
@@ -132,18 +141,31 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
+    let imageUrlToCleanup: string | null = null;
+
     // Delete DB record by id when provided
     if (id) {
+      // deleteMediaAssetById уже получает URL и вызывает removeImageReferencesFromAllPlaces
       await deleteMediaAssetById(id);
     } else if (url) {
       const existing = await findMediaAssetByUrl(url);
       if (existing) {
+        // deleteMediaAssetById уже получает URL и вызывает removeImageReferencesFromAllPlaces
         await deleteMediaAssetById(existing.id);
+      } else {
+        // Если записи в библиотеке нет, но нужно удалить ссылки по URL
+        imageUrlToCleanup = url;
       }
     }
 
+    // Если удаляем по URL без записи в библиотеке, все равно очищаем ссылки
+    if (imageUrlToCleanup) {
+      const { removeImageReferencesFromAllPlaces } = await import("@/lib/media-library-repository");
+      await removeImageReferencesFromAllPlaces(imageUrlToCleanup);
+    }
+
     // Best-effort: delete file from /public/uploads when url points there
-    const targetUrl = url;
+    const targetUrl = url || imageUrlToCleanup;
     if (targetUrl && targetUrl.startsWith("/uploads/")) {
       const uploadDir = path.join(process.cwd(), "public");
       const filePath = path.join(uploadDir, targetUrl);
@@ -153,6 +175,12 @@ export async function DELETE(request: NextRequest) {
         // ignore missing files or fs errors
       }
     }
+
+    // Инвалидируем кэш проектов, так как могли измениться изображения
+    invalidateAllProjectsCache();
+    revalidatePath("/");
+    revalidatePath("/masterskaja");
+    revalidatePath("/proektirovanie");
 
     return NextResponse.json({ ok: true });
   } catch (error) {

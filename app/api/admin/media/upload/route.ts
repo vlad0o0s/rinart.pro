@@ -46,22 +46,37 @@ export async function POST(request: NextRequest) {
     : "image";
 
   const mimeType = file.type.split(";")[0];
-  const { buffer: optimizedBuffer, extension: optimizedExtension, mimeType: optimizedMime } = await optimizeImage(
-    buffer,
-    mimeType,
-    { originalExtension },
-  );
+  
+  try {
+    const { buffer: optimizedBuffer, extension: optimizedExtension, mimeType: optimizedMime } = await optimizeImage(
+      buffer,
+      mimeType,
+      { originalExtension },
+    );
 
-  const storedName = `${baseName || "image"}-${crypto.randomUUID()}${optimizedExtension}`;
-  const filePath = path.join(uploadDir, storedName);
-  await fs.writeFile(filePath, optimizedBuffer);
+    if (!optimizedBuffer || optimizedBuffer.length === 0) {
+      return NextResponse.json({ error: "Не удалось обработать изображение: результат конвертации пустой" }, { status: 500 });
+    }
 
-  const publicUrl = `/uploads/${storedName}`;
+    // Убеждаемся, что расширение .avif (всегда должно быть после наших изменений)
+    const finalExtension = optimizedExtension === ".avif" ? ".avif" : optimizedExtension;
+    const finalMimeType = optimizedMime === "image/avif" ? "image/avif" : optimizedMime;
 
-  return NextResponse.json({
-    url: publicUrl,
-    originalName: file.name,
-    size: optimizedBuffer.length,
-    mimeType: optimizedMime,
-  });
+    const storedName = `${baseName || "image"}-${crypto.randomUUID()}${finalExtension}`;
+    const filePath = path.join(uploadDir, storedName);
+    await fs.writeFile(filePath, optimizedBuffer);
+
+    const publicUrl = `/uploads/${storedName}`;
+
+    return NextResponse.json({
+      url: publicUrl,
+      originalName: file.name,
+      size: optimizedBuffer.length,
+      mimeType: finalMimeType,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Не удалось обработать изображение";
+    console.error("Image optimization failed:", error);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

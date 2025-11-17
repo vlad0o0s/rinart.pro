@@ -9,6 +9,9 @@ import {
   KeyboardSensor,
   DragOverlay,
   closestCenter,
+  closestCorners,
+  rectIntersection,
+  pointerWithin,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -19,6 +22,7 @@ import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
+  rectSortingStrategy,
   arrayMove,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
@@ -41,6 +45,8 @@ const PROJECTS_DND_ACCESSIBILITY = {
 } as const;
 
 const OPTIMIZED_EXTENSIONS = [".avif", ".webp"] as const;
+
+const STORAGE_KEY_SELECTED_PROJECT = "rinart-admin-selected-project-slug";
 
 function isOptimizedImageUrl(url: string | null | undefined): boolean {
   if (!url) {
@@ -77,6 +83,16 @@ function IconEraser(props: SVGProps<SVGSVGElement>) {
       <path d="m20 20-9-9" />
       <path d="m16 20-9-9 5-5a2.828 2.828 0 0 1 4 0L21 11a2.828 2.828 0 0 1 0 4l-5 5Z" />
       <path d="M6 12 3 9" />
+    </svg>
+  );
+}
+
+function IconExternalLink(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden {...props}>
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
     </svg>
   );
 }
@@ -949,13 +965,221 @@ function MediaPanelSkeleton() {
   );
 }
 
+function MediaLibraryItemSkeleton() {
+  return (
+    <div className={styles.mediaModalItem}>
+      <div className={styles.mediaModalSelectable} style={{ cursor: "default", pointerEvents: "none" }}>
+        <div className={styles.mediaModalPreview}>
+          <div className={`${styles.skeleton} ${styles.skeletonThumb}`} style={{ width: "100%", height: "200px", borderRadius: "8px" }} />
+        </div>
+        <span className={`${styles.skeleton} ${styles.skeletonLineShort}`} style={{ marginTop: "8px", height: "16px", width: "80%" }} />
+      </div>
+    </div>
+  );
+}
+
+function SortableGalleryItem({
+  item,
+  index,
+  onRemove,
+  onReplace,
+}: {
+  item: GalleryItem;
+  index: number;
+  onRemove: (id: string) => void;
+  onReplace: (id: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
+  const { onPointerDown: sortablePointerDown, ...otherListeners } = listeners ?? {};
+  const [justEndedDrag, setJustEndedDrag] = useState(false);
+
+  // Отслеживаем завершение drag для предотвращения горизонтального "прыжка"
+  useEffect(() => {
+    if (isDragging) {
+      setJustEndedDrag(false);
+    } else {
+      // Когда drag только что завершился - сразу сбрасываем transform без transition
+      if (transform && (transform.x !== 0 || transform.scaleX !== 1)) {
+        setJustEndedDrag(true);
+        // Используем requestAnimationFrame для синхронизации с рендером браузера
+        requestAnimationFrame(() => {
+          setJustEndedDrag(false);
+        });
+      }
+    }
+  }, [isDragging, transform]);
+
+  // Принудительно обнуляем x координату и scaleX в transform для предотвращения горизонтального смещения
+  const verticalTransform = transform 
+    ? { ...transform, x: 0, scaleX: 1 } 
+    : null;
+
+  // Когда drag только что завершился, полностью сбрасываем transform и отключаем transition
+  const shouldResetTransform = justEndedDrag;
+
+  const style: React.CSSProperties = {
+    transform: shouldResetTransform 
+      ? undefined 
+      : verticalTransform 
+        ? CSS.Transform.toString(verticalTransform) 
+        : undefined,
+    transition: shouldResetTransform ? 'none' : transition,
+    opacity: isDragging ? 0.85 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={styles.galleryThumb}
+      style={style}
+      {...attributes}
+      data-dragging={isDragging}
+    >
+      <button
+        className={styles.dragHandle}
+        type="button"
+        aria-label={`Перетащить изображение ${index + 1}`}
+        ref={setActivatorNodeRef}
+        {...otherListeners}
+        onPointerDown={(event) => {
+          sortablePointerDown?.(event);
+          if (!event.defaultPrevented) {
+            event.stopPropagation();
+          }
+        }}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+      >
+        <span className={styles.dragIcon} aria-hidden="true" />
+      </button>
+      <button
+        className={styles.galleryThumbButton}
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onReplace(item.id);
+        }}
+        aria-label="Заменить изображение из галереи"
+      >
+        {item.url ? (
+          <Image
+            src={item.url}
+            alt={item.caption || "Изображение галереи"}
+            width={320}
+            height={200}
+            unoptimized
+          />
+        ) : (
+          <span className={styles.galleryThumbPlaceholder}>Изображение не выбрано</span>
+        )}
+      </button>
+      <button
+        className={styles.previewDeleteButton}
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onRemove(item.id);
+        }}
+        aria-label="Удалить изображение из галереи"
+      >
+        <IconX aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+function GalleryItemCard({ item, index }: { item: GalleryItem; index: number }) {
+  return (
+    <div className={styles.galleryThumb}>
+      <button
+        className={styles.previewDeleteButton}
+        type="button"
+        aria-label="Удалить изображение из галереи"
+      >
+        <IconX aria-hidden="true" />
+      </button>
+      <button
+        className={styles.galleryThumbButton}
+        type="button"
+        aria-label="Заменить изображение из галереи"
+      >
+        {item.url ? (
+          <Image
+            src={item.url}
+            alt={item.caption || "Изображение галереи"}
+            width={320}
+            height={200}
+            unoptimized
+          />
+        ) : (
+          <span className={styles.galleryThumbPlaceholder}>Изображение не выбрано</span>
+        )}
+      </button>
+    </div>
+  );
+}
+
 export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[] }) {
   const [projects, setProjects] = useState<ProjectSummary[]>(initialProjects);
-  const [selectedSlug, setSelectedSlug] = useState<string | null>(initialProjects[0]?.slug ?? null);
+  
+  // Восстанавливаем выбранный проект из localStorage
+  const getInitialSelectedSlug = useCallback((): string | null => {
+    if (typeof window === "undefined") {
+      return initialProjects[0]?.slug ?? null;
+    }
+    try {
+      const savedSlug = localStorage.getItem(STORAGE_KEY_SELECTED_PROJECT);
+      if (savedSlug && initialProjects.some((p) => p.slug === savedSlug)) {
+        return savedSlug;
+      }
+    } catch {
+      // Игнорируем ошибки localStorage
+    }
+    return initialProjects[0]?.slug ?? null;
+  }, [initialProjects]);
+
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(getInitialSelectedSlug);
   const selectedSlugRef = useRef<string | null>(selectedSlug);
+  
   useEffect(() => {
     selectedSlugRef.current = selectedSlug;
   }, [selectedSlug]);
+
+  // Сохраняем выбранный проект в localStorage при изменении
+  useEffect(() => {
+    if (typeof window === "undefined" || !selectedSlug) {
+      return;
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY_SELECTED_PROJECT, selectedSlug);
+    } catch {
+      // Игнорируем ошибки localStorage
+    }
+  }, [selectedSlug]);
+
+  // Проверяем, что выбранный проект все еще существует в списке проектов
+  useEffect(() => {
+    if (!selectedSlug || projects.length === 0) {
+      return;
+    }
+    const projectExists = projects.some((p) => p.slug === selectedSlug);
+    if (!projectExists) {
+      // Если выбранный проект больше не существует, выбираем первый доступный
+      const firstSlug = projects[0]?.slug ?? null;
+      setSelectedSlug(firstSlug);
+      if (firstSlug) {
+        try {
+          localStorage.setItem(STORAGE_KEY_SELECTED_PROJECT, firstSlug);
+        } catch {
+          // Игнорируем ошибки localStorage
+        }
+      }
+    }
+  }, [projects, selectedSlug]);
   const [editorState, setEditorState] = useState<EditorState | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string>("");
@@ -967,6 +1191,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const [libraryAssets, setLibraryAssets] = useState<MediaAsset[]>([]);
   const [mediaLibrary, setMediaLibrary] = useState<MediaLibraryState>({ open: false, mode: "hero", initialSelection: [] });
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [galleryActiveDragId, setGalleryActiveDragId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const deleteLibraryAsset = async (asset: MediaAsset) => {
@@ -1605,7 +1830,11 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   );
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -1893,6 +2122,62 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     });
   }, []);
 
+  const handleGalleryDragStart = useCallback((event: DragStartEvent) => {
+    setGalleryActiveDragId(String(event.active.id));
+  }, []);
+
+  const handleGalleryDragCancel = useCallback(() => {
+    setGalleryActiveDragId(null);
+  }, []);
+
+  const handleGalleryDragOver = useCallback(
+    (event: DragOverEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) {
+        return;
+      }
+      setEditorState((prev) => {
+        if (!prev) return prev;
+        const oldIndex = prev.gallery.findIndex((item) => item.id === active.id);
+        const newIndex = prev.gallery.findIndex((item) => item.id === over.id);
+        if (oldIndex === -1 || newIndex === -1) {
+          return prev;
+        }
+        // Убираем проверку oldIndex === newIndex для более частых обновлений
+        const reordered = arrayMove(prev.gallery, oldIndex, newIndex);
+        return { ...prev, gallery: reordered };
+      });
+    },
+    [],
+  );
+
+  const handleGalleryDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setGalleryActiveDragId(null);
+
+      const { active, over } = event;
+      if (!over || active.id === over.id) {
+        setEditorState((prev) => {
+          if (!prev) return prev;
+          return { ...prev, gallery: [...prev.gallery] };
+        });
+        return;
+      }
+
+      setEditorState((prev) => {
+        if (!prev) return prev;
+        const oldIndex = prev.gallery.findIndex((item) => item.id === active.id);
+        const newIndex = prev.gallery.findIndex((item) => item.id === over.id);
+        if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
+          return prev;
+        }
+        const reordered = arrayMove(prev.gallery, oldIndex, newIndex);
+        return { ...prev, gallery: reordered };
+      });
+    },
+    [],
+  );
+
   const persistMedia = useCallback(async () => {
     if (!editorState || !selectedSlug) return;
 
@@ -1970,23 +2255,30 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
 
       await persistMedia();
 
+      // После сохранения медиа перезагружаем проект полностью, чтобы получить актуальные данные
+      const finalSlug = response.project.slug;
+      const updatedResponse = await fetchJson<ProjectDetailResponse>(`/api/admin/projects/${finalSlug}`);
+
       setStatus("Проект сохранён");
       setProjects((prev) =>
         prev.map((project) =>
           project.slug === selectedSlug
             ? {
                 ...project,
-                slug: response.project.slug,
-                title: response.project.title,
-                tagline: response.project.tagline,
-                heroImageUrl: response.project.heroImageUrl,
-                categories: (response.project.categories ?? []) as string[],
+                slug: updatedResponse.project.slug,
+                title: updatedResponse.project.title,
+                tagline: updatedResponse.project.tagline,
+                heroImageUrl: updatedResponse.project.heroImageUrl,
+                categories: (updatedResponse.project.categories ?? []) as string[],
               }
             : project,
         ),
       );
-      setSelectedSlug(response.project.slug);
-      setEditorState(mapProjectToEditor(response.project));
+      setSelectedSlug(updatedResponse.project.slug);
+      const updatedEditorState = mapProjectToEditor(updatedResponse.project);
+      setEditorState(updatedEditorState);
+      // Обновляем библиотеку активов из перезагруженного проекта
+      setLibraryAssets((prev) => mergeMediaAssets(prev, collectAssetsFromProjects([updatedResponse.project])));
     } catch (error: unknown) {
       reportError(error, "Не удалось сохранить проект");
     } finally {
@@ -2079,7 +2371,10 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         return;
       }
 
-      if (!window.confirm(`Удалить проект «${projectTitle}»? Это действие нельзя отменить.`)) {
+      const confirmed = window.confirm(
+        `Вы уверены, что хотите удалить проект «${projectTitle}»?\n\nЭто действие нельзя отменить.`,
+      );
+      if (!confirmed) {
         return;
       }
 
@@ -2349,6 +2644,16 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                   updateField={updateEditorField}
                   removeGalleryItem={removeGalleryItem}
                   onOpenLibrary={openMediaLibrary}
+                  onGalleryDragStart={handleGalleryDragStart}
+                  onGalleryDragOver={handleGalleryDragOver}
+                  onGalleryDragEnd={handleGalleryDragEnd}
+                  onGalleryDragCancel={handleGalleryDragCancel}
+                  galleryActiveDragId={galleryActiveDragId}
+                  sensors={sensors}
+                  onSave={persistDetails}
+                  onDelete={handleDeleteProject}
+                  saving={saving}
+                  deleting={deleteLoading}
                 />
               ) : null}
             </aside>
@@ -3335,14 +3640,6 @@ function ProjectEditor({
         </div>
       </section>
 
-      <div className={styles.saveBar}>
-        <button className={styles.primaryButton} type="button" onClick={onSave} disabled={saving || deleting}>
-          {saving ? "Сохранение..." : "Сохранить изменения"}
-        </button>
-        <button className={styles.dangerButton} type="button" onClick={() => onDelete()} disabled={saving || deleting}>
-          {deleting ? "Удаление..." : "Удалить проект"}
-        </button>
-      </div>
     </div>
   );
 }
@@ -3352,17 +3649,102 @@ function MediaPanel({
   updateField,
   removeGalleryItem,
   onOpenLibrary,
+  onGalleryDragStart,
+  onGalleryDragOver,
+  onGalleryDragEnd,
+  onGalleryDragCancel,
+  galleryActiveDragId,
+  sensors,
+  onSave,
+  onDelete,
+  saving,
+  deleting,
 }: {
   state: EditorState;
   updateField: EditorFieldChangeHandler;
   removeGalleryItem: (id: string) => void;
   onOpenLibrary: (mode: MediaLibraryMode, config?: { targetId?: string; initialSelection?: string[] }) => void;
+  onGalleryDragStart: (event: DragStartEvent) => void;
+  onGalleryDragOver: (event: DragOverEvent) => void;
+  onGalleryDragEnd: (event: DragEndEvent) => void;
+  onGalleryDragCancel: () => void;
+  galleryActiveDragId: string | null;
+  sensors: ReturnType<typeof useSensors>;
+  onSave: () => Promise<void>;
+  onDelete: () => void | Promise<void>;
+  saving: boolean;
+  deleting: boolean;
 }) {
   const handleHeroClear = () => updateField("heroImageUrl", "");
   const galleryEmpty = state.gallery.length === 0;
 
   return (
     <div className={styles.mediaStack}>
+      <div className={styles.sectionActions} style={{ marginBottom: "24px" }}>
+        {state.slug ? (
+          <a
+            href={`/${state.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.secondaryButton}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              textDecoration: "none",
+              paddingTop: "12px",
+              paddingBottom: "12px",
+              paddingLeft: "12px",
+              paddingRight: "12px",
+              boxSizing: "border-box",
+              lineHeight: "1",
+            }}
+            title="Просмотреть страницу проекта"
+            aria-label="Просмотреть страницу проекта"
+          >
+            <IconExternalLink style={{ width: "16px", height: "16px", display: "block", flexShrink: 0 }} />
+          </a>
+        ) : null}
+        <button 
+          className={styles.primaryButton} 
+          type="button" 
+          onClick={onSave} 
+          disabled={saving || deleting}
+        >
+          {saving ? "Сохранение..." : "Сохранить"}
+        </button>
+        <button
+          type="button"
+          onClick={() => onDelete()}
+          disabled={saving || deleting}
+          aria-label={deleting ? "Удаление..." : "Удалить проект"}
+          title={deleting ? "Удаление..." : "Удалить проект"}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "8px 12px",
+            background: saving || deleting ? "#fee2e2" : "#fecaca",
+            border: "none",
+            borderRadius: "6px",
+            cursor: saving || deleting ? "not-allowed" : "pointer",
+            color: saving || deleting ? "#9ca3af" : "#dc2626",
+            opacity: saving || deleting ? 0.5 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (!saving && !deleting) {
+              e.currentTarget.style.backgroundColor = "#fca5a5";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!saving && !deleting) {
+              e.currentTarget.style.backgroundColor = "#fecaca";
+            }
+          }}
+        >
+          <IconTrash aria-hidden="true" width={20} height={20} />
+        </button>
+      </div>
       <section className={styles.mediaSection}>
         <div className={styles.sectionHeader}>
           <div className={styles.sectionTitleRow}>
@@ -3420,43 +3802,45 @@ function MediaPanel({
             Пока галерея пуста. Добавьте изображения из медиа-библиотеки.
           </div>
         ) : (
-          <div className={styles.galleryGrid}>
-            {state.gallery.map((item) => (
-              <div key={item.id} className={styles.galleryThumb}>
-                <button
-                  className={styles.previewDeleteButton}
-                  type="button"
-                  onClick={() => removeGalleryItem(item.id)}
-                  aria-label="Удалить изображение из галереи"
-                >
-                  <IconX aria-hidden="true" />
-                </button>
-                <button
-                  className={styles.galleryThumbButton}
-                  type="button"
-                  onClick={() =>
-                    onOpenLibrary("gallery-replace", {
-                      targetId: item.id,
-                      initialSelection: item.url ? [item.url] : [],
-                    })
-                  }
-                  aria-label="Заменить изображение из галереи"
-                >
-                  {item.url ? (
-                    <Image
-                      src={item.url}
-                      alt={item.caption || "Изображение галереи"}
-                      width={320}
-                      height={200}
-                      unoptimized
-                    />
-                  ) : (
-                    <span className={styles.galleryThumbPlaceholder}>Изображение не выбрано</span>
-                  )}
-                </button>
+          <DndContext
+            accessibility={PROJECTS_DND_ACCESSIBILITY}
+            sensors={sensors}
+            collisionDetection={pointerWithin}
+            modifiers={[restrictToVerticalAxis]}
+            onDragStart={onGalleryDragStart}
+            onDragOver={onGalleryDragOver}
+            onDragEnd={onGalleryDragEnd}
+            onDragCancel={onGalleryDragCancel}
+          >
+            <SortableContext items={state.gallery.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+              <div className={styles.galleryList}>
+                {state.gallery.map((item, index) => (
+                  <SortableGalleryItem
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    onRemove={removeGalleryItem}
+                    onReplace={(id) =>
+                      onOpenLibrary("gallery-replace", {
+                        targetId: id,
+                        initialSelection: item.url ? [item.url] : [],
+                      })
+                    }
+                  />
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+            <DragOverlay dropAnimation={null}>
+              {galleryActiveDragId ? (
+                (() => {
+                  const draggingItem = state.gallery.find((item) => item.id === galleryActiveDragId);
+                  if (!draggingItem) return null;
+                  const index = state.gallery.findIndex((item) => item.id === galleryActiveDragId);
+                  return <GalleryItemCard item={draggingItem} index={index} />;
+                })()
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         )}
       </section>
 
@@ -4302,6 +4686,7 @@ function MediaLibraryModal({
 }: MediaLibraryModalProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set(initialSelection));
   const [uploading, setUploading] = useState(false);
+  const [uploadingCount, setUploadingCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -4350,22 +4735,31 @@ function MediaLibraryModal({
   };
 
   const handleFileInputChange = async (event: ReactChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files ? Array.from(event.target.files).slice(0, 10) : [];
+    const files = event.target.files ? Array.from(event.target.files).slice(0, 20) : [];
     if (!files.length) {
       return;
     }
     setUploading(true);
+    setUploadingCount(files.length);
     setError(null);
     try {
       for (const file of files) {
-        const asset = await onUploadFile(file);
-        selectAsset(asset);
+        try {
+          const asset = await onUploadFile(file);
+          selectAsset(asset);
+          setUploadingCount((prev) => Math.max(0, prev - 1));
+        } catch (fileError) {
+          setUploadingCount((prev) => Math.max(0, prev - 1));
+          const message = fileError instanceof Error && fileError.message ? fileError.message : "Не удалось загрузить файл";
+          setError(message);
+        }
       }
     } catch (err) {
       const message = err instanceof Error && err.message ? err.message : "Не удалось загрузить файл";
       setError(message);
     } finally {
       setUploading(false);
+      setUploadingCount(0);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -4382,7 +4776,10 @@ function MediaLibraryModal({
       <div className={styles.mediaModal}>
         <header className={styles.mediaModalHeader}>
           <div>
-            <h3 className={styles.mediaModalTitle}>Библиотека медиа</h3>
+            <div className={styles.sectionTitleRow} style={{ marginBottom: "8px" }}>
+              <h3 className={styles.mediaModalTitle}>Библиотека медиа</h3>
+              <FieldHint text="Загруженные изображения автоматически конвертируются в формат AVIF для быстрой загрузки на сайте." />
+            </div>
             <p className={styles.mediaModalSubtitle}>
               Загрузите изображение или добавьте ссылку. Выбранные элементы отображаются справа.
             </p>
@@ -4405,9 +4802,16 @@ function MediaLibraryModal({
                   onChange={handleFileInputChange}
                   disabled={uploading}
                 />
-                {uploading ? "Загрузка..." : "Загрузить файлы"}
+                {uploading
+                  ? uploadingCount > 0
+                    ? (() => {
+                        const fileWord = uploadingCount === 1 ? "файл" : uploadingCount < 5 ? "файла" : "файлов";
+                        return `Конвертация... (${uploadingCount} ${fileWord})`;
+                      })()
+                    : "Загрузка..."
+                  : "Загрузить файлы"}
               </label>
-              <p className={styles.uploadHint}>Поддерживаются JPG, PNG, WEBP, GIF до 15 МБ. Можно выбрать до 10 файлов за раз.</p>
+              <p className={styles.uploadHint}>Поддерживаются JPG, PNG, WEBP, GIF до 15 МБ. Можно выбрать до 20 файлов за раз.</p>
             </div>
             {error ? <p className={styles.modalError}>{error}</p> : null}
             <p className={styles.modalHint}>
@@ -4462,9 +4866,15 @@ function MediaLibraryModal({
                     </div>
                   );
                 })
-              ) : (
+              ) : null}
+              {uploadingCount > 0
+                ? Array.from({ length: uploadingCount }).map((_, index) => (
+                    <MediaLibraryItemSkeleton key={`uploading-skeleton-${index}`} />
+                  ))
+                : null}
+              {!visibleAssets.length && !uploading ? (
                 <div className={styles.emptyState}>В библиотеке пока нет изображений.</div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
