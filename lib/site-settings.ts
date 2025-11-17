@@ -9,8 +9,8 @@ type CacheEntry<T> = {
 const CACHE_TTL = 60 * 1000;
 
 let contactCache: CacheEntry<ContactSettings> | null = null;
-// let socialCache: CacheEntry<SocialLink[]> | null = null;
-// let appearanceCache: CacheEntry<AppearanceSettings> | null = null;
+let socialCache: CacheEntry<SocialLink[]> | null = null;
+let appearanceCache: CacheEntry<AppearanceSettings> | null = null;
 
 const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
   heroTitle: "Контактная информация",
