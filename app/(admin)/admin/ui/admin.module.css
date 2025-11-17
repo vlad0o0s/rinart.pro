@@ -991,6 +991,69 @@
   justify-content: flex-end;
 }
 
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0f172a;
+  margin: 0;
+}
+
+.previewBox {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(248, 250, 252, 0.8);
+  overflow: hidden;
+  min-height: 240px;
+  aspect-ratio: 16 / 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewBox img,
+.previewBox > :not(.previewPlaceholder) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.previewPlaceholder {
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+  color: rgba(15, 23, 42, 0.45);
+  text-align: center;
+  padding: 24px;
+}
+
+.fieldActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
 .settingsPanels {
   display: flex;
   flex-direction: column;
@@ -1299,12 +1362,17 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   direction: ltr;
   unicode-bidi: plaintext;
+  width: 100%;
 }
 
 .textInput:focus-visible {
   outline: none;
   border-color: rgba(71, 85, 105, 0.6);
   box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.18);
+}
+
+.textInputWide {
+  max-width: 100%;
 }
 
 /* .taglineEditor {

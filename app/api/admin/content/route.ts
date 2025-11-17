@@ -6,6 +6,9 @@ export async function GET(request: NextRequest) {
   await assertAdmin(request);
   const blocks = await getGlobalBlocks();
 
+  const { getContactSettings } = await import("@/lib/site-settings");
+  const contact = await getContactSettings();
+
   const items = [
     {
       slug: "home-hero",
@@ -16,6 +19,12 @@ export async function GET(request: NextRequest) {
       slug: "page-transition",
       title: "Логотип загрузки/перехода",
       imageUrl: blocks["page-transition"]?.imageUrl ?? null,
+    },
+    {
+      slug: "contacts",
+      title: "Контакты",
+      imageUrl: contact.heroImageUrl ?? null,
+      locationLabel: contact.locationLabel ?? null,
     },
   ];
 

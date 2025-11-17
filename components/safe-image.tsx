@@ -12,13 +12,15 @@ type SafeImageProps = ImageProps & {
 };
 
 export function SafeImage(props: SafeImageProps) {
-	const { src, alt, placeholderSrc = PLACEHOLDER_SRC, unoptimized, onError, ...rest } = props;
+	const { src, alt, placeholderSrc = PLACEHOLDER_SRC, onError, ...rest } = props;
 	const initialSrc = useMemo(() => {
 		const value = typeof src === "string" ? src : (Array.isArray(src) ? src[0] : src);
 		return value;
 	}, [src]);
 	const [currentSrc, setCurrentSrc] = useState<ImageProps["src"]>(initialSrc);
 	const [hasError, setHasError] = useState(false);
+	// Генерируем timestamp один раз при монтировании компонента через ленивую инициализацию
+	const cacheBuster = useState(() => `t=${Date.now()}`)[0];
 	
 	const isLocal = useMemo(() => {
 		const s = typeof initialSrc === "string" ? initialSrc : "";
@@ -49,7 +51,7 @@ export function SafeImage(props: SafeImageProps) {
 	if (isLocal && typeof currentSrc === "string") {
 		const { width, height, ...imgProps } = rest;
 		// Добавляем timestamp для обхода кеша, если файл не загружается
-		const srcWithCache = hasError ? currentSrc : `${currentSrc}${currentSrc.includes("?") ? "&" : "?"}t=${Date.now()}`;
+		const srcWithCache = hasError ? currentSrc : `${currentSrc}${currentSrc.includes("?") ? "&" : "?"}${cacheBuster}`;
 		return (
 			<img
 				src={hasError ? currentSrc : srcWithCache}

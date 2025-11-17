@@ -1220,7 +1220,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const [activeView, setActiveView] = useState<"projects" | "seo" | "content">("projects");
 
   // Content (site-wide) state
-  type ContentItemState = { slug: "home-hero" | "page-transition"; title: string; imageUrl: string | null };
+  type ContentItemState = { slug: "home-hero" | "page-transition" | "contacts"; title: string; imageUrl: string | null; locationLabel?: string | null };
   const [contentItems, setContentItems] = useState<ContentItemState[]>([]);
   const [contentLoading, setContentLoading] = useState(false);
   const [contentSaving, setContentSaving] = useState(false);
@@ -1736,7 +1736,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       setLibraryAssets((prev) => mergeMediaAssets(prev, assets));
 
       // Content tab: direct content item update
-      if (mediaLibrary.mode === "site-hero" || mediaLibrary.mode === "site-transition") {
+      if (mediaLibrary.mode === "site-hero" || mediaLibrary.mode === "site-transition" || mediaLibrary.mode === "contact-hero") {
         const asset = assets[0];
         if (asset) {
           setContentItems((prev) =>
@@ -1745,7 +1745,9 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                 ? { ...item, imageUrl: asset.url }
                 : item.slug === "page-transition" && mediaLibrary.mode === "site-transition"
                   ? { ...item, imageUrl: asset.url }
-                  : item,
+                  : item.slug === "contacts" && mediaLibrary.mode === "contact-hero"
+                    ? { ...item, imageUrl: asset.url }
+                    : item,
             ),
           );
         }
@@ -2783,39 +2785,84 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
             <main className={`${styles.editorColumn} ${styles.seoEditorColumn}`}>
               {selectedContent ? (
                 <div className={styles.settingsPanel}>
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.fieldLabel}>{selectedContent.title}</label>
-                    <div
-                      className={styles.previewBox}
-                      style={
-                        selectedContent.slug === "page-transition"
-                          ? { backgroundColor: "#e5e7eb" }
-                          : undefined
-                      }
-                    >
-                      {selectedContent.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={selectedContent.imageUrl} alt={selectedContent.title} />
-                      ) : (
-                        <div className={styles.previewPlaceholder}>Изображение не выбрано</div>
-                      )}
-                    </div>
-                    <div className={styles.fieldActions}>
-                      <button
-                        className={styles.secondaryButton}
-                        type="button"
-                        onClick={() =>
-                          openMediaLibrary(
-                            selectedContent.slug === "home-hero" ? "site-hero" : "site-transition",
-                            { initialSelection: selectedContent.imageUrl ? [selectedContent.imageUrl] : [] },
-                          )
+                  {selectedContent.slug === "contacts" ? (
+                    <>
+                      <div className={styles.fieldGroup}>
+                        <LabelWithHint
+                          label="Адрес / локация"
+                          hint="Адрес или описание локации, отображается на странице контактов."
+                        />
+                        <input
+                          className={styles.textInput}
+                          value={selectedContent.locationLabel || ""}
+                          onChange={(event) => {
+                            setContentItems((prev) =>
+                              prev.map((i) => (i.slug === "contacts" ? { ...i, locationLabel: event.target.value } : i))
+                            );
+                          }}
+                          disabled={contentSaving}
+                          placeholder="Москва, Российская Федерация"
+                        />
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.fieldLabel}>Изображение</label>
+                        <div className={styles.previewBox}>
+                          {selectedContent.imageUrl ? (
+                            <SafeImage src={selectedContent.imageUrl} alt="Изображение контактов" width={640} height={400} />
+                          ) : (
+                            <div className={styles.previewPlaceholder}>Изображение не выбрано</div>
+                          )}
+                        </div>
+                        <div className={styles.fieldActions}>
+                          <button
+                            className={styles.secondaryButton}
+                            type="button"
+                            onClick={() =>
+                              openMediaLibrary("contact-hero", {
+                                initialSelection: selectedContent.imageUrl ? [selectedContent.imageUrl] : [],
+                              })
+                            }
+                            disabled={contentSaving}
+                          >
+                            Выбрать изображение
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.fieldLabel}>{selectedContent.title}</label>
+                      <div
+                        className={styles.previewBox}
+                        style={
+                          selectedContent.slug === "page-transition"
+                            ? { backgroundColor: "#e5e7eb" }
+                            : undefined
                         }
-                        disabled={contentSaving}
                       >
-                        Выбрать изображение
-                      </button>
+                        {selectedContent.imageUrl ? (
+                          <SafeImage src={selectedContent.imageUrl} alt={selectedContent.title} width={640} height={400} />
+                        ) : (
+                          <div className={styles.previewPlaceholder}>Изображение не выбрано</div>
+                        )}
+                      </div>
+                      <div className={styles.fieldActions}>
+                        <button
+                          className={styles.secondaryButton}
+                          type="button"
+                          onClick={() =>
+                            openMediaLibrary(
+                              selectedContent.slug === "home-hero" ? "site-hero" : "site-transition",
+                              { initialSelection: selectedContent.imageUrl ? [selectedContent.imageUrl] : [] },
+                            )
+                          }
+                          disabled={contentSaving}
+                        >
+                          Выбрать изображение
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div className={styles.formActions}>
                     <button
                       className={styles.primaryButton}
@@ -2826,7 +2873,10 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                           setContentSaving(true);
                           const payload = await fetchJson<{ item: ContentItemState }>(`/api/admin/content/${selectedContent.slug}`, {
                             method: "PATCH",
-                            body: JSON.stringify({ imageUrl: selectedContent.imageUrl ?? null }),
+                            body: JSON.stringify({
+                              imageUrl: selectedContent.imageUrl ?? null,
+                              locationLabel: selectedContent.slug === "contacts" ? selectedContent.locationLabel ?? null : undefined,
+                            }),
                           });
                           setContentItems((prev) => prev.map((i) => (i.slug === payload.item.slug ? payload.item : i)));
                           setStatus("Контент обновлён");
@@ -4841,7 +4891,7 @@ function MediaLibraryModal({
           <div>
             <div className={styles.sectionTitleRow} style={{ marginBottom: "8px" }}>
               <h3 className={styles.mediaModalTitle}>Библиотека медиа</h3>
-              <FieldHint text="Загруженные изображения автоматически конвертируются в формат WebP для быстрой загрузки на сайте." />
+              <FieldHint text="Загруженные изображения автоматически конвертируются в формат AVIF (или WebP) для быстрой загрузки на сайте." />
             </div>
             <p className={styles.mediaModalSubtitle}>
               Загрузите изображение или добавьте ссылку. Выбранные элементы отображаются справа.
