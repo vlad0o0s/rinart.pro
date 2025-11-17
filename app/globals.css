@@ -34,6 +34,13 @@ select {
   margin: 0;
   overflow-x: hidden;
   transition: background 0.3s ease, color 0.3s ease;
+  /* Hide scrollbar but keep scroll functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .site-shell {
@@ -44,6 +51,20 @@ select {
 
 html {
   overflow-x: hidden;
+  scroll-behavior: smooth;
+  /* Keep main scrollbar visible on html */
+}
+
+/* Prevent scroll during initial load - using classes to avoid hydration issues */
+html.scroll-locked {
+  overflow-y: hidden !important;
+  height: 100%;
+}
+
+html.scroll-locked body.scroll-locked {
+  overflow-y: hidden !important;
+  height: 100vh !important;
+  /* Removed position: fixed to allow navigation */
 }
 
 cite,

@@ -60,13 +60,11 @@ export async function upsertSiteSetting(key: string, value: unknown): Promise<Si
 
   // Read raw DB value to verify persistence
   try {
+    type ValueRow = RowDataPacket & { value: unknown | null; updatedAt: Date };
     const [rows] = await runQuery((pool) =>
-      pool.query<Array<{ value: unknown; updatedAt: Date }>>(
-        "SELECT value, updatedAt FROM SiteSetting WHERE `key` = ? LIMIT 1",
-        [key],
-      ),
+      pool.query<ValueRow[]>("SELECT value, updatedAt FROM SiteSetting WHERE `key` = ? LIMIT 1", [key]),
     );
-    const raw = rows?.[0] ?? null;
+    const raw = (rows?.[0] as ValueRow | undefined) ?? null;
     console.log("[SiteSettingsRepo] after-upsert raw", { key, raw });
   } catch {}
 

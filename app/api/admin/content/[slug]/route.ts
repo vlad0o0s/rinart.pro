@@ -8,9 +8,9 @@ function isAllowedSlug(slug: string): slug is AllowedSlug {
   return slug === "home-hero" || slug === "page-transition";
 }
 
-export async function PATCH(request: NextRequest, context: { params: { slug: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
   await assertAdmin(request);
-  const rawSlug = context.params.slug;
+  const { slug: rawSlug } = await context.params;
   const slug = decodeURIComponent((rawSlug ?? "")).trim();
   if (!isAllowedSlug(slug)) {
     try {
