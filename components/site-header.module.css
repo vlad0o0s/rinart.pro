@@ -102,6 +102,8 @@
 
 .wrapper {
   width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
   padding: 18px 10px 10px;
   display: flex;
   flex-direction: column;
@@ -390,8 +392,8 @@
 
 .subnavList {
   list-style: none;
-  margin: 20px 0 0;
-  padding: 0;
+  margin: 20px auto 0;
+  padding: 0 10px;
   display: flex;
   gap: 16px;
   justify-content: flex-start;
@@ -401,6 +403,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: rgba(37, 37, 37, 0.5);
+  max-width: 1920px;
 }
 
 .subnavItem a {

@@ -330,16 +330,32 @@ function MobileMenu({
       <div className={styles.menuPanel}>
         <div className={styles.menuContent}>
           <ul className={styles.menuList}>
-            {NAV_LINKS.map((link, index) => (
-              <li
-                key={`${link.href}-mobile`}
-                className={`${styles.menuItem} ${index === 0 ? styles.menuItemHideMobile : ""}`}
-              >
-                <Link href={link.href} onClick={closeMenu}>
-                  {link.label}
-                </Link>
-              </li>
-            ))}
+            {NAV_LINKS.map((link, index) => {
+              // Use regular <a> for anchor links (href contains #) to allow proper anchor navigation
+              const isAnchorLink = link.href.includes("#");
+              return (
+                <li
+                  key={`${link.href}-mobile`}
+                  className={`${styles.menuItem} ${index === 0 ? styles.menuItemHideMobile : ""}`}
+                >
+                  {isAnchorLink ? (
+                    <a
+                      href={link.href}
+                      onClick={() => {
+                        closeMenu();
+                        // Let PageTransition handle the smooth scroll
+                      }}
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link href={link.href} onClick={closeMenu}>
+                      {link.label}
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
           </ul>
           <div className={styles.socials}>
             {socials.map((social) => {

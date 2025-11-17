@@ -7,6 +7,9 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
 }
 
 .page > *:not(:last-child) {

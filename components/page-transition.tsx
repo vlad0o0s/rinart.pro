@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, startTransition as reactStartTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./page-transition.module.css";
@@ -38,6 +38,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
   const pendingPathRef = useRef<string | null>(null);
   const shouldAwaitRouteRef = useRef(false);
   const readyPathRef = useRef<string | null>(null);
+  const pendingHashRef = useRef<string | null>(null);
 
   const clearNavigationTimer = useCallback(() => {
     if (navigationRef.current) {
@@ -64,6 +65,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
         // Initial load: instantly cover, then proceed to line without "closing" animation
         pendingPathRef.current = null;
         readyPathRef.current = null;
+        pendingHashRef.current = null;
         setPhase("idle");
         setIsActive(true);
         requestAnimationFrame(() => {
@@ -75,6 +77,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
       } else {
         // Route change: normal close → line sequence
         readyPathRef.current = null;
+        // Keep pendingHashRef for route changes with hash
         setPhase("idle");
         setIsActive(true);
         requestAnimationFrame(() => {
@@ -84,7 +87,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
         });
       }
     },
-    [clearNavigationTimer, clearWaitTimer, phase, isActive],
+    [clearNavigationTimer, clearWaitTimer],
   );
 
   useEffect(() => {
@@ -103,14 +106,28 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
     }
 
     if (phase === "open") {
-      // Ensure scroll is at top when animation completes
-      if (typeof window !== "undefined") {
+      // Only scroll to top on route changes, not on initial load
+      if (typeof window !== "undefined" && shouldAwaitRouteRef.current) {
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
       }
       const timer = setTimeout(() => {
         setIsActive(false);
+        // After animation completes, scroll to anchor if there is one
+        if (typeof window !== "undefined" && pendingHashRef.current) {
+          const hash = pendingHashRef.current;
+          pendingHashRef.current = null;
+          // Wait a bit for page to be fully rendered
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const element = document.querySelector(hash);
+              if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            });
+          });
+        }
       }, OPEN_DURATION);
       return () => clearTimeout(timer);
     }
@@ -162,25 +179,58 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
       }
 
       const current = window.location;
-      const isSamePage = 
+      
+      // Check if it's a same-page anchor link (same pathname, different or same hash)
+      // For same-page anchors, handle smooth scroll manually
+      const isSamePage = url.pathname === current.pathname;
+      const isSamePageAnchor = isSamePage && url.hash;
+      
+      // If same page with anchor, prevent default behavior and handle smooth scroll manually
+      // onClick handlers (like closeMenu) are attached with React, which uses bubbling phase
+      // Our handler uses capture phase (true), so we execute first
+      // We need to prevent default, but let React handlers execute via bubbling
+      if (isSamePageAnchor) {
+        // Prevent default navigation behavior immediately
+        event.preventDefault();
+        // Don't stop propagation - let React onClick handlers (like closeMenu) execute
+        // event.stopPropagation(); // Commented to allow React handlers
+        
+        // Handle smooth scroll after a microtask to ensure React handlers run
+        queueMicrotask(() => {
+          // Smooth scroll to anchor
+          const targetId = url.hash.substring(1); // Remove #
+          const targetElement = document.getElementById(targetId) || document.querySelector(url.hash);
+          
+          if (targetElement) {
+            targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+            // Update URL hash without triggering scroll
+            history.pushState(null, "", url.hash);
+          }
+        });
+        
+        return;
+      }
+      
+      // If completely same page (pathname, search, hash), allow default behavior
+      const isCompletelySamePage = 
         url.pathname === current.pathname &&
         url.search === current.search &&
         url.hash === current.hash;
 
-      if (isSamePage) {
+      if (isCompletelySamePage) {
         return;
       }
 
+      // For cross-page anchor links (different pathname with hash), we need to navigate
+      // and then scroll to the anchor after the page loads
       const destination = url.pathname + url.search + url.hash;
       const targetPath = url.pathname;
+      const targetHash = url.hash;
 
       // Set pendingPath BEFORE router.push so route-ready event can match it
       pendingPathRef.current = targetPath;
-
-      // Dispatch event to unlock scroll before transition
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("rinart:route-change"));
-      }
+      // Store hash to scroll to it after navigation completes
+      pendingHashRef.current = targetHash || null;
 
       // Start transition - this will clear any existing navigation timer
       startTransition({ awaitRoute: true });
@@ -193,7 +243,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
         // Call router.push directly - no setTimeout, no queueMicrotask
         // This should work if router is correctly initialized
         router.push(destination);
-      } catch (error) {
+      } catch {
         // Fallback: try window.location as last resort
         window.location.href = destination;
       }
@@ -206,38 +256,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Always prevent unwanted scroll on page load/refresh
-    const preventScroll = () => {
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    };
 
-    // Set scroll to top immediately
-    preventScroll();
-    
-    // Also set on next frame to ensure it sticks
-    requestAnimationFrame(() => {
-      preventScroll();
-      requestAnimationFrame(() => {
-        preventScroll();
-      });
-    });
-
-    // Monitor scroll for a short time after mount
-    const scrollMonitor = setInterval(() => {
-      const currentScroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-      
-      if (currentScroll > 0) {
-        // Try to fix it
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      }
-    }, 100);
-
-    // Clear monitor on cleanup
-    setTimeout(() => clearInterval(scrollMonitor), 5000);
 
     const hasShownPreload = sessionStorage.getItem(SESSION_KEY);
     
@@ -253,7 +272,6 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
         clearTimeout(initialTimerRef.current);
         initialTimerRef.current = null;
       }
-      clearInterval(scrollMonitor);
       // Don't clear navigation timer here - it should complete even if component remounts
       // clearNavigationTimer();
     };
@@ -268,7 +286,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
     pendingPathRef.current = null;
     readyPathRef.current = null;
     setPhase("open");
-  }, [clearWaitTimer, phase]);
+  }, [clearWaitTimer]);
 
   useEffect(() => {
     if (phase !== "wait") {
@@ -334,35 +352,6 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
     };
   }, [phase, finishWaiting, pathname]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    if (isActive) {
-      const originalOverflow = document.body.style.overflow;
-      const originalHeight = document.body.style.height;
-      const originalScrollBehavior = document.documentElement.style.scrollBehavior;
-      
-      document.body.style.overflow = "hidden";
-      document.body.style.height = "100vh";
-      document.documentElement.style.scrollBehavior = "auto";
-      
-      // Force scroll to top when animation starts
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-      
-      return () => {
-        document.body.style.overflow = originalOverflow;
-        document.body.style.height = originalHeight;
-        document.documentElement.style.scrollBehavior = originalScrollBehavior || "";
-        
-        // Ensure we're at top after animation completes
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      };
-    }
-  }, [isActive, phase]);
 
   const wrapperClassName = [
     styles.wrapper,

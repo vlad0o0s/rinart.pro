@@ -14,6 +14,7 @@ export type ContactSettings = {
   emailLabel: string;
   emailHref: string;
   locationLabel: string;
+  heroImageUrl: string | null;
   footerTitle: string;
   cityLabel: string;
   whatsappLabel: string;

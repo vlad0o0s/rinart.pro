@@ -51,21 +51,10 @@ body::-webkit-scrollbar {
 
 html {
   overflow-x: hidden;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   /* Keep main scrollbar visible on html */
 }
 
-/* Prevent scroll during initial load - using classes to avoid hydration issues */
-html.scroll-locked {
-  overflow-y: hidden !important;
-  height: 100%;
-}
-
-html.scroll-locked body.scroll-locked {
-  overflow-y: hidden !important;
-  height: 100vh !important;
-  /* Removed position: fixed to allow navigation */
-}
 
 cite,
 dfn,

@@ -54,16 +54,18 @@ export default function ContactsHero({ contact, socials }: ContactsHeroProps) {
         ) : null}
       </div>
 
-      <div className={styles.heroImage}>
-        <Image
-          src="/img/group-1005.webp"
-          alt="Команда RINART"
-          fill
-          className={styles.image}
-          sizes="(max-width: 768px) 100vw, 480px"
-          priority
-        />
-      </div>
+      {contact.heroImageUrl ? (
+        <div className={styles.heroImage}>
+          <Image
+            src={contact.heroImageUrl}
+            alt="Команда RINART"
+            fill
+            className={styles.image}
+            sizes="(max-width: 768px) 100vw, 480px"
+            priority
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

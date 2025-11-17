@@ -7,6 +7,9 @@
   color: #252525;
   font-family: "Neue Haas Unica", "Helvetica Neue", Arial, sans-serif;
   gap: clamp(40px, 6vw, 72px);
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
 }
 
 /*********************************************

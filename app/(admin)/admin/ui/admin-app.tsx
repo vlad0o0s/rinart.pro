@@ -9,8 +9,6 @@ import {
   KeyboardSensor,
   DragOverlay,
   closestCenter,
-  closestCorners,
-  rectIntersection,
   pointerWithin,
   useSensor,
   useSensors,
@@ -22,7 +20,6 @@ import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
-  rectSortingStrategy,
   arrayMove,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
@@ -222,7 +219,8 @@ type MediaLibraryMode =
   | "team-image"
   | "team-mobile-image"
   | "site-hero"
-  | "site-transition";
+  | "site-transition"
+  | "contact-hero";
 
 type MediaLibraryState = {
   open: boolean;
@@ -238,6 +236,7 @@ type ContactSettingsState = {
   emailLabel: string;
   emailHref: string;
   locationLabel: string;
+  heroImageUrl: string | null;
   footerTitle: string;
   cityLabel: string;
   whatsappLabel: string;
@@ -274,6 +273,7 @@ const CONTACT_DEFAULTS: ContactSettingsState = {
   emailLabel: "rinartburo@mail.ru",
   emailHref: "mailto:rinartburo@mail.ru",
   locationLabel: "Москва, Российская Федерация",
+  heroImageUrl: "/img/group-1005.webp",
   footerTitle: "Обсудим ваш проект:",
   cityLabel: "г. Москва",
   whatsappLabel: "Написать в WhatsApp",
@@ -350,6 +350,7 @@ function normalizeContactSettings(value?: Partial<ContactSettingsState> | null):
     emailLabel: value.emailLabel?.trim() || CONTACT_DEFAULTS.emailLabel,
     emailHref: value.emailHref?.trim() || CONTACT_DEFAULTS.emailHref,
     locationLabel: value.locationLabel?.trim() || CONTACT_DEFAULTS.locationLabel,
+    heroImageUrl: value.heroImageUrl?.trim() || CONTACT_DEFAULTS.heroImageUrl,
     footerTitle: value.footerTitle?.trim() || CONTACT_DEFAULTS.footerTitle,
     cityLabel: value.cityLabel?.trim() || CONTACT_DEFAULTS.cityLabel,
     whatsappLabel: value.whatsappLabel?.trim() || CONTACT_DEFAULTS.whatsappLabel,
@@ -998,15 +999,21 @@ function SortableGalleryItem({
   // Отслеживаем завершение drag для предотвращения горизонтального "прыжка"
   useEffect(() => {
     if (isDragging) {
-      setJustEndedDrag(false);
+      // Use setTimeout to avoid synchronous setState in effect
+      setTimeout(() => {
+        setJustEndedDrag(false);
+      }, 0);
     } else {
       // Когда drag только что завершился - сразу сбрасываем transform без transition
       if (transform && (transform.x !== 0 || transform.scaleX !== 1)) {
-        setJustEndedDrag(true);
-        // Используем requestAnimationFrame для синхронизации с рендером браузера
-        requestAnimationFrame(() => {
-          setJustEndedDrag(false);
-        });
+        // Use setTimeout to avoid synchronous setState in effect
+        setTimeout(() => {
+          setJustEndedDrag(true);
+          // Используем requestAnimationFrame для синхронизации с рендером браузера
+          requestAnimationFrame(() => {
+            setJustEndedDrag(false);
+          });
+        }, 0);
       }
     }
   }, [isDragging, transform]);
@@ -1092,7 +1099,7 @@ function SortableGalleryItem({
   );
 }
 
-function GalleryItemCard({ item, index }: { item: GalleryItem; index: number }) {
+function GalleryItemCard({ item }: { item: GalleryItem; index: number }) {
   return (
     <div className={styles.galleryThumb}>
       <button
@@ -1811,6 +1818,11 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               page.slug === mediaLibrary.targetId ? { ...page, ogImageUrl: seoAsset.url } : page,
             ),
           );
+        }
+      } else if (mediaLibrary.mode === "contact-hero") {
+        const heroAsset = assets[0];
+        if (heroAsset) {
+          setContactSettings((prev) => ({ ...prev, heroImageUrl: heroAsset.url }));
         }
       } else if (mediaLibrary.mode === "team-image") {
         const teamAsset = assets[0];
@@ -4030,6 +4042,52 @@ function SettingsView({
               disabled={settingsLoading}
             />
           </label>
+        </div>
+        <div className={styles.mediaSection}>
+          <div className={styles.sectionHeader}>
+            <div className={styles.sectionTitleRow}>
+              <h3 className={styles.sectionTitle}>Изображение героя</h3>
+              <FieldHint text="Изображение, показываемое на странице контактов." />
+            </div>
+            <p className={styles.sectionSubtitle}>Отображается справа от контактной информации.</p>
+            <div className={styles.sectionActions}>
+              <button
+                className={styles.secondaryButton}
+                type="button"
+                onClick={() =>
+                  onOpenMediaLibrary("contact-hero", {
+                    initialSelection: contactSettings.heroImageUrl ? [contactSettings.heroImageUrl] : [],
+                  })
+                }
+              >
+                Выбрать из библиотеки
+              </button>
+            </div>
+          </div>
+          <div className={styles.heroPreview}>
+            {contactSettings.heroImageUrl ? (
+              <div className={styles.heroImageWrap}>
+                <button
+                  className={styles.previewDeleteButton}
+                  type="button"
+                  onClick={() => onContactChange("heroImageUrl", "")}
+                  aria-label="Удалить изображение"
+                >
+                  <IconX aria-hidden="true" />
+                </button>
+                <Image
+                  src={contactSettings.heroImageUrl}
+                  alt="Изображение героя контактов"
+                  width={640}
+                  height={400}
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <div className={styles.heroPlaceholder}>Изображение не выбрано</div>
+            )}
+          </div>
+          <p className={styles.mediaHint}>Выберите изображение из медиа-библиотеки.</p>
         </div>
       </div>
       <div className={styles.settingsActions}>

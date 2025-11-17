@@ -74,129 +74,16 @@ export default async function RootLayout({
   const appearanceSettings = await getAppearanceSettings();
 
   return (
-    <html lang="ru" data-scroll-behavior="smooth">
+    <html lang="ru" data-scroll-behavior="auto">
       <body className={`${neueHaasUnica.variable} antialiased`} suppressHydrationWarning>
         <Script
-          id="prevent-scroll-on-load"
-          strategy="afterInteractive"
+          id="disable-scroll-restoration"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-              (function() {
-                // Disable browser scroll restoration
-                if ('scrollRestoration' in history) {
-                  history.scrollRestoration = 'manual';
-                }
-                
-                // Immediately prevent scroll on page load - force multiple times
-                var forceScrollToTop = function() {
-                  window.scrollTo(0, 0);
-                  document.documentElement.scrollTop = 0;
-                  document.body.scrollTop = 0;
-                  
-                  // Also try scrollIntoView on html element
-                  if (document.documentElement.scrollIntoView) {
-                    document.documentElement.scrollIntoView({ behavior: 'auto', block: 'start' });
-                  }
-                };
-                
-                // Force immediately
-                forceScrollToTop();
-                
-                // Force on next frame
-                requestAnimationFrame(function() {
-                  forceScrollToTop();
-                  requestAnimationFrame(function() {
-                    forceScrollToTop();
-                    
-                    var afterInitScroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-                    
-                    if (afterInitScroll > 0) {
-                      // Final aggressive attempt
-                      forceScrollToTop();
-                      
-                      // Wait a bit and check again
-                      setTimeout(function() {
-                        var finalScroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-                        if (finalScroll > 0) {
-                          forceScrollToTop();
-                        }
-                      }, 50);
-                    }
-                  });
-                });
-                
-                // Block scroll during initial load - using classes instead of attributes to avoid hydration issues
-                document.documentElement.classList.add('scroll-locked');
-                document.body.classList.add('scroll-locked');
-                
-                var preventScroll = function(e) {
-                  var currentScroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-                  if (currentScroll > 0) {
-                    window.scrollTo(0, 0);
-                    document.documentElement.scrollTop = 0;
-                    document.body.scrollTop = 0;
-                  }
-                };
-                window.addEventListener('scroll', preventScroll, { passive: false });
-                
-                // Monitor scroll changes with polling
-                var lastScroll = 0;
-                var scrollMonitor = setInterval(function() {
-                  var currentScroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-                  
-                  // Detect scroll change
-                  if (currentScroll !== lastScroll && currentScroll > 0) {
-                    lastScroll = currentScroll;
-                    
-                    // Try to reset it
-                    window.scrollTo(0, 0);
-                    document.documentElement.scrollTop = 0;
-                    document.body.scrollTop = 0;
-                  }
-                  
-                  lastScroll = currentScroll;
-                }, 100);
-                
-                // Remove scroll lock on navigation - listen for route change events
-                // This will be called by PageTransition when navigation starts
-                window.addEventListener('rinart:route-change', function(e) {
-                  var hasLock = document.documentElement.classList.contains('scroll-locked');
-                  
-                  if (hasLock) {
-                    clearInterval(scrollMonitor);
-                    document.documentElement.classList.remove('scroll-locked');
-                    document.body.classList.remove('scroll-locked');
-                    window.removeEventListener('scroll', preventScroll);
-                  }
-                }, { once: false });
-                
-                // Restore scroll after page is ready
-                var restoreScroll = function() {
-                  clearInterval(scrollMonitor);
-                  document.documentElement.classList.remove('scroll-locked');
-                  document.body.classList.remove('scroll-locked');
-                  window.removeEventListener('scroll', preventScroll);
-                  window.scrollTo(0, 0);
-                  document.documentElement.scrollTop = 0;
-                  document.body.scrollTop = 0;
-                };
-                
-                // Wait for actual page load, not just DOM ready
-                if (document.readyState === 'complete') {
-                  setTimeout(restoreScroll, 100);
-                } else {
-                  window.addEventListener('load', function() {
-                    setTimeout(restoreScroll, 100);
-                  }, { once: true });
-                  
-                  // Fallback - restore after reasonable time
-                  setTimeout(function() {
-                    if (document.documentElement.classList.contains('scroll-locked')) {
-                      restoreScroll();
-                    }
-                  }, 3000);
-                }
-              })();
+              if (typeof window !== 'undefined' && 'scrollRestoration' in history) {
+                history.scrollRestoration = 'manual';
+              }
             `,
           }}
         />

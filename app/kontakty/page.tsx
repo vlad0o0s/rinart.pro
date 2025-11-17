@@ -18,12 +18,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function KontaktyPage() {
   const [contactSettings, socialLinks] = await Promise.all([getContactSettings(), getSocialLinks()]);
-  try {
-    console.log("[Contacts/Page] SSR data", {
-      contact: contactSettings,
-      socialLinks,
-    });
-  } catch {}
 
   return (
     <>

@@ -25,7 +25,7 @@ export default async function ProektirovaniePage() {
   return (
     <>
       <SiteHeader showDesktopNav subLinks={PROEKTIR_SUBLINKS} socialLinks={socialLinks} />
-      <main className="min-h-screen bg-white text-neutral-900 antialiased">
+      <main className="min-h-screen bg-white text-neutral-900 antialiased site-shell">
         <HeroSection />
         <IntroSection />
         <WorkTypesSection />

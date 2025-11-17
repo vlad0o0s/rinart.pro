@@ -13,7 +13,7 @@ export function Hero({ imageUrl }: { imageUrl?: string }) {
     return value && value.length ? value : HERO_IMAGE;
   }, [imageUrl]);
 
-  const isRemoteHero = /^https?:\/\//i.test(heroImage);
+  // const isRemoteHero = /^https?:\/\//i.test(heroImage);
 
   return (
     <section className={styles.hero} aria-label="Визуализация проекта Ильичевка">

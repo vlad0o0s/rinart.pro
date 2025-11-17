@@ -37,10 +37,7 @@ export function RouteReadyAnnouncer() {
         }),
       );
       
-      // Also ensure scroll is at top
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
+      // Don't force scroll to top here - let PageTransition handle it only on route changes
     };
 
     // Maximum wait time - always dispatch after this
@@ -177,7 +174,7 @@ export function RouteReadyAnnouncer() {
       }
     };
 
-    waitForReady().catch((error) => {
+    waitForReady().catch(() => {
       // If anything fails, still dispatch
       dispatchReady();
     });

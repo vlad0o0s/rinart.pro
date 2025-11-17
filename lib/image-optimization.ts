@@ -48,7 +48,7 @@ export async function optimizeImage(
     if (avifBuffer.length > 0) {
       return { buffer: avifBuffer, extension: ".avif", mimeType: "image/avif" };
     }
-  } catch (error) {
+  } catch {
     // Продолжаем попытки
   }
 
@@ -58,7 +58,7 @@ export async function optimizeImage(
     if (avifBuffer.length > 0) {
       return { buffer: avifBuffer, extension: ".avif", mimeType: "image/avif" };
     }
-  } catch (error) {
+  } catch {
     // Продолжаем попытки
   }
 

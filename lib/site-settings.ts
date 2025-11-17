@@ -9,8 +9,8 @@ type CacheEntry<T> = {
 const CACHE_TTL = 60 * 1000;
 
 let contactCache: CacheEntry<ContactSettings> | null = null;
-let socialCache: CacheEntry<SocialLink[]> | null = null;
-let appearanceCache: CacheEntry<AppearanceSettings> | null = null;
+// let socialCache: CacheEntry<SocialLink[]> | null = null;
+// let appearanceCache: CacheEntry<AppearanceSettings> | null = null;
 
 const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
   heroTitle: "Контактная информация",
@@ -19,6 +19,7 @@ const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
   emailLabel: "rinartburo@mail.ru",
   emailHref: "mailto:rinartburo@mail.ru",
   locationLabel: "Москва, Российская Федерация",
+  heroImageUrl: "/img/group-1005.webp",
   footerTitle: "Обсудим ваш проект:",
   cityLabel: "г. Москва",
   whatsappLabel: "Написать в WhatsApp",
@@ -118,6 +119,7 @@ export function normalizeContactSettings(value: unknown): ContactSettings {
     return DEFAULT_CONTACT_SETTINGS;
   }
   const source = value as Partial<ContactSettings>;
+  const heroImageUrl = source.heroImageUrl?.trim() || DEFAULT_CONTACT_SETTINGS.heroImageUrl;
   return {
     heroTitle: stringOrDefault(source.heroTitle, DEFAULT_CONTACT_SETTINGS.heroTitle),
     phoneLabel: stringOrDefault(source.phoneLabel, DEFAULT_CONTACT_SETTINGS.phoneLabel),
@@ -125,6 +127,7 @@ export function normalizeContactSettings(value: unknown): ContactSettings {
     emailLabel: stringOrDefault(source.emailLabel, DEFAULT_CONTACT_SETTINGS.emailLabel),
     emailHref: stringOrDefault(source.emailHref, DEFAULT_CONTACT_SETTINGS.emailHref),
     locationLabel: stringOrDefault(source.locationLabel, DEFAULT_CONTACT_SETTINGS.locationLabel),
+    heroImageUrl: heroImageUrl || null,
     footerTitle: stringOrDefault(source.footerTitle, DEFAULT_CONTACT_SETTINGS.footerTitle),
     cityLabel: stringOrDefault(source.cityLabel, DEFAULT_CONTACT_SETTINGS.cityLabel),
     whatsappLabel: stringOrDefault(source.whatsappLabel, DEFAULT_CONTACT_SETTINGS.whatsappLabel),
