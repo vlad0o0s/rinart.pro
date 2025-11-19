@@ -166,21 +166,23 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
                 className={`${styles.portfolioCard} ${isInactive ? styles.portfolioCardDimmed : ""}`}
               >
                 <div className={styles.portfolioImageWrapper}>
-                  {project.heroImageUrl ? (
-                    <Image
-                      src={project.heroImageUrl}
-                      alt={project.title}
-                      className={styles.portfolioImage}
-                      loading={index === 0 ? "eager" : "lazy"}
-                      fetchPriority={index === 0 ? "high" : undefined}
-                      priority={index === 0}
-                      fill
-                      sizes="(max-width: 640px) 88vw, (max-width: 1200px) 40vw, 22vw"
-                      quality={75}
-                    />
-                  ) : (
-                    <span className={styles.portfolioImageFallback} aria-hidden />
-                  )}
+                  <div className={styles.portfolioImageContainer}>
+                    {project.heroImageUrl ? (
+                      <Image
+                        src={project.heroImageUrl}
+                        alt={project.title}
+                        className={styles.portfolioImage}
+                        loading={index === 0 ? "eager" : "lazy"}
+                        fetchPriority={index === 0 ? "high" : undefined}
+                        priority={index === 0}
+                        fill
+                        sizes="(max-width: 640px) 88vw, (max-width: 1200px) 40vw, 22vw"
+                        quality={75}
+                      />
+                    ) : (
+                      <span className={styles.portfolioImageFallback} aria-hidden />
+                    )}
+                  </div>
                   <span className={styles.portfolioTitle}>{project.title}</span>
                 </div>
               </article>

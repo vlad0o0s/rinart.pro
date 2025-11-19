@@ -1,8 +1,8 @@
 'use client';
 
-import Image from "next/image";
 import type { CSSProperties } from "react";
 import { useReveal } from "@/lib/use-reveal";
+import { SafeImage } from "@/components/safe-image";
 import styles from "./project-diagram.module.css";
 
 type LabelVariant = "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
@@ -65,8 +65,8 @@ export function ProjectDiagram() {
             );
           })}
         </div>
-        <Image
-          src="/img/aksonoometrija-1-1.webp"
+        <SafeImage
+          src="/img/image.png"
           alt="Аксоноометрия проекта дома"
           width={1189}
           height={768}

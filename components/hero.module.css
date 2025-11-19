@@ -37,8 +37,8 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.4;
-  mix-blend-mode: multiply;
+  opacity: 0.1;
+  mix-blend-mode: normal;
   filter: contrast(1.15);
 }
 

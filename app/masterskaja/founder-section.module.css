@@ -199,40 +199,29 @@
 
 .yearBlock {
   width: 100%;
-  border: none;
-  background: none;
   padding: 0;
   text-align: left;
-  cursor: pointer;
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transition: max-height 0.5s ease, opacity 0.5s ease;
+  margin-bottom: clamp(24px, 4vw, 48px);
 }
 
-.yearBlock:focus-visible {
-  outline: 2px dotted #252525;
-  outline-offset: 4px;
-}
-
-.yearBlockActive {
-  max-height: 520px;
-  opacity: 1;
+.yearBlock:last-child {
+  margin-bottom: 0;
 }
 
 .year {
   display: block;
-  margin: 0 0 20px;
-  font-size: clamp(48px, 7vw, 96px);
-  font-weight: 700;
-  line-height: 1;
+  margin: 0 0 12px;
+  font-size: clamp(20px, 2.5vw, 28px);
+  font-weight: 600;
+  line-height: 1.2;
+  color: #252525;
 }
 
 .yearBlockRow {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: 6px;
+  margin-bottom: 16px;
 }
 
 .yearBlockRow:last-of-type {
@@ -241,7 +230,7 @@
 
 .liner {
   width: 100%;
-  height: 3px;
+  height: 1px;
   background-color: #252525;
   display: block;
 }
@@ -251,15 +240,17 @@
 }
 
 .description {
-  font-size: clamp(18px, 1.6vw, 26px);
-  font-weight: 800;
-  text-transform: uppercase;
-  line-height: 1;
-  letter-spacing: -0.01em;
+  font-size: clamp(14px, 1.4vw, 16px);
+  font-weight: 400;
+  text-transform: none;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: #252525;
 }
 
 .descriptionMuted {
-  opacity: 0.15;
+  opacity: 0.6;
+  font-weight: 300;
 }
 
 @media (max-width: 1280px) {
@@ -291,11 +282,11 @@
   }
 
   .year {
-    font-size: clamp(52px, 10vw, 110px);
+    font-size: clamp(18px, 3vw, 24px);
   }
 
   .description {
-    font-size: clamp(16px, 2.1vw, 22px);
+    font-size: clamp(13px, 1.8vw, 15px);
   }
 
   .descriptionMuted {
@@ -339,12 +330,12 @@
   }
 
   .year {
-    font-size: clamp(42px, 10vw, 80px);
-    margin-bottom: 12px;
+    font-size: clamp(16px, 4vw, 20px);
+    margin-bottom: 10px;
   }
 
   .description {
-    font-size: clamp(14px, 2.5vw, 18px);
+    font-size: clamp(12px, 2vw, 14px);
   }
 
   .descriptionMuted {

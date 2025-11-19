@@ -1,6 +1,6 @@
 'use client';
 
-import Image from "next/image";
+import { SafeImage } from "@/components/safe-image";
 import { useReveal } from "@/lib/use-reveal";
 import styles from "./intro-section.module.css";
 
@@ -30,7 +30,7 @@ export function IntroSection() {
           </p>
         </div>
         <div className={styles.media}>
-          <Image
+          <SafeImage
             src="/img/proektirovanie-banner-desktop.webp"
             alt="Архитектурный проект"
             fill

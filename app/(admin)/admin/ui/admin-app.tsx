@@ -1227,6 +1227,11 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const [publications, setPublications] = useState<string[]>([]);
   const [publicationsLoading, setPublicationsLoading] = useState(false);
   const [publicationsSaving, setPublicationsSaving] = useState(false);
+  type FounderBiographyBlock = { year: string; lines: string[] };
+  const [founderBiography, setFounderBiography] = useState<FounderBiographyBlock[]>([]);
+  const [founderBiographyLoading, setFounderBiographyLoading] = useState(false);
+  const [founderBiographySaving, setFounderBiographySaving] = useState(false);
+  const [selectedContentTab, setSelectedContentTab] = useState<"publications" | "biography">("publications");
   const [seoPages, setSeoPages] = useState<SeoPageState[]>([]);
   const [selectedSeoSlug, setSelectedSeoSlug] = useState<string | null>(null);
   const [seoLoading, setSeoLoading] = useState(false);
@@ -2497,7 +2502,16 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       .catch((error) => reportError(error, "Не удалось загрузить публикации"))
       .finally(() => setPublicationsLoading(false));
 
-  }, [activeView, reportError, contentItems]);
+    setFounderBiographyLoading(true);
+    fetchJson<{ biography: FounderBiographyBlock[] }>("/api/admin/founder-biography")
+      .then((data) => {
+        const bio = Array.isArray(data.biography) ? data.biography : [];
+        setFounderBiography(bio);
+      })
+      .catch((error) => reportError(error, "Не удалось загрузить биографию"))
+      .finally(() => setFounderBiographyLoading(false));
+
+  }, [activeView, reportError]);
 
   return (
     <div className={styles.adminShell}>
@@ -2736,26 +2750,32 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                 </div>
               </div>
               <div className={styles.projectColumnBody}>
-                {publicationsLoading ? (
+                {publicationsLoading || founderBiographyLoading ? (
                   <SeoListSkeleton />
                 ) : (
                   <div className={styles.seoPageList}>
                     <SeoPageListItem
                       page={{ slug: "publications-block", label: "Публикации и награды", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as SeoPageDefaults } as unknown as SeoPageState}
-                      isActive={true}
-                      onSelect={() => {}}
+                      isActive={selectedContentTab === "publications"}
+                      onSelect={() => setSelectedContentTab("publications")}
+                    />
+                    <SeoPageListItem
+                      page={{ slug: "founder-biography", label: "Биография основателя", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as SeoPageDefaults } as unknown as SeoPageState}
+                      isActive={selectedContentTab === "biography"}
+                      onSelect={() => setSelectedContentTab("biography")}
                     />
                   </div>
                 )}
               </div>
             </aside>
             <main className={`${styles.editorColumn} ${styles.seoEditorColumn}`}>
-              {publicationsLoading ? (
+              {publicationsLoading || founderBiographyLoading ? (
                 <SeoEditorSkeleton />
               ) : (
                 <div className={styles.settingsPanel}>
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.fieldLabel}>Публикации и награды</label>
+                  {selectedContentTab === "publications" ? (
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.fieldLabel}>Публикации и награды</label>
                     <div className={styles.formGrid}>
                       {publications.map((pub, index) => (
                         <div key={`pub-${index}`} className={styles.inputGroup} style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
@@ -2797,32 +2817,165 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                     >
                       Добавить публикацию
                     </button>
+                    <div className={styles.formActions}>
+                      <button
+                        className={styles.primaryButton}
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            setPublicationsSaving(true);
+                            const filtered = publications.filter((p) => p.trim().length > 0);
+                            const response = await fetchJson<{ publications: string[] }>("/api/admin/publications", {
+                              method: "PUT",
+                              body: JSON.stringify({ publications: filtered }),
+                            });
+                            setPublications(response.publications ?? []);
+                            setStatus("Публикации обновлены");
+                          } catch (error) {
+                            reportError(error, "Не удалось сохранить публикации");
+                          } finally {
+                            setPublicationsSaving(false);
+                          }
+                        }}
+                        disabled={publicationsSaving || publicationsLoading}
+                      >
+                        {publicationsSaving ? "Сохраняем..." : "Сохранить публикации"}
+                      </button>
+                    </div>
                   </div>
-                  <div className={styles.formActions}>
+                  ) : (
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.fieldLabel}>Биография основателя</label>
+                    <div className={styles.formGrid}>
+                      {founderBiography.map((block, blockIndex) => (
+                        <div key={`bio-block-${blockIndex}`} style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px" }}>
+                          <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
+                            <input
+                              className={styles.textInput}
+                              value={block.year}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setFounderBiography((prev) => {
+                                  const next = [...prev];
+                                  next[blockIndex] = { ...next[blockIndex], year: value };
+                                  return next;
+                                });
+                              }}
+                              placeholder="Год (например: 1977 г.)"
+                              style={{ flex: 1, fontSize: "13px", padding: "6px 8px", border: "none", borderBottom: "1px solid rgba(15, 23, 42, 0.12)", borderRadius: "0", background: "transparent" }}
+                            />
+                            <button
+                              type="button"
+                              className={styles.projectDelete}
+                              aria-label="Удалить блок"
+                              data-visible="static"
+                              onClick={() => {
+                                setFounderBiography((prev) => prev.filter((_, i) => i !== blockIndex));
+                              }}
+                            >
+                              <IconTrash aria-hidden="true" />
+                            </button>
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "4px", paddingLeft: "16px" }}>
+                            {block.lines.map((line, lineIndex) => (
+                              <div key={`bio-line-${blockIndex}-${lineIndex}`} style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
+                                <input
+                                  className={styles.textInput}
+                                  value={line}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    setFounderBiography((prev) => {
+                                      const next = [...prev];
+                                      const newLines = [...next[blockIndex].lines];
+                                      newLines[lineIndex] = value;
+                                      next[blockIndex] = { ...next[blockIndex], lines: newLines };
+                                      return next;
+                                    });
+                                  }}
+                                  placeholder="Строка биографии"
+                                  style={{ flex: 1, fontSize: "12px", padding: "4px 8px", border: "none", borderBottom: "1px solid rgba(15, 23, 42, 0.08)", borderRadius: "0", background: "transparent", color: "rgba(15, 23, 42, 0.7)" }}
+                                />
+                                <button
+                                  type="button"
+                                  className={styles.projectDelete}
+                                  aria-label="Удалить строку"
+                                  data-visible="static"
+                                  onClick={() => {
+                                    setFounderBiography((prev) => {
+                                      const next = [...prev];
+                                      const newLines = next[blockIndex].lines.filter((_, i) => i !== lineIndex);
+                                      if (newLines.length === 0) {
+                                        return next.filter((_, i) => i !== blockIndex);
+                                      }
+                                      next[blockIndex] = { ...next[blockIndex], lines: newLines };
+                                      return next;
+                                    });
+                                  }}
+                                >
+                                  <IconTrash aria-hidden="true" />
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              className={styles.secondaryButton}
+                              type="button"
+                              onClick={() => {
+                                setFounderBiography((prev) => {
+                                  const next = [...prev];
+                                  next[blockIndex] = { ...next[blockIndex], lines: [...next[blockIndex].lines, ""] };
+                                  return next;
+                                });
+                              }}
+                              style={{ alignSelf: "flex-start", fontSize: "11px", padding: "4px 8px", marginTop: "4px" }}
+                            >
+                              Добавить строку
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                     <button
-                      className={styles.primaryButton}
+                      className={styles.secondaryButton}
                       type="button"
-                      onClick={async () => {
-                        try {
-                          setPublicationsSaving(true);
-                          const filtered = publications.filter((p) => p.trim().length > 0);
-                          const response = await fetchJson<{ publications: string[] }>("/api/admin/publications", {
-                            method: "PUT",
-                            body: JSON.stringify({ publications: filtered }),
-                          });
-                          setPublications(response.publications ?? []);
-                          setStatus("Публикации обновлены");
-                        } catch (error) {
-                          reportError(error, "Не удалось сохранить публикации");
-                        } finally {
-                          setPublicationsSaving(false);
-                        }
+                      onClick={() => {
+                        setFounderBiography((prev) => [...prev, { year: "", lines: [""] }]);
                       }}
-                      disabled={publicationsSaving || publicationsLoading}
+                      style={{ fontSize: "11px", padding: "4px 8px" }}
                     >
-                      {publicationsSaving ? "Сохраняем..." : "Сохранить публикации"}
+                      Добавить блок
                     </button>
+                    <div className={styles.formActions}>
+                      <button
+                        className={styles.primaryButton}
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            setFounderBiographySaving(true);
+                            const filtered = founderBiography
+                              .map((block) => ({
+                                year: block.year.trim(),
+                                lines: block.lines.map((line) => line.trim()).filter((line) => line.length > 0),
+                              }))
+                              .filter((block) => block.year.length > 0 && block.lines.length > 0);
+                            const response = await fetchJson<{ biography: FounderBiographyBlock[] }>("/api/admin/founder-biography", {
+                              method: "PUT",
+                              body: JSON.stringify({ biography: filtered }),
+                            });
+                            setFounderBiography(response.biography ?? []);
+                            setStatus("Биография обновлена");
+                          } catch (error) {
+                            reportError(error, "Не удалось сохранить биографию");
+                          } finally {
+                            setFounderBiographySaving(false);
+                          }
+                        }}
+                        disabled={founderBiographySaving || founderBiographyLoading}
+                      >
+                        {founderBiographySaving ? "Сохраняем..." : "Сохранить биографию"}
+                      </button>
+                    </div>
                   </div>
+                  )}
                 </div>
               )}
             </main>

@@ -55,6 +55,66 @@ const DEFAULT_PUBLICATIONS: string[] = [
   "Диплом 3 степени, конкурс «3d-дом для экопарка Ясное Поле»",
 ];
 
+export type FounderBiographyBlock = {
+  year: string;
+  lines: string[];
+};
+
+const DEFAULT_FOUNDER_BIOGRAPHY: FounderBiographyBlock[] = [
+  {
+    year: "1977 г.",
+    lines: [
+      "Родился в Чимкенте, СССР",
+      "художественное училище им.Кастеева, факультет дизайна. Чимкент",
+      "Казанская Государственная Архитектурно-Строительная Академия, Кафедра АП Казань",
+    ],
+  },
+  {
+    year: "1992-1996 гг.",
+    lines: [
+      "художественное училище им.Кастеева, факультет дизайна. Чимкент",
+      "Казанская Государственная Архитектурно-Строительная Академия, Кафедра АП Казань",
+      "архитектор, ГУП « Татинвестгражданпроект» мастерская №1,под рук-вом Бакулина Г.А. Казань",
+    ],
+  },
+  {
+    year: "1998-2004 гг.",
+    lines: [
+      "Казанская Государственная Архитектурно-Строительная Академия, Кафедра АП Казань",
+      "архитектор, ГУП « Татинвестгражданпроект» мастерская №1,под рук-вом Бакулина Г.А. Казань",
+      "кафедра Архитектурного проектирования, КГАСА, Казань",
+    ],
+  },
+  {
+    year: "2004-2007 гг.",
+    lines: [
+      "архитектор, ГУП « Татинвестгражданпроект» мастерская №1,под рук-вом Бакулина Г.А. Казань",
+      "кафедра Архитектурного проектирования, КГАСА, Казань",
+      'архитектор, "Сергей Скуратов architects", Москва',
+    ],
+  },
+  {
+    year: "2006-2007 гг.",
+    lines: [
+      "кафедра Архитектурного проектирования, КГАСА, Казань",
+      'архитектор, "Сергей Скуратов architects", Москва',
+      "архитектор, мастерская Белоусова Н.В., Москва",
+    ],
+  },
+  {
+    year: "2007-2008 гг.",
+    lines: [
+      'архитектор, "Сергей Скуратов architects", Москва',
+      "архитектор, мастерская Белоусова Н.В., Москва",
+      "Персональная творческая мастерская",
+    ],
+  },
+  {
+    year: "2020 г.",
+    lines: ["Персональная творческая мастерская", "член Союза архитекторов России"],
+  },
+];
+
 function readCache<T>(entry: CacheEntry<T> | null): T | null {
   if (!entry || entry.expiresAt < Date.now()) {
     return null;
@@ -239,6 +299,52 @@ export function normalizePublications(value: unknown): string[] {
     return DEFAULT_PUBLICATIONS;
   }
   return publications;
+}
+
+export async function getFounderBiography(): Promise<FounderBiographyBlock[]> {
+  // Always read fresh to reflect admin changes immediately across the site
+  const settings = await fetchAllSiteSettings();
+  const record = settings.find((item) => item.key === "founderBiography");
+  const biography = normalizeFounderBiography(record?.value);
+  return biography;
+}
+
+export async function saveFounderBiography(payload: FounderBiographyBlock[]): Promise<FounderBiographyBlock[]> {
+  const sanitized = normalizeFounderBiography(payload);
+  await upsertSiteSetting("founderBiography", sanitized);
+  return sanitized;
+}
+
+export function normalizeFounderBiography(value: unknown): FounderBiographyBlock[] {
+  if (!Array.isArray(value)) {
+    return DEFAULT_FOUNDER_BIOGRAPHY;
+  }
+  const blocks = value
+    .map((item) => {
+      if (!item || typeof item !== "object") {
+        return null;
+      }
+      const source = item as Partial<FounderBiographyBlock>;
+      const year = stringOrDefault(source.year, "");
+      if (!year) {
+        return null;
+      }
+      const lines = Array.isArray(source.lines)
+        ? source.lines
+            .map((line) => (typeof line === "string" && line.trim().length > 0 ? line.trim() : null))
+            .filter((line): line is string => Boolean(line))
+        : [];
+      if (!lines.length) {
+        return null;
+      }
+      return { year, lines };
+    })
+    .filter((item): item is FounderBiographyBlock => Boolean(item));
+
+  if (!blocks.length) {
+    return DEFAULT_FOUNDER_BIOGRAPHY;
+  }
+  return blocks;
 }
 
 export function invalidateSiteSettingsCache() {
