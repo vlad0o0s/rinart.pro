@@ -67,16 +67,12 @@ export function SafeImage(props: SafeImageProps) {
 
 	// Для локальных файлов используем обычный img, чтобы избежать проблем с Next.js Image оптимизацией
 	if (isLocal && typeof currentSrc === "string") {
-		const { 
+		// Извлекаем и игнорируем Next.js-специфичные пропсы, которые не нужны для нативного img
+		const {
 			width, 
 			height, 
 			className,
 			style,
-			...imgProps 
-		} = rest;
-		// Извлекаем и игнорируем Next.js-специфичные пропсы, которые не нужны для нативного img
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const {
 			fill: _fill,
 			priority: _priority,
 			loading: _loading,
@@ -87,6 +83,7 @@ export function SafeImage(props: SafeImageProps) {
 			blurDataURL: _blurDataURL,
 			quality: _quality,
 			loader: _loader,
+			...imgProps 
 		} = rest;
 		// Добавляем timestamp для обхода кеша браузера, чтобы всегда загружать актуальные файлы
 		// Пути /uploads/ обрабатываются через API route /app/uploads/[...path]/route.ts
