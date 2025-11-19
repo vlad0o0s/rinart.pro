@@ -19,12 +19,9 @@ export function SafeImage(props: SafeImageProps) {
 	}, [src]);
 	const [currentSrc, setCurrentSrc] = useState<ImageProps["src"]>(initialSrc);
 	const [hasError, setHasError] = useState(false);
-	// Генерируем timestamp на основе src, чтобы при изменении изображения обновлялся кеш
-	const cacheBuster = useMemo(() => {
-		const srcStr = typeof initialSrc === "string" ? initialSrc : "";
-		// Используем хеш от src + текущее время для уникальности
-		return `t=${Date.now()}&s=${srcStr.length}`;
-	}, [initialSrc]);
+	// Генерируем timestamp один раз при монтировании компонента через ленивую инициализацию
+	// Это обеспечивает обход кеша браузера без вызова нечистой функции во время рендера
+	const cacheBuster = useState(() => `t=${Date.now()}`)[0];
 	
 	const isLocal = useMemo(() => {
 		const s = typeof initialSrc === "string" ? initialSrc : "";
