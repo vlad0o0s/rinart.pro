@@ -5,7 +5,6 @@ import { useMemo } from "react";
 import styles from "./hero.module.css";
 
 const HERO_IMAGE = "/img/01-ilichevka.jpg";
-const HERO_TEXTURE = "/img/noisy-background.webp";
 
 export function Hero({ imageUrl }: { imageUrl?: string }) {
   const heroImage = useMemo(() => {
@@ -17,30 +16,21 @@ export function Hero({ imageUrl }: { imageUrl?: string }) {
 
   return (
     <section className={styles.hero} aria-label="Визуализация проекта Ильичевка">
-      <Image
-        src={heroImage}
-        alt="Современный частный дом в окружении хвойного леса"
-        fill
-        priority
-        fetchPriority="high"
-        loading="eager"
-        sizes="100vw"
-        className={styles.image}
-        // грузим оригинальный файл без прокси Next/Image, чтобы не было кеша и 400 в dev
-        unoptimized
-      />
-      <div className={styles.overlay}>
+      <div className={styles.imageWrapper}>
         <Image
-          src={HERO_TEXTURE}
-          alt=""
+          src={heroImage}
+          alt="Современный частный дом в окружении хвойного леса"
           fill
           priority
           fetchPriority="high"
           loading="eager"
           sizes="100vw"
-          className={styles.overlayTexture}
+          className={styles.image}
+          // грузим оригинальный файл без прокси Next/Image, чтобы не было кеша и 400 в dev
+          unoptimized
         />
       </div>
+      <div className={styles.overlay}></div>
       <div className={styles.content}>{/* Content for hero section will be added in subsequent steps */}</div>
     </section>
   );

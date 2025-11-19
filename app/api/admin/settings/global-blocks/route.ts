@@ -20,6 +20,7 @@ export async function PUT(request: NextRequest) {
     }
     const saved = await getGlobalBlocks();
     revalidatePath("/");
+    revalidatePath("/proektirovanie");
     return NextResponse.json({ blocks: saved });
   } catch (error) {
     console.error("[Admin][API] Failed to save global blocks", error);

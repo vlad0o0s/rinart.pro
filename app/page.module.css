@@ -222,6 +222,7 @@
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   grid-gap: 30px 10px;
+  align-items: stretch;
 }
 
 .portfolioSkeletonCard {
@@ -259,7 +260,8 @@
 .portfolioCard {
   position: relative;
   display: flex;
-  min-height: 100%;
+  flex-direction: column;
+  min-height: 381px;
   transition: opacity 0.3s ease;
 }
 
@@ -272,12 +274,13 @@
   width: 100%;
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .portfolioImageContainer {
   position: relative;
   width: 100%;
-  padding-top: 68%;
+  height: 381px;
   overflow: hidden;
 }
 
@@ -290,7 +293,7 @@
 }
 
 .portfolioImage {
-  transform: scale(1);
+  transform: scale(1.15);
   object-fit: cover;
   object-position: center;
   filter: grayscale(1);
@@ -304,7 +307,7 @@
 .portfolioLink:focus-visible .portfolioImage {
   filter: grayscale(0);
   opacity: 1;
-  transform: scale(1.03);
+  transform: scale(1.2);
 }
 
 .portfolioImageFallback {

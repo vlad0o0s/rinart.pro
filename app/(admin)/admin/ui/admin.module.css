@@ -414,10 +414,7 @@
   padding: 32px clamp(24px, 6vw, 56px) 56px;
 }
 
-.adminContent[data-view="seo"] {
-  grid-template-columns: minmax(340px, 420px) minmax(540px, 1fr);
-}
-
+.adminContent[data-view="seo"],
 .adminContent[data-view="settings"] {
   grid-template-columns: minmax(0, 1fr);
 }

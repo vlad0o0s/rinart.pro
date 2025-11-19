@@ -15,13 +15,14 @@ import { proektirovaniePageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 import { getSocialLinks } from "@/lib/site-settings";
+import { getGlobalBlocks } from "@/lib/global-blocks";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("proektirovanie");
 }
 
 export default async function ProektirovaniePage() {
-  const socialLinks = await getSocialLinks();
+  const [socialLinks, blocks] = await Promise.all([getSocialLinks(), getGlobalBlocks()]);
   return (
     <>
       <SiteHeader showDesktopNav subLinks={PROEKTIR_SUBLINKS} socialLinks={socialLinks} />
@@ -34,7 +35,7 @@ export default async function ProektirovaniePage() {
         <ProjectDiagram />
         <SecondStageSection />
         <ThirdStageSection />
-        <PricingTimeline />
+        <PricingTimeline data={blocks.pricing} />
       </main>
       <Footer />
       <JsonLd schema={proektirovaniePageSchema()} />

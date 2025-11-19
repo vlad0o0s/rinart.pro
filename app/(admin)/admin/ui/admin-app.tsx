@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { SVGProps } from "react";
 import type { ChangeEvent as ReactChangeEvent, FormEvent as ReactFormEvent, MouseEvent as ReactMouseEvent } from "react";
+import type { PricingItem, PricingData } from "@/lib/global-blocks";
 import {
   DndContext,
   PointerSensor,
@@ -44,6 +45,7 @@ const PROJECTS_DND_ACCESSIBILITY = {
 const OPTIMIZED_EXTENSIONS = [".avif", ".webp"] as const;
 
 const STORAGE_KEY_SELECTED_PROJECT = "rinart-admin-selected-project-slug";
+const STORAGE_KEY_ACTIVE_VIEW = "rinart-admin-active-view";
 
 function isOptimizedImageUrl(url: string | null | undefined): boolean {
   if (!url) {
@@ -292,12 +294,15 @@ const APPEARANCE_DEFAULTS: AppearanceSettingsState = {
     "https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png",
 };
 
-type SettingsTab = "contacts" | "social" | "media" | "team";
+type SettingsTab = "contacts" | "social" | "media" | "pricing" | "publications" | "biography" | "team";
 
 const SETTINGS_TABS: { id: SettingsTab; label: string; description: string }[] = [
   { id: "contacts", label: "Контакты", description: "Телефон, email, адрес и изображение" },
   { id: "social", label: "Социальные сети", description: "Ссылки для шапки, подвала и контактов" },
   { id: "media", label: "Медиа сайта", description: "Изображения главного экрана и переходов" },
+  { id: "pricing", label: "Цены", description: "Стоимость проектирования" },
+  { id: "publications", label: "Публикации", description: "Публикации и награды" },
+  { id: "biography", label: "Биография", description: "Биография основателя" },
   { id: "team", label: "Команда", description: "Карточки участников мастерской" },
 ];
 
@@ -403,10 +408,6 @@ type EditorState = {
   heroImageUrl: string;
   gallery: GalleryItem[];
   schemes: SchemeItem[];
-  seoTitle: string;
-  seoDescription: string;
-  seoKeywords: string;
-  seoOgImageUrl: string;
 };
 
 type EditorFieldChangeHandler = <K extends keyof EditorState>(field: K, value: EditorState[K]) => void;
@@ -460,14 +461,6 @@ function mapProjectToEditor(project: ProjectDetailResponse["project"]): EditorSt
 
   const body = project.content?.body ?? [];
   const html = project.content?.bodyHtml ?? convertBodyToHtml(body);
-  const seo = project.content?.seo;
-  const seoTitle = typeof seo?.title === "string" ? seo.title : "";
-  const seoDescription = typeof seo?.description === "string" ? seo.description : "";
-  const seoKeywordsArray = Array.isArray(seo?.keywords)
-    ? seo.keywords.filter((item: unknown): item is string => typeof item === "string")
-    : [];
-  const seoKeywords = seoKeywordsArray.join(", ");
-  const seoOgImageUrl = typeof seo?.ogImage === "string" ? seo.ogImage : "";
 
   return {
     slug: project.slug,
@@ -480,10 +473,6 @@ function mapProjectToEditor(project: ProjectDetailResponse["project"]): EditorSt
         : feature?.url ?? "") ?? "",
     gallery,
     schemes,
-    seoTitle,
-    seoDescription,
-    seoKeywords,
-    seoOgImageUrl,
   };
 }
 
@@ -544,12 +533,7 @@ function collectAssetsFromEditor(state: EditorState): MediaAsset[] {
       assets.push(createMediaAsset(item.url, item.caption, "project"));
     }
   });
-  if (state.seoOgImageUrl && isOptimizedImageUrl(state.seoOgImageUrl)) {
-    const clean = state.seoOgImageUrl.trim();
-    if (clean) {
-      assets.push(createMediaAsset(clean, `${state.title} — превью`, "project"));
-    }
-  }
+  // SEO fields removed - now managed in separate SEO view
   return assets;
 }
 
@@ -1217,13 +1201,40 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     );
     setLibraryAssets((prev) => prev.filter((item) => item.id !== asset.id));
   };
-  const [activeView, setActiveView] = useState<"projects" | "seo" | "content" | "settings">("projects");
+  // Инициализируем с дефолтным значением для избежания проблем с гидратацией
+  const [activeView, setActiveView] = useState<"projects" | "seo" | "settings">("projects");
+
+  // Восстанавливаем активную вкладку из localStorage после гидратации
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    try {
+      const savedView = localStorage.getItem(STORAGE_KEY_ACTIVE_VIEW);
+      if (savedView === "projects" || savedView === "seo" || savedView === "settings") {
+        setActiveView(savedView);
+      }
+    } catch {
+      // Игнорируем ошибки localStorage
+    }
+  }, []);
+
+  // Сохраняем активную вкладку в localStorage при изменении
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY_ACTIVE_VIEW, activeView);
+    } catch {
+      // Игнорируем ошибки localStorage
+    }
+  }, [activeView]);
 
   // Content (site-wide) state
   type ContentItemState = { slug: "home-hero" | "page-transition" | "contacts"; title: string; imageUrl: string | null; locationLabel?: string | null };
   const [contentItems, setContentItems] = useState<ContentItemState[]>([]);
   const [contentLoading, setContentLoading] = useState(false);
-  const [contentSocialLinks] = useState<SocialLinkState[]>([]);
   const [publications, setPublications] = useState<string[]>([]);
   const [publicationsLoading, setPublicationsLoading] = useState(false);
   const [publicationsSaving, setPublicationsSaving] = useState(false);
@@ -1231,7 +1242,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const [founderBiography, setFounderBiography] = useState<FounderBiographyBlock[]>([]);
   const [founderBiographyLoading, setFounderBiographyLoading] = useState(false);
   const [founderBiographySaving, setFounderBiographySaving] = useState(false);
-  const [selectedContentTab, setSelectedContentTab] = useState<"publications" | "biography">("publications");
+  const [founderLeadText, setFounderLeadText] = useState<string>("");
   const [seoPages, setSeoPages] = useState<SeoPageState[]>([]);
   const [selectedSeoSlug, setSelectedSeoSlug] = useState<string | null>(null);
   const [seoLoading, setSeoLoading] = useState(false);
@@ -1252,6 +1263,9 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const [teamDeleting, setTeamDeleting] = useState(false);
   const [teamActiveDragId, setTeamActiveDragId] = useState<number | null>(null);
   const [teamCreateModalOpen, setTeamCreateModalOpen] = useState(false);
+  const [pricingData, setPricingData] = useState<PricingData>({ topItems: [], bottomItems: [] });
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [pricingSaving, setPricingSaving] = useState(false);
   const activeProject = useMemo(
     () => (activeDragId ? projects.find((project) => project.slug === activeDragId) ?? null : null),
     [projects, activeDragId],
@@ -1274,6 +1288,13 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     window.location.href = "/admin/login";
   }, []);
 
+  // Функция для скролла вверх
+  const scrollToTop = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, []);
+
   const reportError = useCallback(
     (error: unknown, fallbackMessage: string) => {
       if (error instanceof UnauthorizedError) {
@@ -1281,14 +1302,18 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         return;
       }
       console.error(error);
-      if (error instanceof Error && error.message) {
-        setStatus(error.message);
-      } else {
-        setStatus(fallbackMessage);
-      }
+      const errorMessage = error instanceof Error && error.message ? error.message : fallbackMessage;
+      setStatus(`Ошибка сохранения: ${errorMessage}`);
+      scrollToTop();
     },
-    [redirectToLogin],
+    [redirectToLogin, scrollToTop],
   );
+
+  // Функция для установки успешного статуса
+  const setSuccessStatus = useCallback((message: string) => {
+    setStatus(message);
+    scrollToTop();
+  }, [scrollToTop]);
 
 
   const loadTeamMembers = useCallback(async () => {
@@ -1316,6 +1341,171 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       loadTeamMembers();
     }
   }, [activeView, teamLoaded, teamLoading, loadTeamMembers]);
+
+  const loadPricing = useCallback(async () => {
+    try {
+      setPricingLoading(true);
+      const blocks = await fetchJson<{ blocks: { pricing?: PricingData } }>("/api/admin/settings/global-blocks");
+      if (blocks.blocks?.pricing) {
+        setPricingData(blocks.blocks.pricing);
+      } else {
+        // Load defaults from public API
+        const allBlocks = await fetchJson<{ blocks: { pricing?: PricingData } }>("/api/settings/global-blocks");
+        if (allBlocks.blocks?.pricing) {
+          setPricingData(allBlocks.blocks.pricing);
+        }
+      }
+    } catch (error) {
+      reportError(error, "Не удалось загрузить цены");
+    } finally {
+      setPricingLoading(false);
+    }
+  }, [reportError]);
+
+  useEffect(() => {
+    if (activeView === "settings" && pricingData.topItems.length === 0 && pricingData.bottomItems.length === 0 && !pricingLoading) {
+      loadPricing();
+    }
+  }, [activeView, pricingData, pricingLoading, loadPricing]);
+
+  const handlePricingChange = useCallback((type: "top" | "bottom", index: number, field: keyof PricingItem, value: string | number) => {
+    setPricingData((prev) => {
+      const items = type === "top" ? [...prev.topItems] : [...prev.bottomItems];
+      items[index] = { ...items[index], [field]: value };
+      return type === "top" ? { ...prev, topItems: items } : { ...prev, bottomItems: items };
+    });
+  }, []);
+
+  const handleSavePricing = useCallback(async () => {
+    try {
+      setPricingSaving(true);
+      const payload = await fetchJson<{ blocks: { pricing?: PricingData } }>(
+        "/api/admin/settings/global-blocks",
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            blocks: {
+              pricing: pricingData,
+            },
+          }),
+        },
+      );
+      if (payload.blocks?.pricing) {
+        setPricingData(payload.blocks.pricing);
+      }
+      setSuccessStatus("Цены сохранены");
+    } catch (error) {
+      reportError(error, "Не удалось сохранить цены");
+    } finally {
+      setPricingSaving(false);
+    }
+  }, [pricingData, reportError]);
+
+  const handlePublicationsChange = useCallback((index: number, value: string) => {
+    setPublications((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  }, []);
+
+  const handlePublicationsAdd = useCallback(() => {
+    setPublications((prev) => [...prev, ""]);
+  }, []);
+
+  const handlePublicationsRemove = useCallback((index: number) => {
+    setPublications((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleSavePublications = useCallback(async () => {
+    try {
+      setPublicationsSaving(true);
+      const filtered = publications.filter((p) => p.trim().length > 0);
+      const response = await fetchJson<{ publications: string[] }>("/api/admin/publications", {
+        method: "PUT",
+        body: JSON.stringify({ publications: filtered }),
+      });
+      setPublications(response.publications ?? []);
+      setSuccessStatus("Публикации обновлены");
+    } catch (error) {
+      reportError(error, "Не удалось сохранить публикации");
+    } finally {
+      setPublicationsSaving(false);
+    }
+  }, [publications, reportError]);
+
+  const handleFounderBiographyChange = useCallback((blockIndex: number, field: "year" | "lines", value: string | string[], lineIndex?: number) => {
+    setFounderBiography((prev) => {
+      const next = [...prev];
+      if (field === "year") {
+        next[blockIndex] = { ...next[blockIndex], year: value as string };
+      } else if (field === "lines") {
+        const newLines = [...next[blockIndex].lines];
+        if (typeof lineIndex === "number") {
+          newLines[lineIndex] = value as string;
+        } else {
+          newLines.push(...(value as string[]));
+        }
+        next[blockIndex] = { ...next[blockIndex], lines: newLines };
+      }
+      return next;
+    });
+  }, []);
+
+  const handleFounderBiographyAddBlock = useCallback(() => {
+    setFounderBiography((prev) => [...prev, { year: "", lines: [""] }]);
+  }, []);
+
+  const handleFounderBiographyRemoveBlock = useCallback((blockIndex: number) => {
+    setFounderBiography((prev) => prev.filter((_, i) => i !== blockIndex));
+  }, []);
+
+  const handleFounderBiographyAddLine = useCallback((blockIndex: number) => {
+    setFounderBiography((prev) => {
+      const next = [...prev];
+      next[blockIndex] = { ...next[blockIndex], lines: [...next[blockIndex].lines, ""] };
+      return next;
+    });
+  }, []);
+
+  const handleFounderBiographyRemoveLine = useCallback((blockIndex: number, lineIndex: number) => {
+    setFounderBiography((prev) => {
+      const next = [...prev];
+      const newLines = next[blockIndex].lines.filter((_, i) => i !== lineIndex);
+      if (newLines.length === 0) {
+        return next.filter((_, i) => i !== blockIndex);
+      }
+      next[blockIndex] = { ...next[blockIndex], lines: newLines };
+      return next;
+    });
+  }, []);
+
+  const handleSaveFounderBiography = useCallback(async () => {
+    try {
+      setFounderBiographySaving(true);
+      const filtered = founderBiography
+        .map((block) => ({
+          year: block.year.trim(),
+          lines: block.lines.map((line) => line.trim()).filter((line) => line.length > 0),
+        }))
+        .filter((block) => block.year.length > 0 && block.lines.length > 0);
+      const response = await fetchJson<{ biography: FounderBiographyBlock[]; leadText?: string }>("/api/admin/founder-biography", {
+        method: "PUT",
+        body: JSON.stringify({ biography: filtered, leadText: founderLeadText.trim() }),
+      });
+      if (response.biography) {
+        setFounderBiography(response.biography);
+      }
+      if (response.leadText !== undefined) {
+        setFounderLeadText(response.leadText);
+      }
+      setSuccessStatus("Биография обновлена");
+    } catch (error) {
+      reportError(error, "Не удалось сохранить биографию");
+    } finally {
+      setFounderBiographySaving(false);
+    }
+  }, [founderBiography, founderLeadText, reportError]);
 
   const handleContactFieldChange = useCallback(<K extends keyof ContactSettingsState>(field: K, value: string) => {
     setContactSettings((prev) => {
@@ -1368,7 +1558,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       );
       setContactSettings(normalizeContactSettings(response.contact));
       setSocialLinks(normalizeSocialLinks(response.socials));
-      setStatus("Настройки сохранены");
+      setSuccessStatus("Настройки сохранены");
     } catch (error) {
       reportError(error, "Не удалось сохранить настройки");
     } finally {
@@ -1398,7 +1588,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       );
       setContactSettings(normalizeContactSettings(response.contact));
       setSocialLinks(normalizeSocialLinks(response.socials));
-      setStatus("Социальные сети и телефон обновлены");
+      setSuccessStatus("Социальные сети обновлены");
     } catch (error) {
       reportError(error, "Не удалось сохранить социальные сети");
     } finally {
@@ -1430,7 +1620,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
           homeHeroImageUrl: payload.blocks?.["home-hero"]?.imageUrl ?? APPEARANCE_DEFAULTS.homeHeroImageUrl,
           transitionImageUrl: payload.blocks?.["page-transition"]?.imageUrl ?? APPEARANCE_DEFAULTS.transitionImageUrl,
         });
-        setStatus("Медиа обновлены");
+        setSuccessStatus("Медиа обновлены");
       } catch (error) {
         reportError(error, "Не удалось сохранить изображения");
       } finally {
@@ -1502,7 +1692,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
           .map((member, index) => ({ ...member, order: index })),
       );
       setTeamEditor(updatedMember);
-      setStatus("Участник обновлён");
+      setSuccessStatus("Участник обновлён");
     } catch (error) {
       reportError(error, "Не удалось сохранить участника");
     } finally {
@@ -1524,7 +1714,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       const nextMember = teamMembers.find((member) => member.id !== teamEditor.id);
       setTeamSelectedId(nextMember?.id ?? null);
       setTeamEditor(nextMember ?? null);
-      setStatus("Участник удалён");
+      setSuccessStatus("Участник удалён");
     } catch (error) {
       reportError(error, "Не удалось удалить участника");
     } finally {
@@ -1546,7 +1736,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         );
         setTeamSelectedId(newMember.id);
         setTeamEditor(newMember);
-        setStatus("Участник добавлен");
+        setSuccessStatus("Участник добавлен");
         setTeamCreateModalOpen(false);
       } catch (error) {
         reportError(error, "Не удалось создать участника");
@@ -1615,7 +1805,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         method: "POST",
         body: JSON.stringify({ order: nextOrder }),
       })
-        .then(() => setStatus("Порядок команды обновлён"))
+        .then(() => setSuccessStatus("Порядок команды обновлён"))
         .catch((error) => reportError(error, "Не удалось обновить порядок команды"));
     },
     [reportError],
@@ -1811,11 +2001,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
             };
           });
         }
-      } else if (mediaLibrary.mode === "seo") {
-        const seoAsset = assets[0];
-        if (seoAsset) {
-          setEditorState((prev) => (prev ? { ...prev, seoOgImageUrl: seoAsset.url } : prev));
-        }
       } else if (mediaLibrary.mode === "seo-page" && mediaLibrary.targetId) {
         const seoAsset = assets[0];
         if (seoAsset) {
@@ -1928,16 +2113,24 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         setSeoLoading(true);
         const data = await fetchJson<{ pages: SeoPageResponse[] }>("/api/admin/seo");
         if (cancelled) return;
-        const mapped = data.pages.map<SeoPageState>((page) => ({
-          slug: page.slug,
-          label: page.label,
-          path: page.path,
-          title: page.seo?.title ?? "",
-          description: page.seo?.description ?? "",
-          keywords: (page.seo?.keywords ?? []).join(", "),
-          ogImageUrl: page.seo?.ogImageUrl ?? "",
-          defaults: page.defaults ?? {},
-        }));
+        const mapped = data.pages.map<SeoPageState>((page) => {
+          const seo = page.seo ?? {};
+          const defaults = page.defaults ?? {};
+          return {
+            slug: page.slug,
+            label: page.label,
+            path: page.path,
+            title: (seo.title ?? defaults.title ?? "").trim(),
+            description: (seo.description ?? defaults.description ?? "").trim(),
+            keywords: Array.isArray(seo.keywords) && seo.keywords.length > 0
+              ? seo.keywords.join(", ")
+              : Array.isArray(defaults.keywords) && defaults.keywords.length > 0
+                ? defaults.keywords.join(", ")
+                : "",
+            ogImageUrl: (seo.ogImageUrl ?? defaults.ogImageUrl ?? "").trim(),
+            defaults: defaults,
+          };
+        });
         setSeoPages(mapped);
         setSelectedSeoSlug((prev) => prev ?? (mapped[0]?.slug ?? null));
       } catch (error: unknown) {
@@ -2042,7 +2235,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
             method: "POST",
             body: JSON.stringify({ order: nextOrder }),
           });
-          setStatus("Порядок обновлён");
+          setSuccessStatus("Порядок обновлён");
         } catch (error: unknown) {
           reportError(error, "Не удалось обновить порядок");
         }
@@ -2093,6 +2286,8 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
           }),
         });
         const updated = response.page;
+        const seo = updated.seo ?? {};
+        const defaults = updated.defaults ?? {};
         setSeoPages((prev) =>
           prev.map((item) =>
             item.slug === slug
@@ -2100,16 +2295,20 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                   slug: updated.slug,
                   label: updated.label,
                   path: updated.path,
-                  title: updated.seo?.title ?? "",
-                  description: updated.seo?.description ?? "",
-                  keywords: (updated.seo?.keywords ?? []).join(", "),
-                  ogImageUrl: updated.seo?.ogImageUrl ?? "",
-                  defaults: updated.defaults ?? {},
+                  title: (seo.title ?? defaults.title ?? "").trim(),
+                  description: (seo.description ?? defaults.description ?? "").trim(),
+                  keywords: Array.isArray(seo.keywords) && seo.keywords.length > 0
+                    ? seo.keywords.join(", ")
+                    : Array.isArray(defaults.keywords) && defaults.keywords.length > 0
+                      ? defaults.keywords.join(", ")
+                      : "",
+                  ogImageUrl: (seo.ogImageUrl ?? defaults.ogImageUrl ?? "").trim(),
+                  defaults: defaults,
                 }
               : item,
           ),
         );
-        setStatus("SEO обновлено");
+        setSuccessStatus("SEO обновлено");
       } catch (error: unknown) {
         reportError(error, "Не удалось сохранить SEO");
       } finally {
@@ -2244,10 +2443,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       setSaving(true);
       const paragraphs = convertHtmlToParagraphs(editorState.descriptionHtml);
       const descriptionHtml = editorState.descriptionHtml.trim();
-      const seoKeywords = editorState.seoKeywords
-        .split(",")
-        .map((keyword) => keyword.trim())
-        .filter((keyword) => keyword.length > 0);
       const response = await fetchJson<ProjectDetailResponse>(`/api/admin/projects/${selectedSlug}`, {
         method: "PATCH",
         body: JSON.stringify({
@@ -2264,10 +2459,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
           descriptionBody: paragraphs,
           descriptionHtml,
           facts: [],
-          seoTitle: editorState.seoTitle,
-          seoDescription: editorState.seoDescription,
-          seoKeywords,
-          seoOgImage: editorState.seoOgImageUrl,
         }),
       });
 
@@ -2277,7 +2468,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       const finalSlug = response.project.slug;
       const updatedResponse = await fetchJson<ProjectDetailResponse>(`/api/admin/projects/${finalSlug}`);
 
-      setStatus("Проект сохранён");
+      setSuccessStatus("Проект сохранён");
       setProjects((prev) =>
         prev.map((project) =>
           project.slug === selectedSlug
@@ -2336,7 +2527,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
             );
             setSelectedSlug(response.project.slug);
             setEditorState(mapProjectToEditor(response.project));
-            setStatus("Проект создан");
+            setSuccessStatus("Проект создан");
             setLibraryAssets((prev) => mergeMediaAssets(prev, collectAssetsFromProjects([response.project])));
             setCreateModalOpen(false);
             return;
@@ -2412,9 +2603,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
             urlsToRemove.add(item.url);
           }
         });
-        if (snapshot.seoOgImageUrl) {
-          urlsToRemove.add(snapshot.seoOgImageUrl);
-        }
+        // SEO fields removed - now managed in separate SEO view
 
         setLibraryAssets((prev) =>
           prev.filter((asset) => asset.origin !== "project" || !urlsToRemove.has(asset.url)),
@@ -2437,7 +2626,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
           return filtered;
         });
 
-        setStatus("Проект удалён");
+        setSuccessStatus("Проект удалён");
 
         if (deletingCurrent) {
           if (nextSlugAfterDelete) {
@@ -2479,39 +2668,37 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   }, [status]);
 
   useEffect(() => {
-    if (activeView !== "content") {
-      return;
+    // Load publications and biography when opening settings view
+    if (activeView === "settings") {
+      if (publications.length === 0 && !publicationsLoading) {
+        setPublicationsLoading(true);
+        fetchJson<{ publications: string[] }>("/api/admin/publications")
+          .then((data) => {
+            const pubs = Array.isArray(data.publications) ? data.publications : [];
+            setPublications(pubs);
+          })
+          .catch((error) => reportError(error, "Не удалось загрузить публикации"))
+          .finally(() => setPublicationsLoading(false));
+      }
+
+      if (founderBiography.length === 0 && !founderBiographyLoading) {
+        setFounderBiographyLoading(true);
+        fetchJson<{ biography: FounderBiographyBlock[]; leadText?: string }>("/api/admin/founder-biography")
+          .then((data) => {
+            const bio = Array.isArray(data.biography) ? data.biography : [];
+            setFounderBiography(bio);
+            if (typeof data.leadText === "string") {
+              setFounderLeadText(data.leadText);
+            }
+          })
+          .catch((error) => reportError(error, "Не удалось загрузить биографию"))
+          .finally(() => setFounderBiographyLoading(false));
+      }
     }
-    setContentLoading(true);
-    fetchJson<{ items: ContentItemState[] }>("/api/admin/content")
-      .then((data) => {
-        const items = (data.items ?? []) as ContentItemState[];
-        setContentItems(items);
-      })
-      .catch((error) => reportError(error, "Не удалось загрузить контент"))
-      .finally(() => setContentLoading(false));
 
-    // Social links loading removed - not used in current implementation
+    // Content loading removed - publications and biography moved to settings view
 
-    setPublicationsLoading(true);
-    fetchJson<{ publications: string[] }>("/api/admin/publications")
-      .then((data) => {
-        const pubs = Array.isArray(data.publications) ? data.publications : [];
-        setPublications(pubs);
-      })
-      .catch((error) => reportError(error, "Не удалось загрузить публикации"))
-      .finally(() => setPublicationsLoading(false));
-
-    setFounderBiographyLoading(true);
-    fetchJson<{ biography: FounderBiographyBlock[] }>("/api/admin/founder-biography")
-      .then((data) => {
-        const bio = Array.isArray(data.biography) ? data.biography : [];
-        setFounderBiography(bio);
-      })
-      .catch((error) => reportError(error, "Не удалось загрузить биографию"))
-      .finally(() => setFounderBiographyLoading(false));
-
-  }, [activeView, reportError]);
+  }, [activeView, reportError, publications.length, publicationsLoading, founderBiography.length, founderBiographyLoading]);
 
   return (
     <div className={styles.adminShell}>
@@ -2519,7 +2706,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         <div className={styles.branding}>
           <span className={styles.brandTitle}>RINART Admin</span>
           <span className={styles.brandSubtitle}>
-            {activeView === "projects" ? "Управление портфолио" : activeView === "seo" ? "SEO сайта" : activeView === "content" ? "Контент сайта" : "Настройки"}
+            {activeView === "projects" ? "Управление портфолио" : activeView === "seo" ? "SEO сайта" : "Настройки"}
           </span>
           <nav className={styles.viewTabs} aria-label="Разделы админки">
             <button
@@ -2539,15 +2726,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               disabled={activeView === "seo"}
             >
               SEO
-            </button>
-            <button
-              type="button"
-              className={styles.viewTabButton}
-              data-active={activeView === "content"}
-              onClick={() => setActiveView("content")}
-              disabled={activeView === "content"}
-            >
-              Контент
             </button>
             <button
               type="button"
@@ -2656,11 +2834,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                   deleting={deleteLoading}
                   onDelete={handleDeleteProject}
                   onSave={persistDetails}
-                  onOpenOgImagePicker={() =>
-                    openMediaLibrary("seo", {
-                      initialSelection: editorState.seoOgImageUrl ? [editorState.seoOgImageUrl] : [],
-                    })
-                  }
                 />
               ) : (
                 <div className={styles.emptyState}>Выберите проект, чтобы открыть подробное редактирование.</div>
@@ -2691,295 +2864,24 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
             </aside>
           </>
         ) : activeView === "seo" ? (
-          <>
-            <aside className={`${styles.projectColumn} ${styles.seoListColumn}`}>
-              <div className={styles.projectColumnHeader}>
-                <div>
-                  <h2 className={styles.columnTitle}>Страницы</h2>
-                  <p className={styles.columnSubtitle}>Выберите страницу, чтобы настроить метаданные.</p>
-                </div>
-              </div>
-              <div className={styles.projectColumnBody}>
-                {showSeoSkeleton ? (
-                  <SeoListSkeleton />
-                ) : seoPages.length ? (
-                  <div className={styles.seoPageList}>
-                    {seoPages.map((page) => (
-                      <SeoPageListItem
-                        key={page.slug}
-                        page={page}
-                        isActive={page.slug === selectedSeoSlug}
-                        onSelect={handleSeoSelect}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className={styles.emptyState}>Нет доступных страниц для настройки.</div>
-                )}
-              </div>
-            </aside>
-            <main className={`${styles.editorColumn} ${styles.seoEditorColumn}`}>
-              {selectedSeoPage ? (
-                <SeoEditorPanel
-                  page={selectedSeoPage}
-                  onFieldChange={(field, value) => updateSeoField(selectedSeoPage.slug, field, value)}
-                  onSave={() => handleSeoSave(selectedSeoPage.slug)}
-                  onClearOgImage={() => handleSeoOgClear(selectedSeoPage.slug)}
-                  onOpenOgPicker={() =>
-                    openMediaLibrary("seo-page", {
-                      targetId: selectedSeoPage.slug,
-                      initialSelection: selectedSeoPage.ogImageUrl ? [selectedSeoPage.ogImageUrl] : [],
-                    })
-                  }
-                  saving={seoSaving}
-                />
-              ) : showSeoSkeleton ? (
-                <SeoEditorSkeleton />
-              ) : (
-                <div className={styles.emptyState}>Выберите страницу, чтобы изменить SEO.</div>
-              )}
-            </main>
-          </>
-        ) : activeView === "content" ? (
-          <>
-            <aside className={`${styles.projectColumn} ${styles.seoListColumn}`}>
-              <div className={styles.projectColumnHeader}>
-                <div>
-                  <h2 className={styles.columnTitle}>Контент</h2>
-                  <p className={styles.columnSubtitle}>Публикации и награды.</p>
-                </div>
-              </div>
-              <div className={styles.projectColumnBody}>
-                {publicationsLoading || founderBiographyLoading ? (
-                  <SeoListSkeleton />
-                ) : (
-                  <div className={styles.seoPageList}>
-                    <SeoPageListItem
-                      page={{ slug: "publications-block", label: "Публикации и награды", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as SeoPageDefaults } as unknown as SeoPageState}
-                      isActive={selectedContentTab === "publications"}
-                      onSelect={() => setSelectedContentTab("publications")}
-                    />
-                    <SeoPageListItem
-                      page={{ slug: "founder-biography", label: "Биография основателя", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as SeoPageDefaults } as unknown as SeoPageState}
-                      isActive={selectedContentTab === "biography"}
-                      onSelect={() => setSelectedContentTab("biography")}
-                    />
-                  </div>
-                )}
-              </div>
-            </aside>
-            <main className={`${styles.editorColumn} ${styles.seoEditorColumn}`}>
-              {publicationsLoading || founderBiographyLoading ? (
-                <SeoEditorSkeleton />
-              ) : (
-                <div className={styles.settingsPanel}>
-                  {selectedContentTab === "publications" ? (
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.fieldLabel}>Публикации и награды</label>
-                    <div className={styles.formGrid}>
-                      {publications.map((pub, index) => (
-                        <div key={`pub-${index}`} className={styles.inputGroup} style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
-                          <input
-                            className={styles.textInput}
-                            value={pub}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setPublications((prev) => {
-                                const next = [...prev];
-                                next[index] = value;
-                                return next;
-                              });
-                            }}
-                            placeholder="Введите публикацию или награду"
-                            style={{ flex: 1 }}
-                          />
-                          <button
-                            type="button"
-                            className={styles.projectDelete}
-                            aria-label="Удалить публикацию"
-                            data-visible="static"
-                            style={{ marginLeft: 0 }}
-                            onClick={() => {
-                              setPublications((prev) => prev.filter((_, i) => i !== index));
-                            }}
-                          >
-                            <IconTrash aria-hidden="true" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    <button
-                      className={styles.secondaryButton}
-                      type="button"
-                      onClick={() => {
-                        setPublications((prev) => [...prev, ""]);
-                      }}
-                    >
-                      Добавить публикацию
-                    </button>
-                    <div className={styles.formActions}>
-                      <button
-                        className={styles.primaryButton}
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            setPublicationsSaving(true);
-                            const filtered = publications.filter((p) => p.trim().length > 0);
-                            const response = await fetchJson<{ publications: string[] }>("/api/admin/publications", {
-                              method: "PUT",
-                              body: JSON.stringify({ publications: filtered }),
-                            });
-                            setPublications(response.publications ?? []);
-                            setStatus("Публикации обновлены");
-                          } catch (error) {
-                            reportError(error, "Не удалось сохранить публикации");
-                          } finally {
-                            setPublicationsSaving(false);
-                          }
-                        }}
-                        disabled={publicationsSaving || publicationsLoading}
-                      >
-                        {publicationsSaving ? "Сохраняем..." : "Сохранить публикации"}
-                      </button>
-                    </div>
-                  </div>
-                  ) : (
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.fieldLabel}>Биография основателя</label>
-                    <div className={styles.formGrid}>
-                      {founderBiography.map((block, blockIndex) => (
-                        <div key={`bio-block-${blockIndex}`} style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px" }}>
-                          <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
-                            <input
-                              className={styles.textInput}
-                              value={block.year}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setFounderBiography((prev) => {
-                                  const next = [...prev];
-                                  next[blockIndex] = { ...next[blockIndex], year: value };
-                                  return next;
-                                });
-                              }}
-                              placeholder="Год (например: 1977 г.)"
-                              style={{ flex: 1, fontSize: "13px", padding: "6px 8px", border: "none", borderBottom: "1px solid rgba(15, 23, 42, 0.12)", borderRadius: "0", background: "transparent" }}
-                            />
-                            <button
-                              type="button"
-                              className={styles.projectDelete}
-                              aria-label="Удалить блок"
-                              data-visible="static"
-                              onClick={() => {
-                                setFounderBiography((prev) => prev.filter((_, i) => i !== blockIndex));
-                              }}
-                            >
-                              <IconTrash aria-hidden="true" />
-                            </button>
-                          </div>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "4px", paddingLeft: "16px" }}>
-                            {block.lines.map((line, lineIndex) => (
-                              <div key={`bio-line-${blockIndex}-${lineIndex}`} style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
-                                <input
-                                  className={styles.textInput}
-                                  value={line}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    setFounderBiography((prev) => {
-                                      const next = [...prev];
-                                      const newLines = [...next[blockIndex].lines];
-                                      newLines[lineIndex] = value;
-                                      next[blockIndex] = { ...next[blockIndex], lines: newLines };
-                                      return next;
-                                    });
-                                  }}
-                                  placeholder="Строка биографии"
-                                  style={{ flex: 1, fontSize: "12px", padding: "4px 8px", border: "none", borderBottom: "1px solid rgba(15, 23, 42, 0.08)", borderRadius: "0", background: "transparent", color: "rgba(15, 23, 42, 0.7)" }}
-                                />
-                                <button
-                                  type="button"
-                                  className={styles.projectDelete}
-                                  aria-label="Удалить строку"
-                                  data-visible="static"
-                                  onClick={() => {
-                                    setFounderBiography((prev) => {
-                                      const next = [...prev];
-                                      const newLines = next[blockIndex].lines.filter((_, i) => i !== lineIndex);
-                                      if (newLines.length === 0) {
-                                        return next.filter((_, i) => i !== blockIndex);
-                                      }
-                                      next[blockIndex] = { ...next[blockIndex], lines: newLines };
-                                      return next;
-                                    });
-                                  }}
-                                >
-                                  <IconTrash aria-hidden="true" />
-                                </button>
-                              </div>
-                            ))}
-                            <button
-                              className={styles.secondaryButton}
-                              type="button"
-                              onClick={() => {
-                                setFounderBiography((prev) => {
-                                  const next = [...prev];
-                                  next[blockIndex] = { ...next[blockIndex], lines: [...next[blockIndex].lines, ""] };
-                                  return next;
-                                });
-                              }}
-                              style={{ alignSelf: "flex-start", fontSize: "11px", padding: "4px 8px", marginTop: "4px" }}
-                            >
-                              Добавить строку
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <button
-                      className={styles.secondaryButton}
-                      type="button"
-                      onClick={() => {
-                        setFounderBiography((prev) => [...prev, { year: "", lines: [""] }]);
-                      }}
-                      style={{ fontSize: "11px", padding: "4px 8px" }}
-                    >
-                      Добавить блок
-                    </button>
-                    <div className={styles.formActions}>
-                      <button
-                        className={styles.primaryButton}
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            setFounderBiographySaving(true);
-                            const filtered = founderBiography
-                              .map((block) => ({
-                                year: block.year.trim(),
-                                lines: block.lines.map((line) => line.trim()).filter((line) => line.length > 0),
-                              }))
-                              .filter((block) => block.year.length > 0 && block.lines.length > 0);
-                            const response = await fetchJson<{ biography: FounderBiographyBlock[] }>("/api/admin/founder-biography", {
-                              method: "PUT",
-                              body: JSON.stringify({ biography: filtered }),
-                            });
-                            setFounderBiography(response.biography ?? []);
-                            setStatus("Биография обновлена");
-                          } catch (error) {
-                            reportError(error, "Не удалось сохранить биографию");
-                          } finally {
-                            setFounderBiographySaving(false);
-                          }
-                        }}
-                        disabled={founderBiographySaving || founderBiographyLoading}
-                      >
-                        {founderBiographySaving ? "Сохраняем..." : "Сохранить биографию"}
-                      </button>
-                    </div>
-                  </div>
-                  )}
-                </div>
-              )}
-            </main>
-          </>
+          <SeoView
+            seoPages={seoPages}
+            selectedSeoSlug={selectedSeoSlug}
+            onSeoSelect={handleSeoSelect}
+            selectedSeoPage={selectedSeoPage}
+            onSeoFieldChange={(field: SeoEditorField, value: string) => updateSeoField(selectedSeoPage?.slug ?? "", field, value)}
+            onSeoSave={() => handleSeoSave(selectedSeoPage?.slug ?? "")}
+            onSeoOgClear={() => handleSeoOgClear(selectedSeoPage?.slug ?? "")}
+            onSeoOgPicker={() =>
+              selectedSeoPage &&
+              openMediaLibrary("seo-page", {
+                targetId: selectedSeoPage.slug,
+                initialSelection: selectedSeoPage.ogImageUrl ? [selectedSeoPage.ogImageUrl] : [],
+              })
+            }
+            seoSaving={seoSaving}
+            seoLoading={showSeoSkeleton}
+          />
         ) : activeView === "settings" ? (
           <SettingsView
             contactSettings={contactSettings}
@@ -2995,6 +2897,29 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
             appearanceSaving={appearanceSaving}
             onAppearanceChange={handleAppearanceFieldChange}
             onSaveAppearance={handleSaveAppearance}
+            pricingData={pricingData}
+            pricingLoading={pricingLoading}
+            pricingSaving={pricingSaving}
+            onPricingChange={handlePricingChange}
+            onSavePricing={handleSavePricing}
+            publications={publications}
+            publicationsLoading={publicationsLoading}
+            publicationsSaving={publicationsSaving}
+            onPublicationsChange={handlePublicationsChange}
+            onPublicationsAdd={handlePublicationsAdd}
+            onPublicationsRemove={handlePublicationsRemove}
+            onSavePublications={handleSavePublications}
+            founderBiography={founderBiography}
+            founderBiographyLoading={founderBiographyLoading}
+            founderBiographySaving={founderBiographySaving}
+            onFounderBiographyChange={handleFounderBiographyChange}
+            onFounderBiographyAddBlock={handleFounderBiographyAddBlock}
+            onFounderBiographyRemoveBlock={handleFounderBiographyRemoveBlock}
+            onFounderBiographyAddLine={handleFounderBiographyAddLine}
+            onFounderBiographyRemoveLine={handleFounderBiographyRemoveLine}
+            onSaveFounderBiography={handleSaveFounderBiography}
+            founderLeadText={founderLeadText}
+            onFounderLeadTextChange={setFounderLeadText}
             teamMembers={teamMembers}
             teamLoading={teamLoading}
             teamSelectedId={teamSelectedId}
@@ -3106,81 +3031,83 @@ function SeoEditorPanel({
   };
 
   return (
-    <form className={styles.seoEditorForm} onSubmit={handleSubmit}>
-      <header className={styles.seoEditorHeader}>
-        <div>
-          <h2 className={styles.columnTitle}>{page.label}</h2>
-          <p className={styles.columnSubtitle}>Настройте заголовки, описания и изображение для соцсетей.</p>
+    <form className={styles.settingsPanel} onSubmit={handleSubmit}>
+      <div className={styles.settingsCard}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionEyebrow}>SEO</p>
+            <h2 className={styles.columnTitle}>{page.label}</h2>
+            <p className={styles.columnSubtitle}>Настройте заголовки, описания и изображение для соцсетей.</p>
+            <code className={styles.seoPathBadge}>{page.path}</code>
+          </div>
         </div>
-        <code className={styles.seoPathBadge}>{page.path}</code>
-      </header>
 
-      <label className={styles.inputGroup}>
-        <LabelWithHint label="Title" hint="Заголовок, который появляется в результатах поиска и во вкладке браузера." />
-        <input
-          className={styles.textInput}
-          value={page.title}
-          onChange={(event) => onFieldChange("title", event.target.value)}
-          placeholder={page.defaults.title ?? ""}
-        />
-      </label>
+        <label className={styles.inputGroup}>
+          <LabelWithHint label="Title" hint="Заголовок, который появляется в результатах поиска и во вкладке браузера." />
+          <input
+            className={styles.textInput}
+            value={page.title}
+            onChange={(event) => onFieldChange("title", event.target.value)}
+            placeholder={page.defaults.title ?? ""}
+          />
+        </label>
 
-      <label className={styles.inputGroup}>
-        <LabelWithHint
-          label="Description"
-          hint="Краткое описание страницы для поисковых систем и социальных сетей."
-        />
-        <textarea
-          className={`${styles.textInput} ${styles.seoTextarea}`}
-          value={page.description}
-          onChange={(event) => onFieldChange("description", event.target.value)}
-          placeholder={page.defaults.description ?? ""}
-          rows={5}
-        />
-      </label>
+        <label className={styles.inputGroup}>
+          <LabelWithHint
+            label="Description"
+            hint="Краткое описание страницы для поисковых систем и социальных сетей."
+          />
+          <textarea
+            className={`${styles.textInput} ${styles.seoTextarea}`}
+            value={page.description}
+            onChange={(event) => onFieldChange("description", event.target.value)}
+            placeholder={page.defaults.description ?? ""}
+            rows={5}
+          />
+        </label>
 
-      <label className={styles.inputGroup}>
-        <LabelWithHint label="Ключевые слова" hint="Перечислите слова через запятую. Они помогут поисковикам понять контент." />
-        <input
-          className={styles.textInput}
-          value={page.keywords}
-          onChange={(event) => onFieldChange("keywords", event.target.value)}
-          placeholder={defaultKeywords}
-        />
-        <span className={styles.seoHelperText}>Например: архитектура, rinart, мастерская</span>
-      </label>
+        <label className={styles.inputGroup}>
+          <LabelWithHint label="Ключевые слова" hint="Перечислите слова через запятую. Они помогут поисковикам понять контент." />
+          <input
+            className={styles.textInput}
+            value={page.keywords}
+            onChange={(event) => onFieldChange("keywords", event.target.value)}
+            placeholder={defaultKeywords}
+          />
+          <span className={styles.seoHelperText}>Например: архитектура, rinart, мастерская</span>
+        </label>
 
-      <div className={styles.seoOgSection}>
-        <LabelWithHint
-          label="OG-изображение"
-          hint="Будет показано при шаринге страницы в социальных сетях и мессенджерах."
-        />
-        <div className={styles.seoOgPreview}>
-          {hasOgImage ? (
-            <SafeImage
-              src={page.ogImageUrl}
-              alt="OG-превью"
-              className={styles.seoOgPreviewImage}
-              width={640}
-              height={360}
-            />
-          ) : (
-            <div className={styles.seoOgEmpty}>Изображение не выбрано</div>
-          )}
-        </div>
-        <div className={styles.seoOgActions}>
-          <button type="button" className={styles.secondaryButton} onClick={onOpenOgPicker}>
-            Выбрать из библиотеки
-          </button>
-          {hasOgImage ? (
-            <button type="button" className={styles.ghostButton} onClick={onClearOgImage}>
-              Очистить
+        <div className={styles.seoOgSection}>
+          <LabelWithHint
+            label="OG-изображение"
+            hint="Будет показано при шаринге страницы в социальных сетях и мессенджерах."
+          />
+          <div className={styles.seoOgPreview}>
+            {hasOgImage ? (
+              <SafeImage
+                src={page.ogImageUrl}
+                alt="OG-превью"
+                className={styles.seoOgPreviewImage}
+                width={640}
+                height={360}
+              />
+            ) : (
+              <div className={styles.seoOgEmpty}>Изображение не выбрано</div>
+            )}
+          </div>
+          <div className={styles.seoOgActions}>
+            <button type="button" className={styles.secondaryButton} onClick={onOpenOgPicker}>
+              Выбрать из библиотеки
             </button>
-          ) : null}
+            {hasOgImage ? (
+              <button type="button" className={styles.ghostButton} onClick={onClearOgImage}>
+                Очистить
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
-
-      <div className={styles.seoActions}>
+      <div className={styles.settingsActions}>
         <button className={styles.primaryButton} type="submit" disabled={saving}>
           {saving ? "Сохраняем..." : "Сохранить"}
         </button>
@@ -3299,7 +3226,6 @@ function ProjectEditor({
   saving: _saving,
   onDelete: _onDelete,
   deleting: _deleting,
-  onOpenOgImagePicker,
 }: {
   state: EditorState;
   onFieldChange: EditorFieldChangeHandler;
@@ -3308,7 +3234,6 @@ function ProjectEditor({
   saving: boolean;
   onDelete: () => void | Promise<void>;
   deleting: boolean;
-  onOpenOgImagePicker: () => void;
 }) {
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -3844,90 +3769,6 @@ function ProjectEditor({
         </div>
       </section>
 
-      <section className={styles.formSection}>
-        <div className={styles.sectionHeader}>
-          <div className={styles.sectionTitleRow}>
-            <h3 className={styles.sectionTitle}>SEO и мета</h3>
-            <FieldHint text="Эти поля помогают поисковикам и соцсетям корректно отобразить проект." />
-          </div>
-          <p className={styles.sectionSubtitle}>Опишите, как проект должен выглядеть в поиске и при шаринге</p>
-        </div>
-        <div className={`${styles.formGrid} ${styles.gridTwo}`}>
-          <label className={styles.inputGroup}>
-            <LabelWithHint
-              label="SEO Title"
-              hint="Заголовок для поисковой выдачи, держите его до 60 символов."
-            />
-            <input
-              className={styles.textInput}
-              value={state.seoTitle}
-              onChange={(event) => onFieldChange("seoTitle", event.target.value)}
-              placeholder="Например: Современный дом в Казани – Rinart"
-            />
-          </label>
-          <label className={styles.inputGroup}>
-            <LabelWithHint
-              label="SEO Description"
-              hint="Короткое описание до 160 символов для сниппета в поиске."
-            />
-            <textarea
-              className={`${styles.textInput} ${styles.textArea}`}
-              value={state.seoDescription}
-              onChange={(event) => onFieldChange("seoDescription", event.target.value)}
-              rows={3}
-              placeholder="Опишите суть проекта парой предложений."
-            />
-          </label>
-        </div>
-        <div className={`${styles.formGrid} ${styles.gridTwo}`}>
-          <label className={styles.inputGroup}>
-            <LabelWithHint
-              label="SEO Keywords"
-              hint="Список ключевых слов через запятую: город, тип проекта, особенности."
-            />
-            <input
-              className={styles.textInput}
-              value={state.seoKeywords}
-              onChange={(event) => onFieldChange("seoKeywords", event.target.value)}
-              placeholder="дом, интерьер, Rinart"
-            />
-          </label>
-          <label className={styles.inputGroup}>
-            <LabelWithHint
-              label="OG Image"
-              hint="Изображение для предпросмотра в соцсетях (минимум 1200×630)."
-            />
-            <div className={styles.ogInputRow}>
-              {state.seoOgImageUrl ? (
-                <div className={styles.ogPreview}>
-                  <div className={styles.heroImageWrap}>
-                    <button
-                      className={styles.previewDeleteButton}
-                      type="button"
-                      onClick={() => onFieldChange("seoOgImageUrl", "")}
-                      aria-label="Удалить OG изображение"
-                    >
-                      <IconX aria-hidden="true" />
-                    </button>
-                    <SafeImage
-                      src={state.seoOgImageUrl}
-                      alt="Предпросмотр OG"
-                      width={640}
-                      height={360}
-                      unoptimized
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className={styles.ogEmpty}>Изображение не выбрано</div>
-              )}
-              <button className={`${styles.secondaryButton} ${styles.ogPickerButton}`} type="button" onClick={onOpenOgImagePicker}>
-                Выбрать из библиотеки
-              </button>
-            </div>
-          </label>
-        </div>
-      </section>
 
     </div>
   );
@@ -4151,6 +3992,29 @@ type SettingsViewProps = {
   appearanceSaving: boolean;
   onAppearanceChange: (field: keyof AppearanceSettingsState, value: string) => void;
   onSaveAppearance: () => void;
+  pricingData: PricingData;
+  pricingLoading: boolean;
+  pricingSaving: boolean;
+  onPricingChange: (type: "top" | "bottom", index: number, field: keyof PricingItem, value: string | number) => void;
+  onSavePricing: () => void;
+  publications: string[];
+  publicationsLoading: boolean;
+  publicationsSaving: boolean;
+  onPublicationsChange: (index: number, value: string) => void;
+  onPublicationsAdd: () => void;
+  onPublicationsRemove: (index: number) => void;
+  onSavePublications: () => void;
+  founderBiography: Array<{ year: string; lines: string[] }>;
+  founderBiographyLoading: boolean;
+  founderBiographySaving: boolean;
+  onFounderBiographyChange: (blockIndex: number, field: "year" | "lines", value: string | string[], lineIndex?: number) => void;
+  onFounderBiographyAddBlock: () => void;
+  onFounderBiographyRemoveBlock: (blockIndex: number) => void;
+  onFounderBiographyAddLine: (blockIndex: number) => void;
+  onFounderBiographyRemoveLine: (blockIndex: number, lineIndex: number) => void;
+  onSaveFounderBiography: () => void;
+  founderLeadText: string;
+  onFounderLeadTextChange: (text: string) => void;
   teamMembers: TeamMemberState[];
   teamLoading: boolean;
   teamSelectedId: number | null;
@@ -4175,6 +4039,90 @@ type SettingsViewProps = {
   onOpenMediaLibrary: (mode: MediaLibraryMode, options?: { targetId?: string; initialSelection?: string[] }) => void;
 };
 
+function SeoView({
+  seoPages,
+  selectedSeoSlug,
+  onSeoSelect,
+  selectedSeoPage,
+  onSeoFieldChange,
+  onSeoSave,
+  onSeoOgClear,
+  onSeoOgPicker,
+  seoSaving,
+  seoLoading,
+}: {
+  seoPages: SeoPageState[];
+  selectedSeoSlug: string | null;
+  onSeoSelect: (slug: string) => void;
+  selectedSeoPage: SeoPageState | null;
+  onSeoFieldChange: (field: SeoEditorField, value: string) => void;
+  onSeoSave: () => void;
+  onSeoOgClear: () => void;
+  onSeoOgPicker: () => void;
+  seoSaving: boolean;
+  seoLoading: boolean;
+}) {
+  return (
+    <div className={styles.settingsHub}>
+      <div className={styles.settingsIntro}>
+        <div>
+          <p className={styles.sectionEyebrow}>SEO</p>
+          <h2 className={styles.columnTitle}>Метаданные страниц</h2>
+          <p className={styles.columnSubtitle}>Выберите страницу, чтобы настроить заголовки, описания и изображения для поисковых систем.</p>
+        </div>
+      </div>
+      <div className={styles.settingsLayout}>
+        <nav className={styles.settingsNav} aria-label="Страницы сайта">
+          {seoLoading ? (
+            <div className={styles.emptyState}>Загрузка...</div>
+          ) : seoPages.length ? (
+            seoPages.map((page) => {
+              const hasOverrides =
+                page.title.trim().length > 0 ||
+                page.description.trim().length > 0 ||
+                page.keywords.trim().length > 0 ||
+                page.ogImageUrl.trim().length > 0;
+              return (
+                <button
+                  key={page.slug}
+                  className={styles.settingsNavButton}
+                  type="button"
+                  data-active={selectedSeoSlug === page.slug}
+                  onClick={() => onSeoSelect(page.slug)}
+                >
+                  <span className={styles.settingsNavLabel}>{page.label}</span>
+                  <span className={styles.settingsNavDescription}>
+                    {page.path}
+                    {hasOverrides ? " • Настроено" : ""}
+                  </span>
+                </button>
+              );
+            })
+          ) : (
+            <div className={styles.emptyState}>Нет доступных страниц</div>
+          )}
+        </nav>
+        <div className={styles.settingsContent}>
+          {selectedSeoPage ? (
+            <SeoEditorPanel
+              page={selectedSeoPage}
+              onFieldChange={onSeoFieldChange}
+              onSave={onSeoSave}
+              onClearOgImage={onSeoOgClear}
+              onOpenOgPicker={onSeoOgPicker}
+              saving={seoSaving}
+            />
+          ) : seoLoading ? (
+            <SeoEditorSkeleton />
+          ) : (
+            <div className={styles.emptyState}>Выберите страницу, чтобы изменить SEO.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Settings view removed
 function SettingsView({
   contactSettings,
@@ -4190,6 +4138,29 @@ function SettingsView({
   appearanceSaving,
   onAppearanceChange: _onAppearanceChange,
   onSaveAppearance,
+  pricingData,
+  pricingLoading,
+  pricingSaving,
+  onPricingChange,
+  onSavePricing,
+  publications,
+  publicationsLoading,
+  publicationsSaving,
+  onPublicationsChange,
+  onPublicationsAdd,
+  onPublicationsRemove,
+  onSavePublications,
+  founderBiography,
+  founderBiographyLoading,
+  founderBiographySaving,
+  onFounderBiographyChange,
+  onFounderBiographyAddBlock,
+  onFounderBiographyRemoveBlock,
+  onFounderBiographyAddLine,
+  onFounderBiographyRemoveLine,
+  onSaveFounderBiography,
+  founderLeadText,
+  onFounderLeadTextChange,
   teamMembers,
   teamLoading,
   teamSelectedId,
@@ -4229,6 +4200,313 @@ function SettingsView({
     event.preventDefault();
     onSaveAppearance();
   };
+
+  const handlePricingSubmit = (event: ReactFormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSavePricing();
+  };
+
+  const handlePublicationsSubmit = (event: ReactFormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSavePublications();
+  };
+
+  const handleFounderBiographySubmit = (event: ReactFormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSaveFounderBiography();
+  };
+
+  const renderPricingPanel = () => (
+    <form className={styles.settingsPanel} onSubmit={handlePricingSubmit}>
+      <div className={styles.settingsCard}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionEyebrow}>Контент сайта</p>
+            <h2 className={styles.columnTitle}>Цены на проектирование</h2>
+            <p className={styles.columnSubtitle}>Редактируйте названия услуг и цены. Используйте \n для переноса строки в названии.</p>
+          </div>
+        </div>
+        {pricingLoading ? (
+          <div className={styles.emptyState}>Загрузка...</div>
+        ) : (
+          <>
+            <div className={styles.sectionHeader}>
+              <h3 className={styles.sectionTitle}>Верхний ряд</h3>
+            </div>
+            <div className={styles.formGrid}>
+              {pricingData.topItems.map((item, index) => (
+                <div key={`top-${index}`} className={styles.settingsCard} style={{ marginBottom: "24px" }}>
+                  <div className={`${styles.formGrid} ${styles.gridTwo}`}>
+                    <label className={styles.inputGroup}>
+                      <LabelWithHint label="Название услуги" hint="Используйте \n для переноса строки" />
+                      <textarea
+                        className={styles.textInput}
+                        value={item.label}
+                        onChange={(event) => onPricingChange("top", index, "label", event.target.value)}
+                        disabled={pricingLoading}
+                        rows={2}
+                      />
+                    </label>
+                    <label className={styles.inputGroup}>
+                      <LabelWithHint label="Цена" hint="Например: 1500 р/м2" />
+                      <input
+                        className={styles.textInput}
+                        value={item.price}
+                        onChange={(event) => onPricingChange("top", index, "price", event.target.value)}
+                        disabled={pricingLoading}
+                      />
+                    </label>
+                  </div>
+                  <div className={`${styles.formGrid} ${styles.gridTwo}`}>
+                    <label className={styles.inputGroup}>
+                      <LabelWithHint label="Заполненные квадраты" hint="Количество заполненных индикаторов (1-7)" />
+                      <input
+                        type="number"
+                        min="1"
+                        max="7"
+                        className={styles.textInput}
+                        value={item.filledSquares}
+                        onChange={(event) => onPricingChange("top", index, "filledSquares", parseInt(event.target.value) || 1)}
+                        disabled={pricingLoading}
+                      />
+                    </label>
+                    <label className={styles.inputGroup}>
+                      <LabelWithHint label="Высота соединителя (px)" hint="Высота линии соединения" />
+                      <input
+                        type="number"
+                        className={styles.textInput}
+                        value={item.connectorHeight}
+                        onChange={(event) => onPricingChange("top", index, "connectorHeight", parseInt(event.target.value) || 0)}
+                        disabled={pricingLoading}
+                      />
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className={styles.sectionHeader} style={{ marginTop: "32px" }}>
+              <h3 className={styles.sectionTitle}>Нижний ряд</h3>
+            </div>
+            <div className={styles.formGrid}>
+              {pricingData.bottomItems.map((item, index) => (
+                <div key={`bottom-${index}`} className={styles.settingsCard} style={{ marginBottom: "24px" }}>
+                  <div className={`${styles.formGrid} ${styles.gridTwo}`}>
+                    <label className={styles.inputGroup}>
+                      <LabelWithHint label="Название услуги" hint="Используйте \n для переноса строки" />
+                      <textarea
+                        className={styles.textInput}
+                        value={item.label}
+                        onChange={(event) => onPricingChange("bottom", index, "label", event.target.value)}
+                        disabled={pricingLoading}
+                        rows={2}
+                      />
+                    </label>
+                    <label className={styles.inputGroup}>
+                      <LabelWithHint label="Цена" hint="Например: 1500 р/м2" />
+                      <input
+                        className={styles.textInput}
+                        value={item.price}
+                        onChange={(event) => onPricingChange("bottom", index, "price", event.target.value)}
+                        disabled={pricingLoading}
+                      />
+                    </label>
+                  </div>
+                  <div className={`${styles.formGrid} ${styles.gridTwo}`}>
+                    <label className={styles.inputGroup}>
+                      <LabelWithHint label="Заполненные квадраты" hint="Количество заполненных индикаторов (1-7)" />
+                      <input
+                        type="number"
+                        min="1"
+                        max="7"
+                        className={styles.textInput}
+                        value={item.filledSquares}
+                        onChange={(event) => onPricingChange("bottom", index, "filledSquares", parseInt(event.target.value) || 1)}
+                        disabled={pricingLoading}
+                      />
+                    </label>
+                    <label className={styles.inputGroup}>
+                      <LabelWithHint label="Высота соединителя (px)" hint="Высота линии соединения" />
+                      <input
+                        type="number"
+                        className={styles.textInput}
+                        value={item.connectorHeight}
+                        onChange={(event) => onPricingChange("bottom", index, "connectorHeight", parseInt(event.target.value) || 0)}
+                        disabled={pricingLoading}
+                      />
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      <div className={styles.settingsActions}>
+        <button className={styles.primaryButton} type="submit" disabled={pricingSaving || pricingLoading}>
+          {pricingSaving ? "Сохраняем..." : "Сохранить цены"}
+        </button>
+      </div>
+    </form>
+  );
+
+  const renderPublicationsPanel = () => (
+    <form className={styles.settingsPanel} onSubmit={handlePublicationsSubmit}>
+      <div className={styles.settingsCard}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionEyebrow}>Контент сайта</p>
+            <h2 className={styles.columnTitle}>Публикации и награды</h2>
+            <p className={styles.columnSubtitle}>Добавьте список публикаций и наград мастерской.</p>
+          </div>
+        </div>
+        {publicationsLoading ? (
+          <div className={styles.emptyState}>Загрузка...</div>
+        ) : (
+          <>
+            <div className={styles.formGrid}>
+              {publications.map((pub, index) => (
+                <div key={`pub-${index}`} className={styles.inputGroup} style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
+                  <input
+                    className={styles.textInput}
+                    value={pub}
+                    onChange={(e) => onPublicationsChange(index, e.target.value)}
+                    placeholder="Введите публикацию или награду"
+                    style={{ flex: 1 }}
+                    disabled={publicationsLoading}
+                  />
+                  <button
+                    type="button"
+                    className={styles.projectDelete}
+                    aria-label="Удалить публикацию"
+                    data-visible="static"
+                    style={{ marginLeft: 0 }}
+                    onClick={() => onPublicationsRemove(index)}
+                  >
+                    <IconTrash aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              className={styles.secondaryButton}
+              type="button"
+              onClick={onPublicationsAdd}
+              disabled={publicationsLoading}
+            >
+              Добавить публикацию
+            </button>
+          </>
+        )}
+      </div>
+      <div className={styles.settingsActions}>
+        <button className={styles.primaryButton} type="submit" disabled={publicationsSaving || publicationsLoading}>
+          {publicationsSaving ? "Сохраняем..." : "Сохранить публикации"}
+        </button>
+      </div>
+    </form>
+  );
+
+  const renderBiographyPanel = () => (
+    <form className={styles.settingsPanel} onSubmit={handleFounderBiographySubmit}>
+      <div className={styles.settingsCard}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionEyebrow}>Контент сайта</p>
+            <h2 className={styles.columnTitle}>Биография основателя</h2>
+            <p className={styles.columnSubtitle}>Добавьте биографию основателя мастерской по годам.</p>
+          </div>
+        </div>
+        {founderBiographyLoading ? (
+          <div className={styles.emptyState}>Загрузка...</div>
+        ) : (
+          <>
+            <label className={styles.inputGroup}>
+              <LabelWithHint label="Вводный текст" hint="Текст, который отображается перед биографией." />
+              <textarea
+                className={`${styles.textInput} ${styles.seoTextarea}`}
+                value={founderLeadText}
+                onChange={(e) => onFounderLeadTextChange(e.target.value)}
+                placeholder="Занимаюсь проектированием больше 20 лет. Мастерская создана в 2024 году. Окончил Архитектурно Строительную Академию в г. Казани."
+                rows={3}
+                disabled={founderBiographyLoading}
+              />
+            </label>
+            <div className={styles.formGrid}>
+              {founderBiography.map((block, blockIndex) => (
+                <div key={`bio-block-${blockIndex}`} style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px" }}>
+                  <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
+                    <input
+                      className={styles.textInput}
+                      value={block.year}
+                      onChange={(e) => onFounderBiographyChange(blockIndex, "year", e.target.value)}
+                      placeholder="Год (например: 1977 г.)"
+                      style={{ flex: 1, fontSize: "13px", padding: "6px 8px", border: "none", borderBottom: "1px solid rgba(15, 23, 42, 0.12)", borderRadius: "0", background: "transparent" }}
+                      disabled={founderBiographyLoading}
+                    />
+                    <button
+                      type="button"
+                      className={styles.projectDelete}
+                      aria-label="Удалить блок"
+                      data-visible="static"
+                      onClick={() => onFounderBiographyRemoveBlock(blockIndex)}
+                    >
+                      <IconTrash aria-hidden="true" />
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", paddingLeft: "16px" }}>
+                    {block.lines.map((line: string, lineIndex: number) => (
+                      <div key={`bio-line-${blockIndex}-${lineIndex}`} style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
+                        <input
+                          className={styles.textInput}
+                          value={line}
+                          onChange={(e) => onFounderBiographyChange(blockIndex, "lines", e.target.value, lineIndex)}
+                          placeholder="Строка биографии"
+                          style={{ flex: 1, fontSize: "12px", padding: "4px 8px", border: "none", borderBottom: "1px solid rgba(15, 23, 42, 0.08)", borderRadius: "0", background: "transparent", color: "rgba(15, 23, 42, 0.7)" }}
+                          disabled={founderBiographyLoading}
+                        />
+                        <button
+                          type="button"
+                          className={styles.projectDelete}
+                          aria-label="Удалить строку"
+                          data-visible="static"
+                          onClick={() => onFounderBiographyRemoveLine(blockIndex, lineIndex)}
+                        >
+                          <IconTrash aria-hidden="true" />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      className={styles.secondaryButton}
+                      type="button"
+                      onClick={() => onFounderBiographyAddLine(blockIndex)}
+                      style={{ alignSelf: "flex-start", fontSize: "11px", padding: "4px 8px", marginTop: "4px" }}
+                      disabled={founderBiographyLoading}
+                    >
+                      Добавить строку
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              className={styles.secondaryButton}
+              type="button"
+              onClick={onFounderBiographyAddBlock}
+              style={{ fontSize: "11px", padding: "4px 8px" }}
+              disabled={founderBiographyLoading}
+            >
+              Добавить блок
+            </button>
+          </>
+        )}
+      </div>
+      <div className={styles.settingsActions}>
+        <button className={styles.primaryButton} type="submit" disabled={founderBiographySaving || founderBiographyLoading}>
+          {founderBiographySaving ? "Сохраняем..." : "Сохранить биографию"}
+        </button>
+      </div>
+    </form>
+  );
 
   const renderContactsPanel = () => (
     <form className={styles.settingsPanel} onSubmit={handleContactsSubmit}>
@@ -4556,8 +4834,14 @@ function SettingsView({
               ? renderSocialPanel()
               : activeTab === "media"
                 ? renderMediaPanel()
-                : (
-                  <div className={styles.teamSectionWrapper}>
+                : activeTab === "pricing"
+                  ? renderPricingPanel()
+                  : activeTab === "publications"
+                    ? renderPublicationsPanel()
+                    : activeTab === "biography"
+                      ? renderBiographyPanel()
+                      : (
+                        <div className={styles.teamSectionWrapper}>
                     <div className={styles.teamSectionCard}>
                       <TeamManager
                         members={teamMembers}

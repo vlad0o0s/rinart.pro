@@ -3,70 +3,17 @@
 import type { CSSProperties } from "react";
 import { useReveal } from "@/lib/use-reveal";
 import styles from "./pricing-timeline.module.css";
+import type { PricingItem, PricingData } from "@/lib/global-blocks";
 
-type PricingItem = {
-  label: string;
-  price: string;
-  filledSquares: number;
-  connectorHeight: number;
+type PricingTimelineProps = {
+  data: PricingData;
 };
 
-const TOP_ITEMS: PricingItem[] = [
-  {
-    label: "Эскизный проект \nдома:",
-    price: "1500 р/м2",
-    filledSquares: 1,
-    connectorHeight: 45,
-  },
-  {
-    label: "Конструктивные \nрешения:",
-    price: "1000 р/м2",
-    filledSquares: 3,
-    connectorHeight: 185,
-  },
-  {
-    label: "Проект отопления:",
-    price: "300 р/м2",
-    filledSquares: 5,
-    connectorHeight: 95,
-  },
-  {
-    label: "Дизайн проект интерьера:",
-    price: "4000 р/м2",
-    filledSquares: 7,
-    connectorHeight: 265,
-  },
-];
-
-const BOTTOM_ITEMS: PricingItem[] = [
-  {
-    label: "Архитектурные \nрешения:",
-    price: "1500 р/м2",
-    filledSquares: 2,
-    connectorHeight: 60,
-  },
-  {
-    label: "Проект водоснабжения \nи канализации:",
-    price: "300 р/м2",
-    filledSquares: 4,
-    connectorHeight: 210,
-  },
-  {
-    label: "Проект электроснабжения:",
-    price: "300 р/м2",
-    filledSquares: 6,
-    connectorHeight: 105,
-  },
-];
-
-const MOBILE_TIMELINE: Array<{ item: PricingItem; side: "left" | "right" }> = [
-  { item: TOP_ITEMS[0], side: "left" },
-  { item: BOTTOM_ITEMS[0], side: "right" },
-  { item: TOP_ITEMS[1], side: "left" },
-  { item: BOTTOM_ITEMS[1], side: "right" },
-  { item: TOP_ITEMS[2], side: "left" },
-  { item: BOTTOM_ITEMS[2], side: "right" },
-  { item: TOP_ITEMS[3], side: "left" },
+const MOBILE_TIMELINE_ORDER: Array<{ topIndex: number; bottomIndex: number | null }> = [
+  { topIndex: 0, bottomIndex: 0 },
+  { topIndex: 1, bottomIndex: 1 },
+  { topIndex: 2, bottomIndex: 2 },
+  { topIndex: 3, bottomIndex: null },
 ];
 
 const TOTAL_SLOTS = 8;
@@ -131,8 +78,20 @@ function DesktopPricingItem({
   );
 }
 
-export function PricingTimeline() {
+export function PricingTimeline({ data }: PricingTimelineProps) {
   const sectionRef = useReveal<HTMLElement>({ threshold: 0.1 });
+  const { topItems, bottomItems } = data;
+
+  const mobileTimeline = MOBILE_TIMELINE_ORDER.flatMap(({ topIndex, bottomIndex }) => {
+    const items: Array<{ item: PricingItem; side: "left" | "right" }> = [];
+    if (topItems[topIndex]) {
+      items.push({ item: topItems[topIndex], side: "left" });
+    }
+    if (bottomIndex !== null && bottomItems[bottomIndex]) {
+      items.push({ item: bottomItems[bottomIndex], side: "right" });
+    }
+    return items;
+  });
 
   return (
     <section ref={sectionRef} className={styles.section} id="price" data-visible="false">
@@ -141,19 +100,19 @@ export function PricingTimeline() {
       </h2>
       <div className={styles.branch}>
         <div className={styles.topRow}>
-          {TOP_ITEMS.map((item) => (
-            <DesktopPricingItem key={`top-${item.label}`} item={item} variant="top" />
+          {topItems.map((item, index) => (
+            <DesktopPricingItem key={`top-${index}-${item.label}`} item={item} variant="top" />
           ))}
         </div>
         <div className={styles.baseline} aria-hidden="true" />
         <div className={styles.bottomRow}>
-          {BOTTOM_ITEMS.map((item) => (
-            <DesktopPricingItem key={`bottom-${item.label}`} item={item} variant="bottom" />
+          {bottomItems.map((item, index) => (
+            <DesktopPricingItem key={`bottom-${index}-${item.label}`} item={item} variant="bottom" />
           ))}
         </div>
       </div>
       <div className={styles.mobileTimeline}>
-        {MOBILE_TIMELINE.map(({ item, side }) => {
+        {mobileTimeline.map(({ item, side }, index) => {
           const isLeft = side === "left";
           const content = (
             <div className={styles.mobileContent}>
@@ -167,7 +126,7 @@ export function PricingTimeline() {
 
           return (
             <div
-              key={`mobile-${item.label}`}
+              key={`mobile-${index}-${item.label}`}
               className={`${styles.mobileTimelineItem} ${isLeft ? styles.mobileTimelineItemLeft : styles.mobileTimelineItemRight}`}
             >
               {isLeft ? content : <div className={styles.mobileSpacer} aria-hidden="true" />}

@@ -201,7 +201,7 @@
   width: 100%;
   padding: 0;
   text-align: left;
-  margin-bottom: clamp(24px, 4vw, 48px);
+  margin-bottom: 5px;
 }
 
 .yearBlock:last-child {

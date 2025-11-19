@@ -7,9 +7,10 @@ import styles from "./founder-section.module.css";
 
 type FounderSectionProps = {
   biography: FounderBiographyBlock[];
+  leadText: string;
 };
 
-export function FounderSection({ biography }: FounderSectionProps) {
+export function FounderSection({ biography, leadText }: FounderSectionProps) {
   const sectionRef = useReveal<HTMLElement>({ threshold: 0.2 });
 
   return (
@@ -36,8 +37,7 @@ export function FounderSection({ biography }: FounderSectionProps) {
 
         <div className={styles.columnContent}>
           <p className={styles.lead}>
-            Занимаюсь проектированием больше 20 лет. Мастерская создана в 2024 году. Окончил
-            Архитектурно Строительную Академию в г. Казани.
+            {leadText}
           </p>
 
           <div className={styles.timeline}>

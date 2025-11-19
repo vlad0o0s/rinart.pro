@@ -60,6 +60,8 @@ export type FounderBiographyBlock = {
   lines: string[];
 };
 
+const DEFAULT_FOUNDER_LEAD_TEXT = "Занимаюсь проектированием больше 20 лет. Мастерская создана в 2024 году. Окончил Архитектурно Строительную Академию в г. Казани.";
+
 const DEFAULT_FOUNDER_BIOGRAPHY: FounderBiographyBlock[] = [
   {
     year: "1977 г.",
@@ -345,6 +347,23 @@ export function normalizeFounderBiography(value: unknown): FounderBiographyBlock
     return DEFAULT_FOUNDER_BIOGRAPHY;
   }
   return blocks;
+}
+
+export async function getFounderLeadText(): Promise<string> {
+  // Always read fresh to reflect admin changes immediately across the site
+  const settings = await fetchAllSiteSettings();
+  const record = settings.find((item) => item.key === "founderLeadText");
+  if (!record?.value) {
+    return DEFAULT_FOUNDER_LEAD_TEXT;
+  }
+  const text = typeof record.value === "string" ? record.value.trim() : DEFAULT_FOUNDER_LEAD_TEXT;
+  return text || DEFAULT_FOUNDER_LEAD_TEXT;
+}
+
+export async function saveFounderLeadText(payload: string): Promise<string> {
+  const sanitized = typeof payload === "string" ? payload.trim() : DEFAULT_FOUNDER_LEAD_TEXT;
+  await upsertSiteSetting("founderLeadText", sanitized || DEFAULT_FOUNDER_LEAD_TEXT);
+  return sanitized || DEFAULT_FOUNDER_LEAD_TEXT;
 }
 
 export function invalidateSiteSettingsCache() {
