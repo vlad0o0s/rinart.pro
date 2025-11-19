@@ -118,10 +118,10 @@ export async function optimizeImage(
 
   // Попытка 1: AVIF через Sharp (если поддерживается)
   if (supportsAvif) {
-    try {
-      const avifBuffer = await candidate.clone().avif({ quality: 60, effort: 4 }).toBuffer();
+  try {
+    const avifBuffer = await candidate.clone().avif({ quality: 60, effort: 4 }).toBuffer();
       if (avifBuffer && avifBuffer.length > 0) {
-        return { buffer: avifBuffer, extension: ".avif", mimeType: "image/avif" };
+      return { buffer: avifBuffer, extension: ".avif", mimeType: "image/avif" };
       }
     } catch (error) {
       console.warn("AVIF conversion via Sharp failed:", error instanceof Error ? error.message : "unknown error");

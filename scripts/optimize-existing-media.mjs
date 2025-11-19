@@ -56,11 +56,11 @@ async function convertBuffer(buffer, mimeType) {
   const instance = sharp(buffer, { failOnError: false }).rotate();
 
   // Используем только WebP для конвертации
-  try {
-    const webp = await instance.clone().webp({ quality: 75, effort: 4 }).toBuffer();
-    return { buffer: webp, extension: ".webp", mimeType: "image/webp" };
-  } catch {
-    return { buffer, extension: null, mimeType };
+    try {
+      const webp = await instance.clone().webp({ quality: 75, effort: 4 }).toBuffer();
+      return { buffer: webp, extension: ".webp", mimeType: "image/webp" };
+    } catch {
+      return { buffer, extension: null, mimeType };
   }
 }
 

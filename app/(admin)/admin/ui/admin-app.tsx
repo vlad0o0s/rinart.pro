@@ -1746,8 +1746,8 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                 : item.slug === "page-transition" && mediaLibrary.mode === "site-transition"
                   ? { ...item, imageUrl: asset.url }
                   : item.slug === "contacts" && mediaLibrary.mode === "contact-hero"
-                    ? { ...item, imageUrl: asset.url }
-                    : item,
+                  ? { ...item, imageUrl: asset.url }
+                  : item,
             ),
           );
         }
@@ -2830,38 +2830,38 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                       </div>
                     </>
                   ) : (
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.fieldLabel}>{selectedContent.title}</label>
-                      <div
-                        className={styles.previewBox}
-                        style={
-                          selectedContent.slug === "page-transition"
-                            ? { backgroundColor: "#e5e7eb" }
-                            : undefined
-                        }
-                      >
-                        {selectedContent.imageUrl ? (
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>{selectedContent.title}</label>
+                    <div
+                      className={styles.previewBox}
+                      style={
+                        selectedContent.slug === "page-transition"
+                          ? { backgroundColor: "#e5e7eb" }
+                          : undefined
+                      }
+                    >
+                      {selectedContent.imageUrl ? (
                           <SafeImage src={selectedContent.imageUrl} alt={selectedContent.title} width={640} height={400} />
-                        ) : (
-                          <div className={styles.previewPlaceholder}>Изображение не выбрано</div>
-                        )}
-                      </div>
-                      <div className={styles.fieldActions}>
-                        <button
-                          className={styles.secondaryButton}
-                          type="button"
-                          onClick={() =>
-                            openMediaLibrary(
-                              selectedContent.slug === "home-hero" ? "site-hero" : "site-transition",
-                              { initialSelection: selectedContent.imageUrl ? [selectedContent.imageUrl] : [] },
-                            )
-                          }
-                          disabled={contentSaving}
-                        >
-                          Выбрать изображение
-                        </button>
-                      </div>
+                      ) : (
+                        <div className={styles.previewPlaceholder}>Изображение не выбрано</div>
+                      )}
                     </div>
+                    <div className={styles.fieldActions}>
+                      <button
+                        className={styles.secondaryButton}
+                        type="button"
+                        onClick={() =>
+                          openMediaLibrary(
+                            selectedContent.slug === "home-hero" ? "site-hero" : "site-transition",
+                            { initialSelection: selectedContent.imageUrl ? [selectedContent.imageUrl] : [] },
+                          )
+                        }
+                        disabled={contentSaving}
+                      >
+                        Выбрать изображение
+                      </button>
+                    </div>
+                  </div>
                   )}
                   <div className={styles.formActions}>
                     <button
@@ -3289,9 +3289,9 @@ function ProjectEditor({
     }
   }, [onFieldChange]);
 
-  const focusEditor = () => {
+  const focusEditor = useCallback(() => {
     editorRef.current?.focus();
-  };
+  }, []);
 
   const handleRichTextInput = useCallback(() => {
     syncEditorHtml();
@@ -3369,26 +3369,10 @@ function ProjectEditor({
   const handleEditorDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
+      event.stopPropagation();
       const { dataTransfer } = event;
-      const uriList = dataTransfer.getData("text/uri-list");
-      if (uriList && looksLikeUrl(uriList.trim())) {
-        insertImage(uriList.trim());
-        return;
-      }
-
-      const plainText = dataTransfer.getData("text/plain");
-      if (plainText) {
-        const trimmed = plainText.trim();
-        if (looksLikeUrl(trimmed)) {
-          insertImage(trimmed);
-        } else {
-          focusEditor();
-          document.execCommand("insertText", false, plainText);
-          syncEditorHtml();
-        }
-        return;
-      }
-
+      
+      // Сначала проверяем файлы - это приоритетно при перетаскивании
       const files = dataTransfer.files;
       if (files && files.length > 0) {
         const file = files[0];
@@ -3400,10 +3384,36 @@ function ProjectEditor({
             }
           };
           reader.readAsDataURL(file);
+          return;
         }
       }
+
+      // Затем проверяем URL из различных форматов
+      const uriList = dataTransfer.getData("text/uri-list");
+      if (uriList && looksLikeUrl(uriList.trim())) {
+        insertImage(uriList.trim());
+        return;
+      }
+
+      // Проверяем plain text только если это похоже на URL
+      const plainText = dataTransfer.getData("text/plain");
+      if (plainText) {
+        const trimmed = plainText.trim();
+        // Игнорируем локальные пути файлов (file://)
+        if (trimmed.startsWith("file://")) {
+          return;
+        }
+        if (looksLikeUrl(trimmed)) {
+          insertImage(trimmed);
+          return;
+        }
+        // Вставляем текст только если это не путь к файлу
+        focusEditor();
+        document.execCommand("insertText", false, plainText);
+        syncEditorHtml();
+      }
     },
-    [insertImage, syncEditorHtml],
+    [insertImage, syncEditorHtml, focusEditor],
   );
 
   const handleEditorPaste = useCallback(
@@ -3563,16 +3573,6 @@ function ProjectEditor({
                 onMouseDown={handleToolbarMouseDown}
               >
                 1.
-              </button>
-              <button
-                className={styles.toolbarButton}
-                type="button"
-                onClick={() => handleFormatBlock("BLOCKQUOTE")}
-                title="Цитата"
-                aria-label="Цитата"
-                onMouseDown={handleToolbarMouseDown}
-              >
-                “”
               </button>
             </div>
             <div className={styles.toolbarGroup}>

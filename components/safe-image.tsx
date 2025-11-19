@@ -19,13 +19,18 @@ export function SafeImage(props: SafeImageProps) {
 	}, [src]);
 	const [currentSrc, setCurrentSrc] = useState<ImageProps["src"]>(initialSrc);
 	const [hasError, setHasError] = useState(false);
-	// Генерируем timestamp один раз при монтировании компонента через ленивую инициализацию
-	const cacheBuster = useState(() => `t=${Date.now()}`)[0];
+	// Генерируем timestamp на основе src, чтобы при изменении изображения обновлялся кеш
+	const cacheBuster = useMemo(() => {
+		const srcStr = typeof initialSrc === "string" ? initialSrc : "";
+		// Используем хеш от src + текущее время для уникальности
+		return `t=${Date.now()}&s=${srcStr.length}`;
+	}, [initialSrc]);
 	
 	const isLocal = useMemo(() => {
 		const s = typeof initialSrc === "string" ? initialSrc : "";
 		// Используем обычный img для всех локальных файлов (начинающихся с /, но не //)
 		// Это нужно, так как файлы могут обновляться после билда
+		// Пути /uploads/ обрабатываются через API route /app/uploads/[...path]/route.ts
 		return s.startsWith("/") && !s.startsWith("//");
 	}, [initialSrc]);
 
@@ -50,14 +55,15 @@ export function SafeImage(props: SafeImageProps) {
 	// Для локальных файлов используем обычный img, чтобы избежать проблем с Next.js Image оптимизацией
 	if (isLocal && typeof currentSrc === "string") {
 		const { width, height, ...imgProps } = rest;
-		// Добавляем timestamp для обхода кеша, если файл не загружается
+		// Добавляем timestamp для обхода кеша браузера, чтобы всегда загружать актуальные файлы
+		// Пути /uploads/ обрабатываются через API route /app/uploads/[...path]/route.ts
 		const srcWithCache = hasError ? currentSrc : `${currentSrc}${currentSrc.includes("?") ? "&" : "?"}${cacheBuster}`;
 		return (
 			<img
 				src={hasError ? currentSrc : srcWithCache}
 				alt={alt || ""}
 				onError={(e) => {
-					// Если файл не загрузился, пробуем без timestamp
+					// Если файл не загрузился с timestamp, пробуем без него
 					if (!hasError && currentSrc !== placeholderSrc) {
 						setHasError(true);
 						setCurrentSrc(currentSrc);
