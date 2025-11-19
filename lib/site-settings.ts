@@ -11,6 +11,7 @@ const CACHE_TTL = 60 * 1000;
 let contactCache: CacheEntry<ContactSettings> | null = null;
 let socialCache: CacheEntry<SocialLink[]> | null = null;
 let appearanceCache: CacheEntry<AppearanceSettings> | null = null;
+let publicationsCache: CacheEntry<string[]> | null = null;
 
 const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
   heroTitle: "Контактная информация",
@@ -38,6 +39,18 @@ const DEFAULT_APPEARANCE_SETTINGS: AppearanceSettings = {
   homeHeroImageUrl: "/img/01-ilichevka.jpg",
   transitionImageUrl: "https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png",
 };
+
+const DEFAULT_PUBLICATIONS: string[] = [
+  "Финалист конкурса на лучший «Проект шоу-рума НЛК Домостроение на территории Центра дизайна ARTPLAY»",
+  "Финалист конкурса «Активный дом 2012»",
+  "Шорт лист конкурса «Скамья для Николы»",
+  "Публикация в журнале «Проект Россия» № 63",
+  "Участие в конкурсе «Дерево в архитектуре»",
+  "Лонг лист конкурса «Николин Бельведер», проект «Вавилон.ru»",
+  "1-e место «Архновация» — «Архитектурные произведения и проекты», в составе мастерской Н. В. Белоусова",
+  "Публикация в журнале «Татлин моно». Молодые архитекторы России",
+  "Диплом 3 степени, конкурс «3d-дом для экопарка Ясное Поле»",
+];
 
 function readCache<T>(entry: CacheEntry<T> | null): T | null {
   if (!entry || entry.expiresAt < Date.now()) {
@@ -189,9 +202,46 @@ function isValidPlatform(value: unknown): value is SocialPlatform {
   );
 }
 
+export async function getPublications(): Promise<string[]> {
+  // Always read fresh to reflect admin changes immediately across the site
+  const settings = await fetchAllSiteSettings();
+  const record = settings.find((item) => item.key === "publications");
+  const publications = normalizePublications(record?.value);
+  // Do not cache to avoid any delay in propagation
+  publicationsCache = null;
+  return publications;
+}
+
+export async function savePublications(payload: string[]): Promise<string[]> {
+  const sanitized = normalizePublications(payload);
+  await upsertSiteSetting("publications", sanitized);
+  publicationsCache = null;
+  return sanitized;
+}
+
+export function normalizePublications(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return DEFAULT_PUBLICATIONS;
+  }
+  const publications = value
+    .map((item) => {
+      if (typeof item === "string" && item.trim().length > 0) {
+        return item.trim();
+      }
+      return null;
+    })
+    .filter((item): item is string => Boolean(item));
+
+  if (!publications.length) {
+    return DEFAULT_PUBLICATIONS;
+  }
+  return publications;
+}
+
 export function invalidateSiteSettingsCache() {
   contactCache = null;
   socialCache = null;
   appearanceCache = null;
+  publicationsCache = null;
 }
 

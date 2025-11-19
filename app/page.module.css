@@ -221,7 +221,7 @@
 .portfolioGrid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: clamp(16px, 1.5vw, 32px);
+  grid-gap: 30px 10px;
 }
 
 .portfolioSkeletonCard {

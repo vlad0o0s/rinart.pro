@@ -2,9 +2,7 @@
 
 import { SafeImage as Image } from "@/components/safe-image";
 import type { CSSProperties } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { FreeMode, Mousewheel } from "swiper/modules";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReveal } from "@/lib/use-reveal";
 import styles from "./page.module.css";
 
@@ -52,6 +50,8 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
   }, [featureImage, gallery, schemes, title]);
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const closeModal = useCallback(() => {
     setActiveIndex(null);
@@ -107,8 +107,15 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
     };
   }, [activeIndex]);
 
-  const desktopRef = useReveal<HTMLDivElement>({ threshold: 0.15 });
-  const mobileRef = useReveal<HTMLDivElement>({ threshold: 0.1 });
+  // Используем больший rootMargin для предзагрузки изображений заранее
+  const desktopRef = useReveal<HTMLDivElement>({ 
+    threshold: 0.15,
+    rootMargin: "0px 0px 200px 0px" // Предзагружаем за 200px до появления
+  });
+  const mobileRef = useReveal<HTMLDivElement>({ 
+    threshold: 0.1,
+    rootMargin: "0px 0px 200px 0px" // Предзагружаем за 200px до появления
+  });
 
   if (!mediaItems.length) {
     return null;
@@ -119,26 +126,106 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
     : undefined;
   const activeItem = activeIndex !== null ? mediaItems[activeIndex] : null;
 
+  // Предзагружаем первые несколько изображений для более быстрой загрузки
+  useEffect(() => {
+    const preloadLinks: HTMLLinkElement[] = [];
+    // Предзагружаем первые 5 изображений
+    mediaItems.slice(0, 5).forEach((item) => {
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "image";
+      link.href = item.src;
+      document.head.appendChild(link);
+      preloadLinks.push(link);
+    });
+
+    return () => {
+      preloadLinks.forEach((link) => {
+        if (link.parentNode) {
+          link.parentNode.removeChild(link);
+        }
+      });
+    };
+  }, [mediaItems]);
+
+  // Настройка бесконечной прокрутки для десктопа
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    const content = contentRef.current;
+    if (!scrollContainer || !content || mediaItems.length <= 1) {
+      return;
+    }
+
+    const isMobile = () => window.innerWidth <= 768;
+
+    const adjustScrollHeight = () => {
+      if (!isMobile() && infoHeight) {
+        scrollContainer.style.height = `${infoHeight}px`;
+        scrollContainer.style.maxHeight = `${infoHeight}px`;
+      } else {
+        scrollContainer.style.height = "auto";
+        scrollContainer.style.maxHeight = "none";
+      }
+    };
+
+    // Проверяем, не дублирован ли уже контент
+    const hasCloned = scrollContainer.querySelector('[data-cloned="true"]');
+    
+    // Дублируем контент только на десктопе и только один раз
+    if (!isMobile() && !hasCloned) {
+      // Клонируем содержимое для бесконечной прокрутки
+      const clonedContent = content.cloneNode(true) as HTMLDivElement;
+      clonedContent.setAttribute("data-cloned", "true");
+      scrollContainer.appendChild(clonedContent);
+    }
+
+    adjustScrollHeight();
+    window.addEventListener("resize", adjustScrollHeight);
+
+    // Обработка прокрутки колесом мыши только на десктопе
+    if (!isMobile()) {
+      const handleWheel = (event: WheelEvent) => {
+        if (activeIndex === null) {
+          // Прокрутка работает только если модальное окно закрыто
+          event.preventDefault();
+          scrollContainer.scrollTop += event.deltaY;
+
+          const halfHeight = scrollContainer.scrollHeight / 2;
+
+          if (scrollContainer.scrollTop >= halfHeight) {
+            scrollContainer.scrollTop = 0;
+          } else if (scrollContainer.scrollTop <= 0) {
+            scrollContainer.scrollTop = halfHeight;
+          }
+        }
+      };
+
+      scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+      return () => {
+        window.removeEventListener("resize", adjustScrollHeight);
+        scrollContainer.removeEventListener("wheel", handleWheel);
+        // Удаляем клонированный контент при размонтировании
+        const cloned = scrollContainer.querySelector('[data-cloned="true"]');
+        if (cloned) {
+          cloned.remove();
+        }
+      };
+    }
+
+    return () => {
+      window.removeEventListener("resize", adjustScrollHeight);
+    };
+  }, [mediaItems.length, infoHeight, activeIndex]);
+
   return (
     <>
       <div className={styles.mediaColumnDesktop} ref={desktopRef} data-visible="false" style={columnStyle}>
-        <Swiper
-          modules={[FreeMode, Mousewheel]}
-          direction="vertical"
-          slidesPerView={1.1}
-          spaceBetween={20}
-          loop={mediaItems.length > 1}
-          freeMode={{
-            enabled: true,
-            momentum: true,
-            momentumVelocityRatio: 0.6,
-          }}
-          mousewheel={{ forceToAxis: true, releaseOnEdges: false }}
-          className={styles.mediaSwiper}
-        >
-          {mediaItems.map((item, index) => (
-            <SwiperSlide key={`${item.src}-${index}`} className={styles.mediaSlide}>
+        <div ref={scrollContainerRef} className={styles.scrollPc}>
+          <div ref={contentRef} className={styles.scrollContent}>
+            {mediaItems.map((item, index) => (
               <figure
+                key={`${item.src}-${index}`}
                 className={styles.mediaFrame}
                 style={{ "--media-index": index } as CSSProperties}
               >
@@ -146,7 +233,8 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
                   src={item.src}
                   alt={item.alt}
                   className={styles.mediaImage}
-                  loading="lazy"
+                  loading={index < 3 ? "eager" : "lazy"}
+                  fetchPriority={index < 2 ? "high" : undefined}
                   width={1600}
                   height={1000}
                   sizes="(max-width: 1024px) 100vw, 50vw"
@@ -157,9 +245,9 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
                   <figcaption className={styles.mediaCaption}>{item.caption}</figcaption>
                 ) : null}
               </figure>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className={styles.mediaColumnMobile} ref={mobileRef} data-visible="false">
@@ -169,7 +257,8 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
               src={item.src}
               alt={item.alt}
               className={styles.mediaImage}
-              loading="lazy"
+              loading={index < 3 ? "eager" : "lazy"}
+              fetchPriority={index < 2 ? "high" : undefined}
               width={1600}
               height={1000}
               sizes="100vw"

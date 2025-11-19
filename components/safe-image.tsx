@@ -1,7 +1,7 @@
 "use client";
 
 import Image, { type ImageProps } from "next/image";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 
 // 1x1 white PNG
 const PLACEHOLDER_SRC =
@@ -19,9 +19,21 @@ export function SafeImage(props: SafeImageProps) {
 	}, [src]);
 	const [currentSrc, setCurrentSrc] = useState<ImageProps["src"]>(initialSrc);
 	const [hasError, setHasError] = useState(false);
-	// Генерируем timestamp один раз при монтировании компонента через ленивую инициализацию
-	// Это обеспечивает обход кеша браузера без вызова нечистой функции во время рендера
-	const cacheBuster = useState(() => `t=${Date.now()}`)[0];
+	// Генерируем timestamp только на клиенте после монтирования, чтобы избежать hydration mismatch
+	const [cacheBuster, setCacheBuster] = useState<string>("");
+	
+	useEffect(() => {
+		// Генерируем cache buster только на клиенте после монтирования
+		setCacheBuster(`t=${Date.now()}`);
+	}, []);
+
+	// Обновляем currentSrc при изменении initialSrc и сбрасываем cache buster
+	useEffect(() => {
+		setCurrentSrc(initialSrc);
+		setHasError(false);
+		// Обновляем cache buster при изменении src, чтобы загрузить новое изображение
+		setCacheBuster(`t=${Date.now()}`);
+	}, [initialSrc]);
 	
 	const isLocal = useMemo(() => {
 		const s = typeof initialSrc === "string" ? initialSrc : "";
@@ -51,13 +63,32 @@ export function SafeImage(props: SafeImageProps) {
 
 	// Для локальных файлов используем обычный img, чтобы избежать проблем с Next.js Image оптимизацией
 	if (isLocal && typeof currentSrc === "string") {
-		const { width, height, ...imgProps } = rest;
+		const { 
+			width, 
+			height, 
+			fill, 
+			priority, 
+			loading, 
+			fetchPriority, 
+			sizes, 
+			unoptimized, 
+			placeholder, 
+			blurDataURL, 
+			quality, 
+			loader,
+			className,
+			style,
+			...imgProps 
+		} = rest;
 		// Добавляем timestamp для обхода кеша браузера, чтобы всегда загружать актуальные файлы
 		// Пути /uploads/ обрабатываются через API route /app/uploads/[...path]/route.ts
-		const srcWithCache = hasError ? currentSrc : `${currentSrc}${currentSrc.includes("?") ? "&" : "?"}${cacheBuster}`;
+		// Используем cache buster только после монтирования на клиенте
+		const srcWithCache = hasError || !cacheBuster 
+			? currentSrc 
+			: `${currentSrc}${currentSrc.includes("?") ? "&" : "?"}${cacheBuster}`;
 		return (
 			<img
-				src={hasError ? currentSrc : srcWithCache}
+				src={srcWithCache}
 				alt={alt || ""}
 				onError={(e) => {
 					// Если файл не загрузился с timestamp, пробуем без него
@@ -70,7 +101,8 @@ export function SafeImage(props: SafeImageProps) {
 				}}
 				width={width}
 				height={height}
-				style={{ objectFit: "cover", width: "100%", height: "100%" }}
+				className={className}
+				style={{ objectFit: "cover", width: "100%", height: "100%", ...style }}
 				{...imgProps}
 			/>
 		);

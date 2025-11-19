@@ -295,7 +295,7 @@ const APPEARANCE_DEFAULTS: AppearanceSettingsState = {
 type SettingsTab = "contacts" | "social" | "media" | "team";
 
 const SETTINGS_TABS: { id: SettingsTab; label: string; description: string }[] = [
-  { id: "contacts", label: "Контакты", description: "Заголовки, телефон, почта и адрес" },
+  { id: "contacts", label: "Контакты", description: "Телефон, email, адрес и изображение" },
   { id: "social", label: "Социальные сети", description: "Ссылки для шапки, подвала и контактов" },
   { id: "media", label: "Медиа сайта", description: "Изображения главного экрана и переходов" },
   { id: "team", label: "Команда", description: "Карточки участников мастерской" },
@@ -1217,7 +1217,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     );
     setLibraryAssets((prev) => prev.filter((item) => item.id !== asset.id));
   };
-  const [activeView, setActiveView] = useState<"projects" | "seo" | "content">("projects");
+  const [activeView, setActiveView] = useState<"projects" | "seo" | "content" | "settings">("projects");
 
   // Content (site-wide) state
   type ContentItemState = { slug: "home-hero" | "page-transition" | "contacts"; title: string; imageUrl: string | null; locationLabel?: string | null };
@@ -1233,6 +1233,9 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const [socialLoading, setSocialLoading] = useState(false);
   const [socialSaving, setSocialSaving] = useState(false);
   const [selectedSocialId, setSelectedSocialId] = useState<string | null>(null);
+  const [publications, setPublications] = useState<string[]>([]);
+  const [publicationsLoading, setPublicationsLoading] = useState(false);
+  const [publicationsSaving, setPublicationsSaving] = useState(false);
   const selectedSocial = useMemo(
     () => (selectedSocialId ? contentSocialLinks.find((l) => l.id === selectedSocialId) ?? null : null),
     [contentSocialLinks, selectedSocialId],
@@ -1350,12 +1353,12 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     }
   }, [reportError]);
 
-  // Ensure team is loaded when opening Team block in Content
+  // Ensure team is loaded when opening Settings view with team tab
   useEffect(() => {
-    if (activeView === "content" && selectedSocialId === "__team__" && !teamLoaded && !teamLoading) {
+    if (activeView === "settings" && !teamLoaded && !teamLoading) {
       loadTeamMembers();
     }
-  }, [activeView, selectedSocialId, teamLoaded, teamLoading, loadTeamMembers]);
+  }, [activeView, teamLoaded, teamLoading, loadTeamMembers]);
 
   const handleContactFieldChange = useCallback(<K extends keyof ContactSettingsState>(field: K, value: string) => {
     setContactSettings((prev) => {
@@ -1411,6 +1414,36 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       setStatus("Настройки сохранены");
     } catch (error) {
       reportError(error, "Не удалось сохранить настройки");
+    } finally {
+      setSettingsSaving(false);
+    }
+  }, [contactSettings, reportError, socialLinks]);
+
+  const handleSaveSocials = useCallback(async () => {
+    try {
+      setSettingsSaving(true);
+      const sanitizedSocials = socialLinks
+        .map((link) => ({
+          ...link,
+          url: link.url.trim(),
+          label: link.label.trim(),
+        }))
+        .filter((link) => link.url.length > 0);
+      const response = await fetchJson<{ contact: ContactSettingsState; socials: SocialLinkState[] }>(
+        "/api/admin/settings/contact",
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            contact: contactSettings,
+            socials: sanitizedSocials,
+          }),
+        },
+      );
+      setContactSettings(normalizeContactSettings(response.contact));
+      setSocialLinks(normalizeSocialLinks(response.socials));
+      setStatus("Социальные сети и телефон обновлены");
+    } catch (error) {
+      reportError(error, "Не удалось сохранить социальные сети");
     } finally {
       setSettingsSaving(false);
     }
@@ -1750,6 +1783,13 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                   : item,
             ),
           );
+          
+          // Также обновляем appearanceSettings для вкладки "Медиа сайта"
+          if (mediaLibrary.mode === "site-hero") {
+            setAppearanceSettings((prev) => ({ ...prev, homeHeroImageUrl: asset.url }));
+          } else if (mediaLibrary.mode === "site-transition") {
+            setAppearanceSettings((prev) => ({ ...prev, transitionImageUrl: asset.url }));
+          }
         }
       }
 
@@ -2506,6 +2546,15 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       .catch((error) => reportError(error, "Не удалось загрузить соцсети"))
       .finally(() => setSocialLoading(false));
 
+    setPublicationsLoading(true);
+    fetchJson<{ publications: string[] }>("/api/admin/publications")
+      .then((data) => {
+        const pubs = Array.isArray(data.publications) ? data.publications : [];
+        setPublications(pubs);
+      })
+      .catch((error) => reportError(error, "Не удалось загрузить публикации"))
+      .finally(() => setPublicationsLoading(false));
+
     function itemsSafeFirstSlug(): ContentItemState["slug"] | null {
       return (Array.isArray(contentItems) && contentItems[0]?.slug) ? contentItems[0].slug : null;
     }
@@ -2517,7 +2566,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         <div className={styles.branding}>
           <span className={styles.brandTitle}>RINART Admin</span>
           <span className={styles.brandSubtitle}>
-            {activeView === "projects" ? "Управление портфолио" : activeView === "seo" ? "SEO сайта" : "Контент сайта"}
+            {activeView === "projects" ? "Управление портфолио" : activeView === "seo" ? "SEO сайта" : activeView === "content" ? "Контент сайта" : "Настройки"}
           </span>
           <nav className={styles.viewTabs} aria-label="Разделы админки">
             <button
@@ -2546,6 +2595,15 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               disabled={activeView === "content"}
             >
               Контент
+            </button>
+            <button
+              type="button"
+              className={styles.viewTabButton}
+              data-active={activeView === "settings"}
+              onClick={() => setActiveView("settings")}
+              disabled={activeView === "settings"}
+            >
+              Настройки
             </button>
           </nav>
         </div>
@@ -2729,199 +2787,77 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               )}
             </main>
           </>
-        ) : (
+        ) : activeView === "content" ? (
           <>
             <aside className={`${styles.projectColumn} ${styles.seoListColumn}`}>
               <div className={styles.projectColumnHeader}>
                 <div>
                   <h2 className={styles.columnTitle}>Контент</h2>
-                  <p className={styles.columnSubtitle}>Выберите элемент и обновите изображение.</p>
+                  <p className={styles.columnSubtitle}>Публикации и награды.</p>
                 </div>
               </div>
               <div className={styles.projectColumnBody}>
-                {contentLoading ? (
+                {publicationsLoading ? (
                   <SeoListSkeleton />
                 ) : (
                   <div className={styles.seoPageList}>
-                    {contentItems.map((item) => (
-                      <SeoPageListItem
-                        key={item.slug}
-                        page={{ slug: item.slug, label: item.title, path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: { title: "", description: "", keywords: [], ogImageUrl: "" } } as unknown as SeoPageState}
-                        isActive={item.slug === selectedContentSlug}
-                        onSelect={(slug) => {
-                          setSelectedSocialId(null);
-                          setSelectedContentSlug(slug as ContentItemState["slug"]);
-                        }}
-                      />
-                    ))}
-
-                    <div className={styles.sectionDivider} />
-
-                    {(socialLoading && !contentSocialLinks.length) ? (
-                      <SeoListSkeleton />
-                    ) : (
-                      <SeoPageListItem
-                        page={{ slug: "social-block", label: "Социальные сети", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as SeoPageDefaults } as unknown as SeoPageState}
-                        isActive={selectedSocialId === "__all__"}
-                        onSelect={() => {
-                          setSelectedContentSlug(null);
-                          setSelectedSocialId("__all__");
-                        }}
-                      />
-                    )}
-
                     <SeoPageListItem
-                      page={{ slug: "team-block", label: "Команда", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as SeoPageDefaults } as unknown as SeoPageState}
-                      isActive={selectedSocialId === "__team__"}
-                      onSelect={() => {
-                        setSelectedContentSlug(null);
-                        setSelectedSocialId("__team__");
-                      }}
+                      page={{ slug: "publications-block", label: "Публикации и награды", path: "", title: "", description: "", keywords: "", ogImageUrl: "", defaults: {} as SeoPageDefaults } as unknown as SeoPageState}
+                      isActive={true}
+                      onSelect={() => {}}
                     />
                   </div>
                 )}
               </div>
             </aside>
             <main className={`${styles.editorColumn} ${styles.seoEditorColumn}`}>
-              {selectedContent ? (
-                <div className={styles.settingsPanel}>
-                  {selectedContent.slug === "contacts" ? (
-                    <>
-                      <div className={styles.fieldGroup}>
-                        <LabelWithHint
-                          label="Адрес / локация"
-                          hint="Адрес или описание локации, отображается на странице контактов."
-                        />
-                        <input
-                          className={styles.textInput}
-                          value={selectedContent.locationLabel || ""}
-                          onChange={(event) => {
-                            setContentItems((prev) =>
-                              prev.map((i) => (i.slug === "contacts" ? { ...i, locationLabel: event.target.value } : i))
-                            );
-                          }}
-                          disabled={contentSaving}
-                          placeholder="Москва, Российская Федерация"
-                        />
-                      </div>
-                      <div className={styles.fieldGroup}>
-                        <label className={styles.fieldLabel}>Изображение</label>
-                        <div className={styles.previewBox}>
-                          {selectedContent.imageUrl ? (
-                            <SafeImage src={selectedContent.imageUrl} alt="Изображение контактов" width={640} height={400} />
-                          ) : (
-                            <div className={styles.previewPlaceholder}>Изображение не выбрано</div>
-                          )}
-                        </div>
-                        <div className={styles.fieldActions}>
-                          <button
-                            className={styles.secondaryButton}
-                            type="button"
-                            onClick={() =>
-                              openMediaLibrary("contact-hero", {
-                                initialSelection: selectedContent.imageUrl ? [selectedContent.imageUrl] : [],
-                              })
-                            }
-                            disabled={contentSaving}
-                          >
-                            Выбрать изображение
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.fieldLabel}>{selectedContent.title}</label>
-                    <div
-                      className={styles.previewBox}
-                      style={
-                        selectedContent.slug === "page-transition"
-                          ? { backgroundColor: "#e5e7eb" }
-                          : undefined
-                      }
-                    >
-                      {selectedContent.imageUrl ? (
-                          <SafeImage src={selectedContent.imageUrl} alt={selectedContent.title} width={640} height={400} />
-                      ) : (
-                        <div className={styles.previewPlaceholder}>Изображение не выбрано</div>
-                      )}
-                    </div>
-                    <div className={styles.fieldActions}>
-                      <button
-                        className={styles.secondaryButton}
-                        type="button"
-                        onClick={() =>
-                          openMediaLibrary(
-                            selectedContent.slug === "home-hero" ? "site-hero" : "site-transition",
-                            { initialSelection: selectedContent.imageUrl ? [selectedContent.imageUrl] : [] },
-                          )
-                        }
-                        disabled={contentSaving}
-                      >
-                        Выбрать изображение
-                      </button>
-                    </div>
-                  </div>
-                  )}
-                  <div className={styles.formActions}>
-                    <button
-                      className={styles.primaryButton}
-                      type="button"
-                      onClick={async () => {
-                        if (!selectedContent) return;
-                        try {
-                          setContentSaving(true);
-                          const payload = await fetchJson<{ item: ContentItemState }>(`/api/admin/content/${selectedContent.slug}`, {
-                            method: "PATCH",
-                            body: JSON.stringify({
-                              imageUrl: selectedContent.imageUrl ?? null,
-                              locationLabel: selectedContent.slug === "contacts" ? selectedContent.locationLabel ?? null : undefined,
-                            }),
-                          });
-                          setContentItems((prev) => prev.map((i) => (i.slug === payload.item.slug ? payload.item : i)));
-                          setStatus("Контент обновлён");
-                        } catch (error) {
-                          reportError(error, "Не удалось сохранить");
-                        } finally {
-                          setContentSaving(false);
-                        }
-                      }}
-                      disabled={contentSaving}
-                    >
-                      {contentSaving ? "Сохраняем..." : "Сохранить"}
-                    </button>
-                  </div>
-                </div>
-              ) : selectedSocialId === "__all__" ? (
+              {publicationsLoading ? (
+                <SeoEditorSkeleton />
+              ) : (
                 <div className={styles.settingsPanel}>
                   <div className={styles.fieldGroup}>
-                    <label className={styles.fieldLabel}>Социальные сети</label>
+                    <label className={styles.fieldLabel}>Публикации и награды</label>
                     <div className={styles.formGrid}>
-                      {contentSocialLinks.map((link) => (
-                        <div key={link.id} className={styles.inputGroup}>
-                          <div className={styles.socialRow}>
-                            <input
-                              className={styles.textInput}
-                              value={link.label}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setContentSocialLinks((prev) => prev.map((l) => (l.id === link.id ? { ...l, label: value } : l)));
-                              }}
-                              placeholder="Подпись"
-                            />
-                            <input
-                              className={styles.textInput}
-                              value={link.url}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setContentSocialLinks((prev) => prev.map((l) => (l.id === link.id ? { ...l, url: value } : l)));
-                              }}
-                              placeholder="https://..."
-                            />
-                          </div>
+                      {publications.map((pub, index) => (
+                        <div key={`pub-${index}`} className={styles.inputGroup} style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
+                          <input
+                            className={styles.textInput}
+                            value={pub}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setPublications((prev) => {
+                                const next = [...prev];
+                                next[index] = value;
+                                return next;
+                              });
+                            }}
+                            placeholder="Введите публикацию или награду"
+                            style={{ flex: 1 }}
+                          />
+                          <button
+                            type="button"
+                            className={styles.projectDelete}
+                            aria-label="Удалить публикацию"
+                            data-visible="static"
+                            style={{ marginLeft: 0 }}
+                            onClick={() => {
+                              setPublications((prev) => prev.filter((_, i) => i !== index));
+                            }}
+                          >
+                            <IconTrash aria-hidden="true" />
+                          </button>
                         </div>
                       ))}
                     </div>
+                    <button
+                      className={styles.secondaryButton}
+                      type="button"
+                      onClick={() => {
+                        setPublications((prev) => [...prev, ""]);
+                      }}
+                    >
+                      Добавить публикацию
+                    </button>
                   </div>
                   <div className={styles.formActions}>
                     <button
@@ -2929,60 +2865,68 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                       type="button"
                       onClick={async () => {
                         try {
-                          setSocialSaving(true);
-                          const response = await fetchJson<{ links: SocialLinkState[] }>(`/api/admin/social`, {
+                          setPublicationsSaving(true);
+                          const filtered = publications.filter((p) => p.trim().length > 0);
+                          const response = await fetchJson<{ publications: string[] }>("/api/admin/publications", {
                             method: "PUT",
-                            body: JSON.stringify({ links: contentSocialLinks }),
+                            body: JSON.stringify({ publications: filtered }),
                           });
-                          setContentSocialLinks(response.links ?? []);
-                          setStatus("Соцсетки обновлены");
+                          setPublications(response.publications ?? []);
+                          setStatus("Публикации обновлены");
                         } catch (error) {
-                          reportError(error, "Не удалось сохранить соцсети");
+                          reportError(error, "Не удалось сохранить публикации");
                         } finally {
-                          setSocialSaving(false);
+                          setPublicationsSaving(false);
                         }
                       }}
-                      disabled={socialSaving}
+                      disabled={publicationsSaving || publicationsLoading}
                     >
-                      {socialSaving ? "Сохраняем..." : "Сохранить все"}
+                      {publicationsSaving ? "Сохраняем..." : "Сохранить публикации"}
                     </button>
                   </div>
                 </div>
-              ) : selectedSocialId === "__team__" ? (
-                <>
-                  <TeamManager
-                    members={teamMembers}
-                    loading={teamLoading}
-                    selectedId={teamSelectedId}
-                    editor={teamEditor}
-                    onSelect={handleSelectTeamMember}
-                    onFieldChange={handleTeamFieldChange}
-                    onSave={handleTeamSave}
-                    onDelete={handleTeamDelete}
-                    onCreate={() => setTeamCreateModalOpen(true)}
-                    onDragStart={handleTeamDragStart}
-                    onDragOver={handleTeamDragOver}
-                    onDragEnd={handleTeamDragEnd}
-                    onDragCancel={handleTeamDragCancel}
-                    saving={teamSaving}
-                    deleting={teamDeleting}
-                    sensors={sensors}
-                    loaded={teamLoaded}
-                    activeDragMember={activeTeamMember}
-                    onOpenMediaLibrary={(mode, options) => openMediaLibrary(mode, options)}
-                  />
-                  {teamCreateModalOpen ? (
-                    <CreateTeamMemberModal onClose={() => setTeamCreateModalOpen(false)} onCreate={handleCreateTeamMember} />
-        ) : null}
-                </>
-              ) : contentLoading || socialLoading ? (
-                <SeoEditorSkeleton />
-              ) : (
-                <div className={styles.emptyState}>Выберите элемент контента.</div>
               )}
             </main>
           </>
-        )}
+        ) : activeView === "settings" ? (
+          <SettingsView
+            contactSettings={contactSettings}
+            socialLinks={socialLinks}
+            onContactChange={handleContactFieldChange}
+            onSocialChange={handleSocialFieldChange}
+            onSaveContacts={handleSaveSettings}
+            onSaveSocials={handleSaveSocials}
+            settingsLoading={settingsLoading}
+            settingsSaving={settingsSaving}
+            appearanceSettings={appearanceSettings}
+            appearanceLoading={appearanceLoading}
+            appearanceSaving={appearanceSaving}
+            onAppearanceChange={handleAppearanceFieldChange}
+            onSaveAppearance={handleSaveAppearance}
+            teamMembers={teamMembers}
+            teamLoading={teamLoading}
+            teamSelectedId={teamSelectedId}
+            teamEditor={teamEditor}
+            onTeamSelect={handleSelectTeamMember}
+            onTeamFieldChange={handleTeamFieldChange}
+            onTeamSave={handleTeamSave}
+            onTeamDelete={handleTeamDelete}
+            onTeamCreate={() => setTeamCreateModalOpen(true)}
+            onTeamDragStart={handleTeamDragStart}
+            onTeamDragOver={handleTeamDragOver}
+            onTeamDragEnd={handleTeamDragEnd}
+            onTeamDragCancel={handleTeamDragCancel}
+            teamSaving={teamSaving}
+            teamDeleting={teamDeleting}
+            teamLoaded={teamLoaded}
+            sensors={sensors}
+            teamCreateModalOpen={teamCreateModalOpen}
+            onCloseCreateModal={() => setTeamCreateModalOpen(false)}
+            onCreateTeamMember={handleCreateTeamMember}
+            activeTeamMember={activeTeamMember}
+            onOpenMediaLibrary={(mode, options) => openMediaLibrary(mode, options)}
+          />
+        ) : null}
       </div>
 
       {mediaLibrary.open ? (
@@ -3276,12 +3220,57 @@ function ProjectEditor({
 }) {
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const draggedImageRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== state.descriptionHtml) {
       editorRef.current.innerHTML = state.descriptionHtml;
     }
   }, [state.descriptionHtml]);
+
+  // Функция для установки обработчиков drag and drop на изображение
+  const setupImageDragHandlers = useCallback((img: HTMLImageElement) => {
+    const handleImageDragStart = (event: DragEvent) => {
+      const targetImg = event.target as HTMLImageElement;
+      if (targetImg.tagName !== "IMG") return;
+      
+      draggedImageRef.current = targetImg;
+      targetImg.style.opacity = "0.5";
+      
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/html", targetImg.outerHTML);
+      }
+    };
+
+    const handleImageDragEnd = (event: DragEvent) => {
+      const targetImg = event.target as HTMLImageElement;
+      if (targetImg.tagName !== "IMG") return;
+      
+      targetImg.style.opacity = "1";
+      draggedImageRef.current = null;
+    };
+
+    img.draggable = true;
+    img.style.cursor = "move";
+    img.addEventListener("dragstart", handleImageDragStart);
+    img.addEventListener("dragend", handleImageDragEnd);
+  }, []);
+
+  // Делаем все изображения в редакторе перетаскиваемыми
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const images = editor.querySelectorAll<HTMLImageElement>("img");
+    images.forEach((img) => {
+      setupImageDragHandlers(img);
+    });
+
+    return () => {
+      // Очистка обработчиков не требуется, так как они будут удалены при размонтировании элементов
+    };
+  }, [state.descriptionHtml, setupImageDragHandlers]);
 
   const syncEditorHtml = useCallback(() => {
     if (editorRef.current) {
@@ -3363,7 +3352,14 @@ function ProjectEditor({
 
   const handleEditorDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = "copy";
+    
+    // Если перетаскивается существующее изображение из редактора
+    if (draggedImageRef.current) {
+      event.dataTransfer.dropEffect = "move";
+    } else {
+      // Перетаскивание файла извне
+      event.dataTransfer.dropEffect = "copy";
+    }
   }, []);
 
   const handleEditorDrop = useCallback(
@@ -3371,6 +3367,130 @@ function ProjectEditor({
       event.preventDefault();
       event.stopPropagation();
       const { dataTransfer } = event;
+      
+      // Если перетаскивается существующее изображение из редактора
+      if (draggedImageRef.current) {
+        const draggedImg = draggedImageRef.current;
+        const editor = editorRef.current;
+        if (!editor) return;
+        
+        // Определяем позицию вставки используя координаты мыши
+        let range: Range | null = null;
+        if (document.caretRangeFromPoint) {
+          range = document.caretRangeFromPoint(event.clientX, event.clientY);
+        } else if ((document as any).caretPositionFromPoint) {
+          // Fallback для Firefox
+          const caretPos = (document as any).caretPositionFromPoint(event.clientX, event.clientY);
+          if (caretPos) {
+            range = document.createRange();
+            range.setStart(caretPos.offsetNode, caretPos.offset);
+            range.collapse(true);
+          }
+        }
+        
+        if (!range) {
+          // Если не удалось определить позицию, просто восстанавливаем изображение
+          draggedImg.style.opacity = "1";
+          draggedImageRef.current = null;
+          return;
+        }
+        
+        // Находим узел, куда будем вставлять
+        let insertNode: Node = range.startContainer;
+        
+        // Если это текстовый узел, работаем с его родителем
+        if (insertNode.nodeType === Node.TEXT_NODE) {
+          insertNode = insertNode.parentNode || editor;
+        }
+        
+        // Проверяем, что не перетаскиваем на само изображение или его родителя
+        if (draggedImg === insertNode || draggedImg.contains(insertNode) || (insertNode as Element).contains?.(draggedImg)) {
+          draggedImg.style.opacity = "1";
+          draggedImageRef.current = null;
+          return;
+        }
+        
+        // Если курсор указывает на само изображение, ничего не делаем
+        if (range.startContainer === draggedImg || range.startContainer.parentNode === draggedImg) {
+          draggedImg.style.opacity = "1";
+          draggedImageRef.current = null;
+          return;
+        }
+        
+        // Создаем клон изображения
+        const clonedImg = draggedImg.cloneNode(true) as HTMLImageElement;
+        clonedImg.style.opacity = "1";
+        
+        // Устанавливаем обработчики drag and drop на клонированное изображение
+        setupImageDragHandlers(clonedImg);
+        
+        // Определяем место вставки на основе типа элемента
+        const targetElement = insertNode as Element;
+        
+        if (targetElement.nodeType === Node.ELEMENT_NODE) {
+          const tagName = targetElement.tagName.toUpperCase();
+          
+          // Для блочных элементов (P, DIV, H2, H3) проверяем, можно ли вставить внутрь
+          if (tagName === "P" || tagName === "DIV" || tagName === "H2" || tagName === "H3" || tagName === "LI") {
+            // Проверяем, пустой ли элемент
+            const isEmpty = !targetElement.textContent?.trim() && !targetElement.querySelector("img");
+            
+            if (isEmpty) {
+              // Элемент пустой - вставляем внутрь
+              targetElement.appendChild(clonedImg);
+            } else {
+              // Элемент не пустой - вставляем после него
+              const parent = targetElement.parentElement;
+              if (parent) {
+                if (targetElement.nextSibling) {
+                  parent.insertBefore(clonedImg, targetElement.nextSibling);
+                } else {
+                  parent.appendChild(clonedImg);
+                }
+              }
+            }
+          } else if (tagName === "IMG") {
+            // Если курсор на другом изображении, вставляем после него
+            const parent = targetElement.parentElement;
+            if (parent) {
+              if (targetElement.nextSibling) {
+                parent.insertBefore(clonedImg, targetElement.nextSibling);
+              } else {
+                parent.appendChild(clonedImg);
+              }
+            }
+          } else {
+            // Для других элементов вставляем после
+            const parent = targetElement.parentElement;
+            if (parent) {
+              if (targetElement.nextSibling) {
+                parent.insertBefore(clonedImg, targetElement.nextSibling);
+              } else {
+                parent.appendChild(clonedImg);
+              }
+            }
+          }
+        } else {
+          // Для текстовых узлов вставляем после родителя
+          const parent = insertNode.parentElement;
+          if (parent) {
+            if (insertNode.nextSibling) {
+              parent.insertBefore(clonedImg, insertNode.nextSibling);
+            } else {
+              parent.appendChild(clonedImg);
+            }
+          }
+        }
+        
+        // Удаляем оригинальное изображение
+        draggedImg.remove();
+        draggedImg.style.opacity = "1";
+        draggedImageRef.current = null;
+        
+        // Синхронизируем HTML
+        syncEditorHtml();
+        return;
+      }
       
       // Сначала проверяем файлы - это приоритетно при перетаскивании
       const files = dataTransfer.files;
@@ -3413,7 +3533,7 @@ function ProjectEditor({
         syncEditorHtml();
       }
     },
-    [insertImage, syncEditorHtml, focusEditor],
+    [insertImage, syncEditorHtml, focusEditor, setupImageDragHandlers],
   );
 
   const handleEditorPaste = useCallback(
@@ -4250,8 +4370,13 @@ function SettingsView({
               </div>
             <div className={styles.appearancePreview}>
               {appearanceSettings.homeHeroImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={appearanceSettings.homeHeroImageUrl} alt="Предпросмотр главного экрана" />
+                <SafeImage 
+                  key={appearanceSettings.homeHeroImageUrl}
+                  src={appearanceSettings.homeHeroImageUrl} 
+                  alt="Предпросмотр главного экрана" 
+                  width={640} 
+                  height={400}
+                />
               ) : (
                 <span className={styles.appearancePlaceholder}>Предпросмотр недоступен</span>
               )}
@@ -4277,8 +4402,13 @@ function SettingsView({
               </div>
             <div className={styles.appearancePreview}>
               {appearanceSettings.transitionImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={appearanceSettings.transitionImageUrl} alt="Предпросмотр перехода" />
+                <SafeImage 
+                  key={appearanceSettings.transitionImageUrl}
+                  src={appearanceSettings.transitionImageUrl} 
+                  alt="Предпросмотр перехода" 
+                  width={640} 
+                  height={400}
+                />
               ) : (
                 <span className={styles.appearancePlaceholder}>Предпросмотр недоступен</span>
               )}
