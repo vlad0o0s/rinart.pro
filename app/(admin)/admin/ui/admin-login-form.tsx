@@ -24,10 +24,10 @@ export function AdminLoginForm() {
       if (submitting) return;
       setStatus("");
 
-      // if (siteKey && !recaptchaToken) {
-      //  setStatus("Подтвердите, что вы не робот");
-      //  return;
-      // }
+      if (siteKey && !recaptchaToken) {
+        setStatus("Подтвердите, что вы не робот");
+        return;
+      }
 
       setSubmitting(true);
 
@@ -42,10 +42,10 @@ export function AdminLoginForm() {
           const payload = await response.json().catch(() => ({}));
           setStatus(typeof payload.error === "string" ? payload.error : LOGIN_ERROR_DEFAULT);
           setSubmitting(false);
-          // if (siteKey) {
-          //   recaptchaRef.current?.reset();
-          //   setRecaptchaToken("");
-          // }
+          if (siteKey) {
+            recaptchaRef.current?.reset();
+            setRecaptchaToken("");
+          }
           return;
         }
 
@@ -94,7 +94,7 @@ export function AdminLoginForm() {
           />
         </label>
 
-        {/* {siteKey && (
+        {siteKey && (
           <div className={styles.captchaWrapper}>
             <ReCAPTCHA
               ref={recaptchaRef}
@@ -102,7 +102,7 @@ export function AdminLoginForm() {
               onChange={(token) => setRecaptchaToken(token || "")}
             />
           </div>
-        )} */}
+        )}
 
         <button className={styles.loginButton} type="submit" disabled={submitting}>
           {submitting ? "Авторизация…" : "Войти в систему"}
