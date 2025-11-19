@@ -49,11 +49,14 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
   const next = { imageUrl: typeof payload.imageUrl === "string" ? payload.imageUrl : null };
   const saved = await saveGlobalBlock(slug, next);
 
+  // Убеждаемся, что saved имеет правильный тип для slug с imageUrl
+  const savedWithImageUrl = saved as { imageUrl: string | null };
+
   return NextResponse.json({
     item: {
       slug,
       title: slug === "home-hero" ? "Главная фотография" : "Логотип загрузки/перехода",
-      imageUrl: saved.imageUrl ?? null,
+      imageUrl: savedWithImageUrl.imageUrl ?? null,
     },
   });
 }

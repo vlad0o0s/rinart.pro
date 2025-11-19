@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-// import ReCAPTCHA from "react-google-recaptcha";
+import ReCAPTCHA from "react-google-recaptcha";
 import styles from "./admin.module.css";
 
 const LOGIN_ERROR_DEFAULT = "Не удалось войти. Проверьте данные и попробуйте снова.";
@@ -13,11 +13,10 @@ export function AdminLoginForm() {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  // const [recaptchaToken, setRecaptchaToken] = useState<string>("");
-  // const recaptchaRef = useRef<ReCAPTCHA | null>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string>("");
+  const recaptchaRef = useRef<ReCAPTCHA | null>(null);
   // Captcha enabled
-  // const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
-  const siteKey = ""; // Captcha disabled
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
@@ -25,10 +24,10 @@ export function AdminLoginForm() {
       if (submitting) return;
       setStatus("");
 
-      // if (siteKey && !recaptchaToken) {
-      //   setStatus("Подтвердите, что вы не робот");
-      //   return;
-      // }
+      if (siteKey && !recaptchaToken) {
+        setStatus("Подтвердите, что вы не робот");
+        return;
+      }
 
       setSubmitting(true);
 
@@ -36,17 +35,17 @@ export function AdminLoginForm() {
         const response = await fetch("/api/admin/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ login, password, recaptchaToken: "" }),
+          body: JSON.stringify({ login, password, recaptchaToken }),
         });
 
         if (!response.ok) {
           const payload = await response.json().catch(() => ({}));
           setStatus(typeof payload.error === "string" ? payload.error : LOGIN_ERROR_DEFAULT);
           setSubmitting(false);
-          // if (siteKey) {
-          //   recaptchaRef.current?.reset();
-          //   setRecaptchaToken("");
-          // }
+          if (siteKey) {
+            recaptchaRef.current?.reset();
+            setRecaptchaToken("");
+          }
           return;
         }
 
@@ -61,7 +60,7 @@ export function AdminLoginForm() {
         return;
       }
     },
-    [login, password, router, submitting],
+    [login, password, router, submitting, siteKey, recaptchaToken],
   );
 
   return (
@@ -95,7 +94,7 @@ export function AdminLoginForm() {
           />
         </label>
 
-        {/* {siteKey && (
+        {siteKey && (
           <div className={styles.captchaWrapper}>
             <ReCAPTCHA
               ref={recaptchaRef}
@@ -103,7 +102,7 @@ export function AdminLoginForm() {
               onChange={(token) => setRecaptchaToken(token || "")}
             />
           </div>
-        )} */}
+        )}
 
         <button className={styles.loginButton} type="submit" disabled={submitting}>
           {submitting ? "Авторизация…" : "Войти в систему"}

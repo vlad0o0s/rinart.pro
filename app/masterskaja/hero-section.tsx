@@ -22,7 +22,7 @@ export function MasterskajaHero() {
       <div className={styles.imageContainer}>
         <div className={styles.imageWrapper}>
           <Image
-            src="/img/balcon.webp"
+            src="/img/123.png"
             alt="Интерьерная деталь мастерской RINART"
             fill
             className={styles.image}

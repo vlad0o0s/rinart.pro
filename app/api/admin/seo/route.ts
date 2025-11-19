@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
         // PageSeo record takes priority, fall back to project content SEO if no record exists
         title: record?.title ?? projectSeo?.title ?? null,
         description: record?.description ?? projectSeo?.description ?? null,
-        keywords: record?.keywords.length > 0 ? record.keywords : (Array.isArray(projectSeo?.keywords) ? projectSeo.keywords : []),
+        keywords: (record?.keywords && record.keywords.length > 0) ? record.keywords : (Array.isArray(projectSeo?.keywords) ? projectSeo.keywords : []),
         ogImageUrl: record?.ogImageUrl ?? projectSeo?.ogImage ?? null,
       },
     };

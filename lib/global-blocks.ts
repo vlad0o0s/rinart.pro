@@ -151,8 +151,9 @@ export async function saveGlobalBlock(slug: keyof GlobalBlocks, data: GlobalBloc
       bottomItems: (value.bottomItems as PricingItem[]) ?? [],
     };
   }
+  const imageUrlValue = (data as { imageUrl: string | null }).imageUrl;
   const sanitized: GlobalBlocks[typeof slug] = {
-    imageUrl: (data as { imageUrl: string | null }).imageUrl && (data as { imageUrl: string | null }).imageUrl.trim().length ? (data as { imageUrl: string | null }).imageUrl.trim() : null,
+    imageUrl: (imageUrlValue && typeof imageUrlValue === "string" && imageUrlValue.trim().length) ? imageUrlValue.trim() : null,
   };
   const saved = await upsertGlobalBlock(slug, sanitized);
   const value = (saved?.data ?? {}) as Record<string, unknown>;
