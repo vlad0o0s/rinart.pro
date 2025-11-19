@@ -1,7 +1,7 @@
 "use client";
 
 import Image, { type ImageProps } from "next/image";
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, useLayoutEffect, startTransition } from "react";
 
 // 1x1 white PNG
 const PLACEHOLDER_SRC =
@@ -22,17 +22,21 @@ export function SafeImage(props: SafeImageProps) {
 	// Генерируем timestamp только на клиенте после монтирования, чтобы избежать hydration mismatch
 	const [cacheBuster, setCacheBuster] = useState<string>("");
 	
-	useEffect(() => {
+	useLayoutEffect(() => {
 		// Генерируем cache buster только на клиенте после монтирования
-		setCacheBuster(`t=${Date.now()}`);
+		startTransition(() => {
+			setCacheBuster(`t=${Date.now()}`);
+		});
 	}, []);
 
 	// Обновляем currentSrc при изменении initialSrc и сбрасываем cache buster
-	useEffect(() => {
-		setCurrentSrc(initialSrc);
-		setHasError(false);
-		// Обновляем cache buster при изменении src, чтобы загрузить новое изображение
-		setCacheBuster(`t=${Date.now()}`);
+	useLayoutEffect(() => {
+		startTransition(() => {
+			setCurrentSrc(initialSrc);
+			setHasError(false);
+			// Обновляем cache buster при изменении src, чтобы загрузить новое изображение
+			setCacheBuster(`t=${Date.now()}`);
+		});
 	}, [initialSrc]);
 	
 	const isLocal = useMemo(() => {
@@ -66,19 +70,23 @@ export function SafeImage(props: SafeImageProps) {
 		const { 
 			width, 
 			height, 
-			fill, 
-			priority, 
-			loading, 
-			fetchPriority, 
-			sizes, 
-			unoptimized, 
-			placeholder, 
-			blurDataURL, 
-			quality, 
-			loader,
 			className,
 			style,
 			...imgProps 
+		} = rest;
+		// Извлекаем и игнорируем Next.js-специфичные пропсы, которые не нужны для нативного img
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const {
+			fill: _fill,
+			priority: _priority,
+			loading: _loading,
+			fetchPriority: _fetchPriority,
+			sizes: _sizes,
+			unoptimized: _unoptimized,
+			placeholder: _placeholder,
+			blurDataURL: _blurDataURL,
+			quality: _quality,
+			loader: _loader,
 		} = rest;
 		// Добавляем timestamp для обхода кеша браузера, чтобы всегда загружать актуальные файлы
 		// Пути /uploads/ обрабатываются через API route /app/uploads/[...path]/route.ts

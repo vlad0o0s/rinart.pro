@@ -85,7 +85,7 @@ async function convertToAvifWithAvifenc(inputBuffer: Buffer): Promise<Buffer | n
       await unlink(tempOutput).catch(() => {});
       
       return avifBuffer.length > 0 ? avifBuffer : null;
-    } catch (error) {
+    } catch {
       await unlink(tempInput).catch(() => {});
       await unlink(tempOutput).catch(() => {});
       return null;

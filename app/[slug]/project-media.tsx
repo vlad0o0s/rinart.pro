@@ -117,17 +117,9 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
     rootMargin: "0px 0px 200px 0px" // Предзагружаем за 200px до появления
   });
 
-  if (!mediaItems.length) {
-    return null;
-  }
-
-  const columnStyle = infoHeight
-    ? ({ height: `${infoHeight}px`, maxHeight: `${infoHeight}px` } as CSSProperties)
-    : undefined;
-  const activeItem = activeIndex !== null ? mediaItems[activeIndex] : null;
-
   // Предзагружаем первые несколько изображений для более быстрой загрузки
   useEffect(() => {
+    if (!mediaItems.length) return;
     const preloadLinks: HTMLLinkElement[] = [];
     // Предзагружаем первые 5 изображений
     mediaItems.slice(0, 5).forEach((item) => {
@@ -217,6 +209,15 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
       window.removeEventListener("resize", adjustScrollHeight);
     };
   }, [mediaItems.length, infoHeight, activeIndex]);
+
+  if (!mediaItems.length) {
+    return null;
+  }
+
+  const columnStyle = infoHeight
+    ? ({ height: `${infoHeight}px`, maxHeight: `${infoHeight}px` } as CSSProperties)
+    : undefined;
+  const activeItem = activeIndex !== null ? mediaItems[activeIndex] : null;
 
   return (
     <>

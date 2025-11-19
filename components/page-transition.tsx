@@ -170,7 +170,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
       let url: URL;
       try {
         url = new URL(anchor.href, window.location.href);
-      } catch (error) {
+      } catch {
         return;
       }
 

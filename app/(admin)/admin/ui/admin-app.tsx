@@ -1223,34 +1223,19 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   type ContentItemState = { slug: "home-hero" | "page-transition" | "contacts"; title: string; imageUrl: string | null; locationLabel?: string | null };
   const [contentItems, setContentItems] = useState<ContentItemState[]>([]);
   const [contentLoading, setContentLoading] = useState(false);
-  const [contentSaving, setContentSaving] = useState(false);
-  const [selectedContentSlug, setSelectedContentSlug] = useState<ContentItemState["slug"] | null>(null);
-  const selectedContent = useMemo(
-    () => (selectedContentSlug ? contentItems.find((i) => i.slug === selectedContentSlug) ?? null : null),
-    [contentItems, selectedContentSlug],
-  );
-  const [contentSocialLinks, setContentSocialLinks] = useState<SocialLinkState[]>([]);
-  const [socialLoading, setSocialLoading] = useState(false);
-  const [socialSaving, setSocialSaving] = useState(false);
-  const [selectedSocialId, setSelectedSocialId] = useState<string | null>(null);
+  const [contentSocialLinks] = useState<SocialLinkState[]>([]);
   const [publications, setPublications] = useState<string[]>([]);
   const [publicationsLoading, setPublicationsLoading] = useState(false);
   const [publicationsSaving, setPublicationsSaving] = useState(false);
-  const selectedSocial = useMemo(
-    () => (selectedSocialId ? contentSocialLinks.find((l) => l.id === selectedSocialId) ?? null : null),
-    [contentSocialLinks, selectedSocialId],
-  );
   const [seoPages, setSeoPages] = useState<SeoPageState[]>([]);
   const [selectedSeoSlug, setSelectedSeoSlug] = useState<string | null>(null);
   const [seoLoading, setSeoLoading] = useState(false);
   const [seoSavingSlug, setSeoSavingSlug] = useState<string | null>(null);
   const [contactSettings, setContactSettings] = useState<ContactSettingsState>(CONTACT_DEFAULTS);
   const [socialLinks, setSocialLinks] = useState<SocialLinkState[]>(SOCIAL_DEFAULTS);
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [appearanceSettings, setAppearanceSettings] = useState<AppearanceSettingsState>(APPEARANCE_DEFAULTS);
-  const [appearanceLoaded, setAppearanceLoaded] = useState(false);
   const [appearanceLoading, setAppearanceLoading] = useState(false);
   const [appearanceSaving, setAppearanceSaving] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMemberState[]>([]);
@@ -1300,39 +1285,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     [redirectToLogin],
   );
 
-  const loadContactSettings = useCallback(async () => {
-    try {
-      setSettingsLoading(true);
-      const data = await fetchJson<{ contact: Partial<ContactSettingsState>; socials: SocialLinkState[] }>(
-        "/api/admin/settings/contact",
-      );
-      setContactSettings(normalizeContactSettings(data.contact));
-      setSocialLinks(normalizeSocialLinks(data.socials));
-      setSettingsLoaded(true);
-    } catch (error) {
-      reportError(error, "Не удалось загрузить настройки");
-    } finally {
-      setSettingsLoading(false);
-    }
-  }, [reportError]);
-
-  const loadAppearanceSettings = useCallback(async () => {
-    try {
-      setAppearanceLoading(true);
-      const data = await fetchJson<{ blocks: { ["home-hero"]?: { imageUrl?: string }; ["page-transition"]?: { imageUrl?: string } } }>(
-        "/api/admin/settings/global-blocks",
-      );
-      setAppearanceSettings({
-        homeHeroImageUrl: data.blocks?.["home-hero"]?.imageUrl ?? APPEARANCE_DEFAULTS.homeHeroImageUrl,
-        transitionImageUrl: data.blocks?.["page-transition"]?.imageUrl ?? APPEARANCE_DEFAULTS.transitionImageUrl,
-      });
-      setAppearanceLoaded(true);
-    } catch (error) {
-      reportError(error, "Не удалось загрузить изображения");
-    } finally {
-      setAppearanceLoading(false);
-    }
-  }, [reportError]);
 
   const loadTeamMembers = useCallback(async () => {
     try {
@@ -1772,8 +1724,8 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       if (mediaLibrary.mode === "site-hero" || mediaLibrary.mode === "site-transition" || mediaLibrary.mode === "contact-hero") {
         const asset = assets[0];
         if (asset) {
-          setContentItems((prev) =>
-            prev.map((item) =>
+          setContentItems((prev: ContentItemState[]) =>
+            prev.map((item: ContentItemState) =>
               item.slug === "home-hero" && mediaLibrary.mode === "site-hero"
                 ? { ...item, imageUrl: asset.url }
                 : item.slug === "page-transition" && mediaLibrary.mode === "site-transition"
@@ -2534,17 +2486,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       .catch((error) => reportError(error, "Не удалось загрузить контент"))
       .finally(() => setContentLoading(false));
 
-    setSocialLoading(true);
-    fetchJson<{ links: SocialLinkState[] }>("/api/admin/social")
-      .then((data) => {
-        const links = Array.isArray(data.links) ? data.links : [];
-        setContentSocialLinks(links);
-        if (!selectedContentSlug && !selectedSocialId) {
-          setSelectedContentSlug(itemsSafeFirstSlug());
-        }
-      })
-      .catch((error) => reportError(error, "Не удалось загрузить соцсети"))
-      .finally(() => setSocialLoading(false));
+    // Social links loading removed - not used in current implementation
 
     setPublicationsLoading(true);
     fetchJson<{ publications: string[] }>("/api/admin/publications")
@@ -2555,10 +2497,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       .catch((error) => reportError(error, "Не удалось загрузить публикации"))
       .finally(() => setPublicationsLoading(false));
 
-    function itemsSafeFirstSlug(): ContentItemState["slug"] | null {
-      return (Array.isArray(contentItems) && contentItems[0]?.slug) ? contentItems[0].slug : null;
-    }
-  }, [activeView, reportError]);
+  }, [activeView, reportError, contentItems]);
 
   return (
     <div className={styles.adminShell}>
@@ -3203,10 +3142,10 @@ function ProjectEditor({
   state,
   onFieldChange,
   onToggleCategory,
-  onSave,
-  saving,
-  onDelete,
-  deleting,
+  onSave: _onSave,
+  saving: _saving,
+  onDelete: _onDelete,
+  deleting: _deleting,
   onOpenOgImagePicker,
 }: {
   state: EditorState;
@@ -3321,7 +3260,7 @@ function ProjectEditor({
       document.execCommand("insertImage", false, trimmed);
       syncEditorHtml();
     };
-  }, [syncEditorHtml]);
+  }, [syncEditorHtml, focusEditor]);
 
   const insertImage = useCallback((url: string) => {
     insertImageRef.current(url);
@@ -3378,13 +3317,22 @@ function ProjectEditor({
         let range: Range | null = null;
         if (document.caretRangeFromPoint) {
           range = document.caretRangeFromPoint(event.clientX, event.clientY);
-        } else if ((document as any).caretPositionFromPoint) {
+        } else {
           // Fallback для Firefox
-          const caretPos = (document as any).caretPositionFromPoint(event.clientX, event.clientY);
-          if (caretPos) {
-            range = document.createRange();
-            range.setStart(caretPos.offsetNode, caretPos.offset);
-            range.collapse(true);
+          interface CaretPosition {
+            offsetNode: Node;
+            offset: number;
+          }
+          const doc = document as typeof document & {
+            caretPositionFromPoint?: (x: number, y: number) => CaretPosition | null;
+          };
+          if (doc.caretPositionFromPoint) {
+            const caretPos = doc.caretPositionFromPoint(event.clientX, event.clientY);
+            if (caretPos) {
+              range = document.createRange();
+              range.setStart(caretPos.offsetNode, caretPos.offset);
+              range.collapse(true);
+            }
           }
         }
         
@@ -3533,7 +3481,7 @@ function ProjectEditor({
         syncEditorHtml();
       }
     },
-    [insertImage, syncEditorHtml, focusEditor, setupImageDragHandlers],
+    [insertImage, syncEditorHtml, setupImageDragHandlers],
   );
 
   const handleEditorPaste = useCallback(
@@ -4087,7 +4035,7 @@ function SettingsView({
   appearanceSettings,
   appearanceLoading,
   appearanceSaving,
-  onAppearanceChange,
+  onAppearanceChange: _onAppearanceChange,
   onSaveAppearance,
   teamMembers,
   teamLoading,
@@ -4724,7 +4672,7 @@ function TeamEditorPanel({
   saving,
   deleting,
   onPickDesktopImage,
-  onPickMobileImage,
+  onPickMobileImage: _onPickMobileImage,
 }: {
   member: TeamMemberState;
   onFieldChange: (field: keyof TeamMemberState, value: string | boolean) => void;
@@ -4923,7 +4871,7 @@ function MediaLibraryModal({
   initialSelection = [],
   onClose,
   onApply,
-  onCreateAsset,
+  onCreateAsset: _onCreateAsset,
   onUploadFile,
   onDeleteAsset,
 }: MediaLibraryModalProps) {

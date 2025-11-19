@@ -9,8 +9,11 @@ type CacheEntry<T> = {
 const CACHE_TTL = 60 * 1000;
 
 let contactCache: CacheEntry<ContactSettings> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let socialCache: CacheEntry<SocialLink[]> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let appearanceCache: CacheEntry<AppearanceSettings> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let publicationsCache: CacheEntry<string[]> | null = null;
 
 const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
