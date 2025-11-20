@@ -39,6 +39,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
   const shouldAwaitRouteRef = useRef(false);
   const readyPathRef = useRef<string | null>(null);
   const pendingHashRef = useRef<string | null>(null);
+  const isInitialLoadRef = useRef(true);
 
   const clearNavigationTimer = useCallback(() => {
     if (navigationRef.current) {
@@ -107,7 +108,13 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
 
     if (phase === "open") {
       // Only scroll to top on route changes, not on initial load
-      if (typeof window !== "undefined" && shouldAwaitRouteRef.current) {
+      // Also check that previousPathRef is set (meaning we had a previous route)
+      if (
+        typeof window !== "undefined" &&
+        shouldAwaitRouteRef.current &&
+        previousPathRef.current !== null &&
+        !isInitialLoadRef.current
+      ) {
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
@@ -278,6 +285,10 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
   }, [startTransition, pathname]);
 
   useEffect(() => {
+    // Mark that initial load is complete after first pathname change
+    if (isInitialLoadRef.current && previousPathRef.current !== null) {
+      isInitialLoadRef.current = false;
+    }
     previousPathRef.current = pathname;
   }, [pathname, isActive, phase]);
 

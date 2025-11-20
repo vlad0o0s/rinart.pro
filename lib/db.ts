@@ -35,11 +35,17 @@ function createPool(): Pool {
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
+    connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT ?? 60000), // 60 секунд по умолчанию
   });
 
   basePool.on("error", (error: MysqlError) => {
     console.error("[db] pool error", error);
-    if (error?.code === "PROTOCOL_CONNECTION_LOST" || error?.code === "ECONNRESET" || error?.fatal) {
+    if (
+      error?.code === "PROTOCOL_CONNECTION_LOST" ||
+      error?.code === "ECONNRESET" ||
+      error?.code === "ETIMEDOUT" ||
+      error?.fatal
+    ) {
       void resetPool();
     }
   });
@@ -64,13 +70,24 @@ function isRecoverableError(error: MysqlError | undefined) {
     "PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR",
     "ECONNRESET",
     "ER_CLIENT_INTERACTION_TIMEOUT",
+    "ETIMEDOUT",
+    "ENOTFOUND",
   ]);
-  return recoverableCodes.has(error.code ?? "") || /packets out of order/i.test(error.message ?? "");
+  const errorMessage = error.message ?? "";
+  const errorCode = error.code ?? "";
+  return (
+    recoverableCodes.has(errorCode) ||
+    /packets out of order/i.test(errorMessage) ||
+    /pool is closed/i.test(errorMessage) ||
+    /timeout/i.test(errorMessage) ||
+    /timed out/i.test(errorMessage)
+  );
 }
 
 async function getConnectionWithRetry(attempt = 0): Promise<PoolConnection> {
   try {
-    return await getPool().getConnection();
+    const pool = getPool();
+    return await pool.getConnection();
   } catch (rawError) {
     const error = rawError as MysqlError;
     if (attempt === 0 && isRecoverableError(error)) {
@@ -83,7 +100,7 @@ async function getConnectionWithRetry(attempt = 0): Promise<PoolConnection> {
 }
 
 async function runWithRetry<T>(operation: (pool: Pool) => Promise<T>, attempt = 0): Promise<T> {
-  const currentPool = getPool();
+  let currentPool = getPool();
   try {
     return await operation(currentPool);
   } catch (rawError) {
@@ -91,6 +108,7 @@ async function runWithRetry<T>(operation: (pool: Pool) => Promise<T>, attempt = 
     if (attempt === 0 && isRecoverableError(error)) {
       console.warn("[db] retrying query after connection error", error);
       await resetPool();
+      currentPool = getPool();
       return runWithRetry(operation, attempt + 1);
     }
     throw error;

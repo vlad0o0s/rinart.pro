@@ -27,7 +27,6 @@
   background-position: center;
   opacity: 0.1;
   mix-blend-mode: normal;
-  filter: contrast(1.15);
   pointer-events: none;
   z-index: 1;
 }

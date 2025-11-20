@@ -59,8 +59,7 @@ async function ProjectPageComponent({ params }: { params: Promise<{ slug: string
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    )
-    .slice(0, 8);
+    );
 
   const descriptionParagraphs = descriptionBody.filter(
     (paragraph): paragraph is string => typeof paragraph === "string" && paragraph.trim().length > 0,

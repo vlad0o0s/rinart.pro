@@ -39,9 +39,9 @@ export function RelatedProjectsSlider({ projects }: { projects: RelatedProject[]
       })),
     [projects],
   );
-  const canLoop = items.length >= 6;
   const prevRef = useRef<HTMLButtonElement | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
+  // Показываем стрелки если проектов больше чем видно на экране (минимум 6 на больших экранах)
   const showArrows = items.length > 6;
 
   if (!items.length) {
@@ -68,7 +68,7 @@ export function RelatedProjectsSlider({ projects }: { projects: RelatedProject[]
       ) : null}
       <Swiper
         modules={[Navigation]}
-        spaceBetween={18}
+        spaceBetween={8}
         slidesPerView={1.05}
         slidesPerGroup={1}
         navigation={
@@ -92,14 +92,14 @@ export function RelatedProjectsSlider({ projects }: { projects: RelatedProject[]
           swiper.navigation.update();
         }}
         allowTouchMove={items.length > 1}
-        loop={canLoop}
+        loop={false}
         watchOverflow
         breakpoints={{
-          640: { slidesPerView: 2, spaceBetween: 18 },
-          900: { slidesPerView: 3, spaceBetween: 20 },
-          1200: { slidesPerView: 4, spaceBetween: 22 },
-          1440: { slidesPerView: 5, spaceBetween: 22 },
-          1800: { slidesPerView: 6, spaceBetween: 24 },
+          640: { slidesPerView: 2, spaceBetween: 8 },
+          900: { slidesPerView: 3, spaceBetween: 10 },
+          1200: { slidesPerView: 4, spaceBetween: 10 },
+          1440: { slidesPerView: 6, spaceBetween: 10 },
+          1800: { slidesPerView: 6, spaceBetween: 12 },
         }}
         className={styles.relatedSwiper}
       >

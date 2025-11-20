@@ -12,9 +12,10 @@ type ProjectInfoProps = {
   descriptionHtml?: string | null;
   descriptionParagraphs: string[];
   onHeightChange?: (height: number | null) => void;
+  featureImage?: string | null;
 };
 
-export function ProjectInfo({ title, descriptionHtml, descriptionParagraphs, onHeightChange }: ProjectInfoProps) {
+export function ProjectInfo({ title, descriptionHtml, descriptionParagraphs, onHeightChange, featureImage }: ProjectInfoProps) {
   const infoRef = useReveal<HTMLDivElement>({ threshold: 0.2 });
   const containerRef = useRef<HTMLDivElement | null>(null);
   const descriptionRef = useRef<HTMLDivElement | null>(null);
@@ -135,6 +136,20 @@ export function ProjectInfo({ title, descriptionHtml, descriptionParagraphs, onH
     >
       
       <h1 className={styles.title}>{title}</h1>
+
+      {featureImage ? (
+        <div className={styles.featureImageMobile}>
+          <Image
+            src={featureImage}
+            alt={title}
+            className={styles.featureImageMobileImg}
+            width={1600}
+            height={1000}
+            sizes="100vw"
+            unoptimized
+          />
+        </div>
+      ) : null}
 
       {descriptionHtml ? (
         <div ref={descriptionRef}>

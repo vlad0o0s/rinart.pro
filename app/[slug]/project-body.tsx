@@ -34,6 +34,7 @@ export default function ProjectBody({
         descriptionHtml={descriptionHtml}
         descriptionParagraphs={descriptionParagraphs}
         onHeightChange={handleHeightChange}
+        featureImage={featureImage}
       />
       <ProjectMedia
         title={title}
