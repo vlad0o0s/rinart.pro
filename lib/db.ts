@@ -86,7 +86,7 @@ function isRecoverableError(error: MysqlError | undefined) {
   ]);
   const errorMessage = error.message ?? "";
   const errorCode = error.code ?? "";
-  const errorNo = (error as any).errno;
+  const errorNo = "errno" in error ? (error.errno as number | undefined) : undefined;
   // Check errno 1203 for ER_TOO_MANY_USER_CONNECTIONS
   const isTooManyConnections = errorNo === 1203 || errorCode === "ER_TOO_MANY_USER_CONNECTIONS";
   return (
@@ -111,7 +111,8 @@ async function getConnectionWithRetry(attempt = 0, maxAttempts = 1): Promise<Poo
     return await Promise.race([connectionPromise, timeout]);
   } catch (rawError) {
     const error = rawError as MysqlError;
-    const isTooManyConnections = (error as any).errno === 1203 || error.code === "ER_TOO_MANY_USER_CONNECTIONS";
+    const errorNo = "errno" in error ? (error.errno as number | undefined) : undefined;
+    const isTooManyConnections = errorNo === 1203 || error.code === "ER_TOO_MANY_USER_CONNECTIONS";
     if (attempt < maxAttempts && isRecoverableError(error)) {
       // Wait longer if too many connections (give time for connections to close)
       const waitTime = isTooManyConnections ? 2000 : 1000;

@@ -43,7 +43,7 @@ export async function findSiteSettingByKey(key: string): Promise<SiteSettingReco
 
 export async function upsertSiteSetting(key: string, value: unknown): Promise<SiteSettingRecord> {
   await ensureDatabaseSchema();
-  const [result] = await runQuery((pool) =>
+  await runQuery((pool) =>
     pool.execute<ResultSetHeader>(
       `INSERT INTO SiteSetting (\`key\`, value)
        VALUES (?, ?)
