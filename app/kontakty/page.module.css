@@ -54,7 +54,6 @@
 .contactPrimary {
   display: flex;
   flex-direction: column;
-  gap: 6px;
   font-family: "Neue Haas Unica", Sans-serif;
   font-size: clamp(18px, 1.8vw, 24px);
   font-weight: 900;
@@ -75,7 +74,6 @@
 .contactSocialsList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   font-family: "Neue Haas Unica", Sans-serif;
   font-size: clamp(16px, 1.6vw, 20px);
   font-weight: 900;

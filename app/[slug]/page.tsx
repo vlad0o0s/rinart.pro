@@ -67,7 +67,7 @@ async function ProjectPageComponent({ params }: { params: Promise<{ slug: string
 
   return (
     <>
-      <SiteHeader showDesktopNav breadcrumbLabel={title} socialLinks={socialLinks} />
+      <SiteHeader showDesktopNav breadcrumbLabel="Портфолио" socialLinks={socialLinks} />
       <div className={styles.page}>
         <ProjectBody
           title={title}

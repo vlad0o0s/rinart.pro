@@ -51,22 +51,6 @@ export async function upsertSiteSetting(key: string, value: unknown): Promise<Si
       [key, JSON.stringify(value ?? null)],
     ),
   );
-  try {
-    console.log("[SiteSettingsRepo] upsertSiteSetting", {
-      key,
-      affectedRows: (result as ResultSetHeader)?.affectedRows,
-    });
-  } catch {}
-
-  // Read raw DB value to verify persistence
-  try {
-    type ValueRow = RowDataPacket & { value: unknown | null; updatedAt: Date };
-    const [rows] = await runQuery((pool) =>
-      pool.query<ValueRow[]>("SELECT value, updatedAt FROM SiteSetting WHERE `key` = ? LIMIT 1", [key]),
-    );
-    const raw = (rows?.[0] as ValueRow | undefined) ?? null;
-    console.log("[SiteSettingsRepo] after-upsert raw", { key, raw });
-  } catch {}
 
   const record = await findSiteSettingByKey(key);
   if (!record) {
@@ -79,18 +63,36 @@ function parseJsonValue(value: unknown): unknown {
   if (value === null || typeof value === "undefined") {
     return null;
   }
+  // Some MySQL drivers may already hydrate JSON columns into objects/arrays
   if (typeof value === "object") {
-    return value as Record<string, unknown>;
+    // If it's already an object or array, return it as-is
+    // But check if it's a Buffer (MySQL might return JSON as Buffer)
+    if (Buffer.isBuffer(value)) {
+      try {
+        const str = value.toString("utf8");
+        const parsed = JSON.parse(str);
+        return parsed;
+      } catch {
+        return null;
+      }
+    }
+    return value;
   }
   if (typeof value === "string") {
     const trimmed = value.trim();
     if (!trimmed) {
       return null;
     }
+    // Check if the string looks like JSON (starts with {, [, or " and is valid JSON)
+    // If it's a JSON string (like "text"), parse it
+    // If it's plain text, return it as-is
     try {
-      return JSON.parse(trimmed);
+      const parsed = JSON.parse(trimmed);
+      return parsed;
     } catch {
-      return null;
+      // If parsing fails, it's likely plain text, not JSON
+      // Return the original string instead of null
+      return trimmed;
     }
   }
   return null;

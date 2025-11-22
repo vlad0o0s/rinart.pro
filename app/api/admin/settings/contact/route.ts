@@ -12,7 +12,11 @@ import { revalidatePath } from "next/cache";
 export async function GET(request: NextRequest) {
   await assertAdmin(request);
   const [contact, socials] = await Promise.all([getContactSettings(), getSocialLinks()]);
-  return NextResponse.json({ contact, socials });
+  const response = NextResponse.json({ contact, socials });
+  response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
 }
 
 export async function PUT(request: NextRequest) {
@@ -32,7 +36,11 @@ export async function PUT(request: NextRequest) {
     revalidatePath("/proektirovanie");
     revalidatePath("/kontakty");
 
-    return NextResponse.json({ contact: updatedContact, socials: updatedSocials });
+    const response = NextResponse.json({ contact: updatedContact, socials: updatedSocials });
+    response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+    return response;
   } catch (error) {
     console.error("Failed to save contact settings", error);
     return NextResponse.json({ error: "Не удалось сохранить настройки" }, { status: 500 });

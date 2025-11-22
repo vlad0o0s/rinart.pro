@@ -21,15 +21,28 @@ export type GlobalBlocks = {
 
 export async function getGlobalBlocks(): Promise<GlobalBlocks> {
   const all = await fetchAllGlobalBlocks();
-  const pick = (slug: keyof GlobalBlocks) => {
+  const pick = async (slug: keyof GlobalBlocks) => {
     const record = all.find((r) => r.slug === slug);
     const value = (record?.data ?? {}) as Record<string, unknown>;
-    return {
-      imageUrl: typeof value.imageUrl === "string" && value.imageUrl.trim().length ? value.imageUrl.trim() : null,
-    };
+    let imageUrl: string | null = typeof value.imageUrl === "string" && value.imageUrl.trim().length ? value.imageUrl.trim() : null;
+    
+    // Validate file exists for local uploads
+    if (imageUrl && imageUrl.startsWith("/uploads/")) {
+      try {
+        const fs = await import("fs/promises");
+        const path = await import("path");
+        const filePath = path.join(process.cwd(), "public", imageUrl);
+        await fs.access(filePath);
+      } catch {
+        // File doesn't exist, return null to fall back to default
+        imageUrl = null;
+      }
+    }
+    
+    return { imageUrl };
   };
-  let home = pick("home-hero");
-  let transition = pick("page-transition");
+  let home = await pick("home-hero");
+  let transition = await pick("page-transition");
 
   // Seed from legacy appearance settings if blocks are absent
   if (!home.imageUrl || !transition.imageUrl) {
@@ -152,8 +165,31 @@ export async function saveGlobalBlock(slug: keyof GlobalBlocks, data: GlobalBloc
     };
   }
   const imageUrlValue = (data as { imageUrl: string | null }).imageUrl;
+  let sanitizedImageUrl: string | null = null;
+  
+  if (imageUrlValue && typeof imageUrlValue === "string" && imageUrlValue.trim().length) {
+    const trimmed = imageUrlValue.trim();
+    
+    // Validate file exists for local uploads before saving
+    if (trimmed.startsWith("/uploads/")) {
+      try {
+        const fs = await import("fs/promises");
+        const path = await import("path");
+        const filePath = path.join(process.cwd(), "public", trimmed);
+        await fs.access(filePath);
+        sanitizedImageUrl = trimmed;
+      } catch {
+        // File doesn't exist, don't save invalid path
+        throw new Error(`Файл не найден: ${trimmed}`);
+      }
+    } else {
+      // External URLs or other paths are allowed
+      sanitizedImageUrl = trimmed;
+    }
+  }
+  
   const sanitized: GlobalBlocks[typeof slug] = {
-    imageUrl: (imageUrlValue && typeof imageUrlValue === "string" && imageUrlValue.trim().length) ? imageUrlValue.trim() : null,
+    imageUrl: sanitizedImageUrl,
   };
   const saved = await upsertGlobalBlock(slug, sanitized);
   const value = (saved?.data ?? {}) as Record<string, unknown>;

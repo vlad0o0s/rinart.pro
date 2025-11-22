@@ -6,7 +6,11 @@ import { revalidatePath } from "next/cache";
 export async function GET(request: NextRequest) {
   await assertAdmin(request);
   const members = await getTeamMembers();
-  return NextResponse.json({ members });
+  const response = NextResponse.json({ members });
+  response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
 }
 
 export async function POST(request: NextRequest) {

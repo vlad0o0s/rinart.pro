@@ -170,16 +170,7 @@ export async function saveSocialLinks(payload: SocialLink[]): Promise<SocialLink
 export async function getAppearanceSettings(): Promise<AppearanceSettings> {
   // Read the single key directly to avoid any stale merged reads
   const record = await findSiteSettingByKey("appearance");
-  let appearance = normalizeAppearanceSettings(record?.value);
-  if (!record) {
-    // Extra diagnostics to understand why value might be missing
-    const all = await fetchAllSiteSettings();
-    console.log(
-      "[SiteSettings] appearance not found; available keys:",
-      all.map((r) => r.key),
-    );
-    appearance = normalizeAppearanceSettings(null);
-  }
+  const appearance = normalizeAppearanceSettings(record?.value);
   // Optionally cache for short time if needed in the future
   appearanceCache = null;
   return appearance;
@@ -305,9 +296,14 @@ export function normalizePublications(value: unknown): string[] {
 
 export async function getFounderBiography(): Promise<FounderBiographyBlock[]> {
   // Always read fresh to reflect admin changes immediately across the site
-  const settings = await fetchAllSiteSettings();
-  const record = settings.find((item) => item.key === "founderBiography");
-  const biography = normalizeFounderBiography(record?.value);
+  // Force fresh read by using findSiteSettingByKey instead of fetchAllSiteSettings
+  // Use direct key lookup to avoid any caching issues
+  const record = await import("./site-settings-repository").then((m) => m.findSiteSettingByKey("founderBiography"));
+  if (!record || record.value === null || record.value === undefined) {
+    return DEFAULT_FOUNDER_BIOGRAPHY;
+  }
+  // Value is parsed from JSON by parseJsonValue, should be an array
+  const biography = normalizeFounderBiography(record.value);
   return biography;
 }
 
@@ -318,9 +314,21 @@ export async function saveFounderBiography(payload: FounderBiographyBlock[]): Pr
 }
 
 export function normalizeFounderBiography(value: unknown): FounderBiographyBlock[] {
+  // If value is null/undefined, return default
+  if (value === null || value === undefined) {
+    return DEFAULT_FOUNDER_BIOGRAPHY;
+  }
+  
+  // Must be an array
   if (!Array.isArray(value)) {
     return DEFAULT_FOUNDER_BIOGRAPHY;
   }
+  
+  // If empty array, return default (can't have empty biography)
+  if (value.length === 0) {
+    return DEFAULT_FOUNDER_BIOGRAPHY;
+  }
+  
   const blocks = value
     .map((item) => {
       if (!item || typeof item !== "object") {
@@ -343,6 +351,7 @@ export function normalizeFounderBiography(value: unknown): FounderBiographyBlock
     })
     .filter((item): item is FounderBiographyBlock => Boolean(item));
 
+  // If no valid blocks after normalization, return default
   if (!blocks.length) {
     return DEFAULT_FOUNDER_BIOGRAPHY;
   }
@@ -351,18 +360,60 @@ export function normalizeFounderBiography(value: unknown): FounderBiographyBlock
 
 export async function getFounderLeadText(): Promise<string> {
   // Always read fresh to reflect admin changes immediately across the site
-  const settings = await fetchAllSiteSettings();
-  const record = settings.find((item) => item.key === "founderLeadText");
-  if (!record?.value) {
+  // Force fresh read by using findSiteSettingByKey instead of fetchAllSiteSettings
+  // Use direct key lookup to avoid any caching issues
+  const record = await import("./site-settings-repository").then((m) => m.findSiteSettingByKey("founderLeadText"));
+  if (!record) {
     return DEFAULT_FOUNDER_LEAD_TEXT;
   }
-  const text = typeof record.value === "string" ? record.value.trim() : DEFAULT_FOUNDER_LEAD_TEXT;
-  return text || DEFAULT_FOUNDER_LEAD_TEXT;
+  
+  // Value is parsed from JSON by parseJsonValue
+  // If it was saved as a string, it should remain a string after JSON.parse
+  // But MySQL JSON columns might return objects, so we need to handle that
+  let text: string;
+  
+  // Check for null/undefined more carefully
+  if (record.value == null) { // This checks both null and undefined
+    return DEFAULT_FOUNDER_LEAD_TEXT;
+  }
+  
+  if (typeof record.value === "string") {
+    text = record.value.trim();
+  } else if (typeof record.value === "object") {
+    // If value is an object, it might be a parsed JSON string that was double-encoded
+    // Or MySQL might have returned it as an object
+    // Check if it's an empty object
+    if (Object.keys(record.value).length === 0) {
+      return DEFAULT_FOUNDER_LEAD_TEXT;
+    }
+    // Try to stringify and see if we can extract a string value
+    const stringified = JSON.stringify(record.value);
+    // If it's a JSON-encoded string, parse it
+    try {
+      const parsed = JSON.parse(stringified);
+      if (typeof parsed === "string") {
+        text = parsed.trim();
+      } else {
+        // If still not a string, try to convert
+        text = stringified.trim();
+      }
+    } catch {
+      text = stringified.trim();
+    }
+  } else {
+    text = String(record.value).trim();
+  }
+  
+  // Return text if not empty, otherwise default
+  return text.length > 0 ? text : DEFAULT_FOUNDER_LEAD_TEXT;
 }
 
 export async function saveFounderLeadText(payload: string): Promise<string> {
-  const sanitized = typeof payload === "string" ? payload.trim() : DEFAULT_FOUNDER_LEAD_TEXT;
-  await upsertSiteSetting("founderLeadText", sanitized || DEFAULT_FOUNDER_LEAD_TEXT);
+  // Always save the actual payload, even if empty (allow empty strings)
+  const sanitized = typeof payload === "string" ? payload.trim() : "";
+  // Save the sanitized value (or empty string, not default)
+  await upsertSiteSetting("founderLeadText", sanitized);
+  // Return saved value or default if empty
   return sanitized || DEFAULT_FOUNDER_LEAD_TEXT;
 }
 
