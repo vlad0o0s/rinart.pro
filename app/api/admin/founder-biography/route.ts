@@ -7,7 +7,12 @@ import { revalidatePath } from "next/cache";
 export async function GET(request: NextRequest) {
   await assertAdmin(request);
   const [biography, leadText] = await Promise.all([getFounderBiography(), getFounderLeadText()]);
-  return NextResponse.json({ biography, leadText });
+  const response = NextResponse.json({ biography, leadText });
+  // Prevent caching
+  response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
 }
 
 export async function PUT(request: NextRequest) {
@@ -31,10 +36,19 @@ export async function PUT(request: NextRequest) {
     }
 
     invalidateSiteSettingsCache();
+    // Revalidate both the page and the API route
     revalidatePath("/masterskaja");
-    return NextResponse.json(results);
+    revalidatePath("/api/admin/founder-biography");
+    // Also try to revalidate the entire route segment
+    revalidatePath("/", "layout");
+    const response = NextResponse.json(results);
+    // Prevent caching
+    response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+    return response;
   } catch (error) {
-    console.error("Failed to save founder data", error);
+    console.error("[API PUT /api/admin/founder-biography] Failed to save founder data", error);
     return NextResponse.json({ error: "Не удалось сохранить данные" }, { status: 500 });
   }
 }

@@ -83,9 +83,14 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
   }, [enrichedProjects]);
 
   const filteredProjects = useMemo(() => {
-    // Всегда показываем все проекты без фильтрации
-    return enrichedProjects.map((project) => ({ project, isInactive: false }));
-  }, [enrichedProjects]);
+    if (activeCategory === "all") {
+      return enrichedProjects.map((project) => ({ project, isInactive: false }));
+    }
+    return enrichedProjects.map((project) => ({
+      project,
+      isInactive: !project.categories.includes(activeCategory),
+    }));
+  }, [enrichedProjects, activeCategory]);
 
   const showSkeleton = enrichedProjects.length === 0;
 

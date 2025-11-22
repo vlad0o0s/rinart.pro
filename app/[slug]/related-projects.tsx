@@ -41,8 +41,8 @@ export function RelatedProjectsSlider({ projects }: { projects: RelatedProject[]
   );
   const prevRef = useRef<HTMLButtonElement | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
-  // Показываем стрелки если проектов больше чем видно на экране (минимум 6 на больших экранах)
-  const showArrows = items.length > 6;
+  // Показываем стрелки если проектов больше чем видно на экране (2 на мобильной, 6 на больших экранах)
+  const showArrows = items.length > 2;
 
   if (!items.length) {
     return null;
@@ -69,7 +69,7 @@ export function RelatedProjectsSlider({ projects }: { projects: RelatedProject[]
       <Swiper
         modules={[Navigation]}
         spaceBetween={8}
-        slidesPerView={1.05}
+        slidesPerView={2}
         slidesPerGroup={1}
         navigation={
           showArrows

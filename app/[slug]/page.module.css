@@ -2,11 +2,10 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding: clamp(60px, 10vw, 120px) 10px clamp(40px, 6vw, 80px);
+  padding: clamp(60px, 10vw, 65px) 10px clamp(40px, 6vw, 80px);
   background-color: #ffffff;
   color: #252525;
   font-family: "Neue Haas Unica", "Helvetica Neue", Arial, sans-serif;
-  gap: clamp(40px, 6vw, 72px);
   width: 100%;
   max-width: 1920px;
   margin: 0 auto;
@@ -20,7 +19,7 @@
   --project-offset: clamp(60px, 10vw, 120px);
   display: grid;
   grid-template-columns: minmax(280px, 0.75fr) minmax(0, 1.25fr);
-  gap: clamp(32px, 6vw, 80px);
+  gap: clamp(32px, 6vw, 40px);
   align-items: start;
 }
 
@@ -124,8 +123,7 @@
 
 .relatedSection {
   position: relative;
-  margin-top: clamp(60px, 7vw, 120px);
-  padding: clamp(24px, 4vw, 48px) clamp(32px, 4vw, 48px) clamp(32px, 5vw, 64px);
+  padding-top: 20px;
   display: flex;
   flex-direction: column;
   gap: clamp(20px, 4vw, 36px);
@@ -140,7 +138,7 @@
 
 .relatedArrow {
   position: absolute;
-  top: 40%;
+  top: 50%;
   z-index: 5;
   width: 48px;
   height: 48px;
@@ -654,6 +652,10 @@
 }
 
 @media (max-width: 640px) {
+  .description {
+    font-size: 4.4vw;
+  }
+
   .previewHint {
     width: 32px;
     height: 32px;

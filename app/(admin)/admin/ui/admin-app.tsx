@@ -1251,9 +1251,11 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const [socialLinks, setSocialLinks] = useState<SocialLinkState[]>(SOCIAL_DEFAULTS);
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
+  const contactSettingsLoadedRef = useRef(false);
   const [appearanceSettings, setAppearanceSettings] = useState<AppearanceSettingsState>(APPEARANCE_DEFAULTS);
   const [appearanceLoading, setAppearanceLoading] = useState(false);
   const [appearanceSaving, setAppearanceSaving] = useState(false);
+  const appearanceLoadedRef = useRef(false);
   const [teamMembers, setTeamMembers] = useState<TeamMemberState[]>([]);
   const [teamLoaded, setTeamLoaded] = useState(false);
   const [teamLoading, setTeamLoading] = useState(false);
@@ -1319,7 +1321,11 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const loadTeamMembers = useCallback(async () => {
     try {
       setTeamLoading(true);
-      const data = await fetchJson<{ members: TeamMemberState[] }>("/api/admin/team");
+      const data = await fetchJson<{ members: TeamMemberState[] }>("/api/admin/team", {
+        headers: {
+          "Cache-Control": "no-cache",
+        },
+      });
       const normalized = (data.members ?? [])
         .map((member) => normalizeTeamMember(member))
         .sort((a, b) => a.order - b.order)
@@ -1345,12 +1351,20 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const loadPricing = useCallback(async () => {
     try {
       setPricingLoading(true);
-      const blocks = await fetchJson<{ blocks: { pricing?: PricingData } }>("/api/admin/settings/global-blocks");
+      const blocks = await fetchJson<{ blocks: { pricing?: PricingData } }>("/api/admin/settings/global-blocks", {
+        headers: {
+          "Cache-Control": "no-cache",
+        },
+      });
       if (blocks.blocks?.pricing) {
         setPricingData(blocks.blocks.pricing);
       } else {
         // Load defaults from public API
-        const allBlocks = await fetchJson<{ blocks: { pricing?: PricingData } }>("/api/settings/global-blocks");
+        const allBlocks = await fetchJson<{ blocks: { pricing?: PricingData } }>("/api/settings/global-blocks", {
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        });
         if (allBlocks.blocks?.pricing) {
           setPricingData(allBlocks.blocks.pricing);
         }
@@ -1366,7 +1380,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     if (activeView === "settings" && pricingData.topItems.length === 0 && pricingData.bottomItems.length === 0 && !pricingLoading) {
       loadPricing();
     }
-  }, [activeView, pricingData, pricingLoading, loadPricing]);
+  }, [activeView, pricingData.topItems.length, pricingData.bottomItems.length, pricingLoading, loadPricing]);
 
   const handlePricingChange = useCallback((type: "top" | "bottom", index: number, field: keyof PricingItem, value: string | number) => {
     setPricingData((prev) => {
@@ -1492,6 +1506,11 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       const response = await fetchJson<{ biography: FounderBiographyBlock[]; leadText?: string }>("/api/admin/founder-biography", {
         method: "PUT",
         body: JSON.stringify({ biography: filtered, leadText: founderLeadText.trim() }),
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+        },
       });
       if (response.biography) {
         setFounderBiography(response.biography);
@@ -1501,6 +1520,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       }
       setSuccessStatus("Биография обновлена");
     } catch (error) {
+      console.error("[Admin] Failed to save biography", error);
       reportError(error, "Не удалось сохранить биографию");
     } finally {
       setFounderBiographySaving(false);
@@ -2672,7 +2692,11 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     if (activeView === "settings") {
       if (publications.length === 0 && !publicationsLoading) {
         setPublicationsLoading(true);
-        fetchJson<{ publications: string[] }>("/api/admin/publications")
+        fetchJson<{ publications: string[] }>("/api/admin/publications", {
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        })
           .then((data) => {
             const pubs = Array.isArray(data.publications) ? data.publications : [];
             setPublications(pubs);
@@ -2683,7 +2707,11 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
 
       if (founderBiography.length === 0 && !founderBiographyLoading) {
         setFounderBiographyLoading(true);
-        fetchJson<{ biography: FounderBiographyBlock[]; leadText?: string }>("/api/admin/founder-biography")
+        fetchJson<{ biography: FounderBiographyBlock[]; leadText?: string }>("/api/admin/founder-biography", {
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        })
           .then((data) => {
             const bio = Array.isArray(data.biography) ? data.biography : [];
             setFounderBiography(bio);
@@ -2691,14 +2719,60 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               setFounderLeadText(data.leadText);
             }
           })
-          .catch((error) => reportError(error, "Не удалось загрузить биографию"))
+          .catch((error) => {
+            reportError(error, "Не удалось загрузить биографию");
+          })
           .finally(() => setFounderBiographyLoading(false));
+      }
+
+      // Load contact settings and social links when opening settings view (only once)
+      if (!settingsLoading && !contactSettingsLoadedRef.current) {
+        contactSettingsLoadedRef.current = true;
+        setSettingsLoading(true);
+        fetchJson<{ contact: ContactSettingsState; socials: SocialLinkState[] }>("/api/admin/settings/contact", {
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        })
+          .then((data) => {
+            setContactSettings(normalizeContactSettings(data.contact));
+            setSocialLinks(normalizeSocialLinks(data.socials));
+          })
+          .catch((error) => {
+            reportError(error, "Не удалось загрузить настройки контактов");
+            contactSettingsLoadedRef.current = false; // Reset on error to allow retry
+          })
+          .finally(() => setSettingsLoading(false));
+      }
+
+      // Load appearance settings when opening settings view (only once)
+      if (!appearanceLoading && !appearanceLoadedRef.current) {
+        appearanceLoadedRef.current = true;
+        setAppearanceLoading(true);
+        fetchJson<{ appearance: AppearanceSettingsState }>("/api/admin/settings/appearance", {
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        })
+          .then((data) => {
+            if (data.appearance) {
+              setAppearanceSettings({
+                homeHeroImageUrl: data.appearance.homeHeroImageUrl || APPEARANCE_DEFAULTS.homeHeroImageUrl,
+                transitionImageUrl: data.appearance.transitionImageUrl || APPEARANCE_DEFAULTS.transitionImageUrl,
+              });
+            }
+          })
+          .catch((error) => {
+            reportError(error, "Не удалось загрузить настройки медиа");
+            appearanceLoadedRef.current = false; // Reset on error to allow retry
+          })
+          .finally(() => setAppearanceLoading(false));
       }
     }
 
     // Content loading removed - publications and biography moved to settings view
 
-  }, [activeView, reportError, publications.length, publicationsLoading, founderBiography.length, founderBiographyLoading]);
+  }, [activeView, reportError, publications.length, publicationsLoading, founderBiography.length, founderBiographyLoading, settingsLoading, appearanceLoading]);
 
   return (
     <div className={styles.adminShell}>

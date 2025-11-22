@@ -28,14 +28,21 @@ async function resetPool() {
 
 function createPool(): Pool {
   const url = getDatabaseUrl();
+  // Reduce connect timeout to fail faster (30 seconds instead of 60)
+  const connectTimeout = Number(process.env.DB_CONNECT_TIMEOUT ?? 30000); // 30 секунд по умолчанию
+  // Reduce pool size to avoid exceeding max_user_connections limit
+  // Default to 5 connections instead of 10 to stay within limits
+  const connectionLimit = Number(process.env.DB_POOL_SIZE ?? 5);
   const basePool = mysql.createPool({
     uri: url,
     waitForConnections: true,
-    connectionLimit: Number(process.env.DB_POOL_SIZE ?? 10),
+    connectionLimit,
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
-    connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT ?? 60000), // 60 секунд по умолчанию
+    connectTimeout,
+    // Idle timeout to close unused connections after 30 seconds
+    idleTimeout: 30000,
   });
 
   basePool.on("error", (error: MysqlError) => {
@@ -44,8 +51,10 @@ function createPool(): Pool {
       error?.code === "PROTOCOL_CONNECTION_LOST" ||
       error?.code === "ECONNRESET" ||
       error?.code === "ETIMEDOUT" ||
+      error?.code === "ENOTFOUND" ||
       error?.fatal
     ) {
+      console.warn("[db] resetting pool due to error:", error.code);
       void resetPool();
     }
   });
@@ -72,45 +81,74 @@ function isRecoverableError(error: MysqlError | undefined) {
     "ER_CLIENT_INTERACTION_TIMEOUT",
     "ETIMEDOUT",
     "ENOTFOUND",
+    // Too many connections - can be retried after waiting
+    "ER_TOO_MANY_USER_CONNECTIONS",
   ]);
   const errorMessage = error.message ?? "";
   const errorCode = error.code ?? "";
+  const errorNo = (error as any).errno;
+  // Check errno 1203 for ER_TOO_MANY_USER_CONNECTIONS
+  const isTooManyConnections = errorNo === 1203 || errorCode === "ER_TOO_MANY_USER_CONNECTIONS";
   return (
     recoverableCodes.has(errorCode) ||
+    isTooManyConnections ||
     /packets out of order/i.test(errorMessage) ||
     /pool is closed/i.test(errorMessage) ||
     /timeout/i.test(errorMessage) ||
-    /timed out/i.test(errorMessage)
+    /timed out/i.test(errorMessage) ||
+    /too many.*connection/i.test(errorMessage)
   );
 }
 
-async function getConnectionWithRetry(attempt = 0): Promise<PoolConnection> {
+async function getConnectionWithRetry(attempt = 0, maxAttempts = 1): Promise<PoolConnection> {
   try {
     const pool = getPool();
-    return await pool.getConnection();
+    // Add timeout to connection attempt
+    const connectionPromise = pool.getConnection();
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("Connection timeout")), 35000); // 35 seconds
+    });
+    return await Promise.race([connectionPromise, timeout]);
   } catch (rawError) {
     const error = rawError as MysqlError;
-    if (attempt === 0 && isRecoverableError(error)) {
-      console.warn("[db] retrying connection after error", error);
-      await resetPool();
-      return getConnectionWithRetry(attempt + 1);
+    const isTooManyConnections = (error as any).errno === 1203 || error.code === "ER_TOO_MANY_USER_CONNECTIONS";
+    if (attempt < maxAttempts && isRecoverableError(error)) {
+      // Wait longer if too many connections (give time for connections to close)
+      const waitTime = isTooManyConnections ? 2000 : 1000;
+      console.warn(`[db] retrying connection after error (attempt ${attempt + 1}/${maxAttempts + 1})`, error.code || error.message, isTooManyConnections ? "- waiting longer for connections to free up" : "");
+      if (isTooManyConnections) {
+        // Don't reset pool on too many connections - just wait and retry
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      } else {
+        await resetPool();
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
+      return getConnectionWithRetry(attempt + 1, maxAttempts);
     }
+    console.error("[db] failed to get connection after retries", error);
     throw error;
   }
 }
 
-async function runWithRetry<T>(operation: (pool: Pool) => Promise<T>, attempt = 0): Promise<T> {
+async function runWithRetry<T>(operation: (pool: Pool) => Promise<T>, attempt = 0, maxAttempts = 1): Promise<T> {
   let currentPool = getPool();
   try {
-    return await operation(currentPool);
+    // Add overall timeout to query execution (45 seconds)
+    const operationPromise = operation(currentPool);
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("Query execution timeout")), 45000);
+    });
+    return await Promise.race([operationPromise, timeout]);
   } catch (rawError) {
     const error = rawError as MysqlError;
-    if (attempt === 0 && isRecoverableError(error)) {
-      console.warn("[db] retrying query after connection error", error);
+    if (attempt < maxAttempts && isRecoverableError(error)) {
+      console.warn(`[db] retrying query after connection error (attempt ${attempt + 1}/${maxAttempts + 1})`, error.code || error.message);
       await resetPool();
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait before retry
       currentPool = getPool();
-      return runWithRetry(operation, attempt + 1);
+      return runWithRetry(operation, attempt + 1, maxAttempts);
     }
+    console.error("[db] failed to execute query after retries", error);
     throw error;
   }
 }
