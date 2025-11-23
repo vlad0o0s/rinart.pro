@@ -311,6 +311,14 @@
   /* Ensure consistent rendering */
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
+  /* Сохраняем позиции элементов при фильтрации */
+  grid-auto-flow: row;
+  /* Фиксируем позиции элементов, чтобы они не менялись при фильтрации */
+  grid-auto-rows: auto;
+  /* Важно: убираем contain, так как он может влиять на расчет позиций grid */
+  /* Grid должен учитывать все элементы, включая неактивные */
+  /* Используем order для сохранения порядка элементов */
+  /* Это гарантирует, что элементы остаются на своих местах при изменении состояния */
 }
 
 .portfolioSkeletonCard {
@@ -340,42 +348,84 @@
   box-sizing: border-box;
   /* Fix for clickable area consistency */
   -webkit-tap-highlight-color: transparent;
-  /* Smooth transition for grid layout changes */
-  -webkit-transition: opacity 0.6s ease, transform 0.6s ease;
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  /* Плавные переходы для всех изменений - увеличиваем время и используем более плавную функцию */
+  -webkit-transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), filter 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), filter 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Сохраняем позицию элемента в grid при фильтрации */
+  position: relative;
+  /* Важно: неактивные элементы должны сохранять свое место в grid */
+  /* Убираем contain, так как он может влиять на grid позиционирование */
+  /* Используем order для сохранения порядка элементов */
+  /* Это гарантирует, что элементы остаются на своих местах при изменении состояния */
 }
 
-.portfolioLink:nth-of-type(8n + 2),
+.portfolioLink[aria-disabled="true"] {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Убираем nth-of-type селекторы, так как теперь используем inline стили */
+/* Это гарантирует, что позиции сохраняются при изменении состояния элементов */
+/* .portfolioLink:nth-of-type(8n + 2),
 .portfolioLink:nth-of-type(8n + 4),
 .portfolioLink:nth-of-type(8n + 5),
 .portfolioLink:nth-of-type(8n + 7) {
   grid-column: span 2;
-}
+} */
+
 
 .portfolioCard {
   position: relative;
   display: flex;
   flex-direction: column;
   min-height: 267px;
-  -webkit-transition: opacity 0.6s ease, transform 0.6s ease;
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  /* Плавный переход для opacity при изменении категории */
+  -webkit-transition: opacity 0.6s ease-out;
+  transition: opacity 0.6s ease-out;
   /* Ensure consistent box model */
   box-sizing: border-box;
+  /* Предотвращаем изменение позиции при изменении состояния */
+  will-change: opacity;
+  /* Начальное состояние - полная непрозрачность */
+  opacity: 1;
 }
 
 .portfolioCardDimmed {
   opacity: 0.2;
   pointer-events: none;
-  -webkit-transform: scale(0.98);
-  transform: scale(0.98);
+  /* Сохраняем место элемента в grid, чтобы он не менял позицию */
+  visibility: visible;
+  height: auto;
+  min-height: 267px;
+  /* Важно: transition наследуется из .portfolioCard, поэтому переход будет плавным */
+  /* Оптимизация для плавной анимации */
+  will-change: opacity;
+  /* Принудительное использование GPU для плавности */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  /* Важно: неактивные элементы должны сохранять свои размеры и позицию в grid */
+  display: flex;
+  flex-direction: column;
+  /* Сохраняем все размеры и позиции */
+  width: 100%;
 }
 
 .portfolioCardDimmed .portfolioImage {
   opacity: 0.3;
   -webkit-filter: grayscale(1) brightness(1.2);
   filter: grayscale(1) brightness(1.2);
-  -webkit-transition: opacity 0.6s ease, -webkit-filter 0.6s ease, filter 0.6s ease;
-  transition: opacity 0.6s ease, filter 0.6s ease;
+  /* Плавный переход для opacity при изменении категории */
+  -webkit-transition: opacity 0.6s ease-out, -webkit-filter 0.6s ease-out, filter 0.6s ease-out;
+  transition: opacity 0.6s ease-out, filter 0.6s ease-out;
+  /* Оптимизация для плавной анимации */
+  will-change: opacity, filter;
+  /* Принудительное использование GPU для плавности */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .portfolioImageWrapper {
@@ -427,7 +477,7 @@
   opacity: 0.75;
   position: absolute;
   z-index: 0;
-  /* Transitions with vendor prefixes */
+  /* Transitions with vendor prefixes - для hover эффектов */
   -webkit-transition: -webkit-filter 0.4s ease, filter 0.4s ease, opacity 0.4s ease, -webkit-transform 0.4s ease, transform 0.4s ease;
   transition: filter 0.4s ease, opacity 0.4s ease, transform 0.4s ease;
   /* Performance optimization */
@@ -444,6 +494,16 @@
   opacity: 1;
   -webkit-transform: scale(1.2);
   transform: scale(1.2);
+}
+
+/* Убираем hover эффект для неактивных элементов */
+.portfolioLink:hover .portfolioCardDimmed .portfolioImage,
+.portfolioLink:focus-visible .portfolioCardDimmed .portfolioImage {
+  -webkit-filter: grayscale(1);
+  filter: grayscale(1);
+  opacity: 0.3;
+  -webkit-transform: scale(1.15);
+  transform: scale(1.15);
 }
 
 .portfolioImageFallback {
@@ -767,5 +827,142 @@
 
   .portfolioMeta {
     font-size: 11px;
+  }
+}
+
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+@media (min-width: 1921px) {
+  .page {
+    padding: 7.2917vw 0 6.25vw;
+  }
+
+  .pageShell {
+    max-width: none;
+  }
+
+  .stageLayer {
+    transform: translateY(1.8229vw);
+  }
+
+  .stageLayer[data-stage="portfolio"]::before {
+    top: -2.0833vw;
+    inset: -2.0833vw 0 auto;
+    height: 4.1667vw;
+  }
+
+  .stageLayer[data-stage="portfolio"]::after {
+    margin: 2.7083vw auto 1.9792vw;
+    height: 0.0521vw; /* 1px */
+    width: 16.6667vw; /* 320px - убираем min() ограничение */
+  }
+
+  .stageLayer[data-stage="footer"]::before {
+    top: -5.2083vw;
+    inset: -5.2083vw 0 auto;
+    height: 5.2083vw;
+  }
+
+  .hero {
+    max-width: none;
+    padding: 0 0.5208vw;
+    gap: 1.4583vw;
+  }
+
+  .heroBrand {
+    font-size: 1.6vw; /* Override clamp(18px, 1.6vw, 32px) - на 1920px = 30.72px */
+  }
+
+  .heroNavList {
+    gap: 0.625vw 1.25vw;
+  }
+
+  .heroNavItem a {
+    font-size: 0.7292vw;
+  }
+
+  .portfolioSection {
+    max-width: none;
+    padding: 0 0.5208vw;
+    gap: 1.4583vw;
+  }
+
+  .portfolioGrid {
+    gap: 0.5208vw;
+    grid-gap: 0.5208vw;
+  }
+
+  .portfolioSkeletonCard {
+    gap: 0.625vw;
+  }
+
+  .portfolioSkeletonImage {
+    border-radius: 0.9375vw;
+  }
+
+  .portfolioSkeletonTitle {
+    height: 0.8333vw;
+    border-radius: 0.4167vw;
+  }
+
+  .portfolioCard {
+    min-height: 13.9063vw;
+  }
+
+  .portfolioImageContainer {
+    height: 13.9063vw;
+  }
+
+  .portfolioTitle {
+    font-size: 0.625vw;
+    line-height: 0.625vw;
+    margin: 0.5208vw 0 0;
+  }
+
+  .categoryHeader {
+    gap: 0.8333vw;
+  }
+
+  .categorySkeletonButton {
+    height: 2.2917vw;
+    border-radius: 0.5208vw;
+  }
+
+  .categorySkeletonList {
+    gap: 0.625vw 0.9375vw;
+  }
+
+  .categorySkeletonChip {
+    width: 4.6875vw;
+    height: 0.9375vw;
+  }
+
+  .mobileCategoryButton {
+    padding: 0.625vw 0;
+    font-size: 0.7292vw;
+    border-bottom: 0.0521vw solid rgba(37, 37, 37, 0.12);
+  }
+
+  .mobileCategoryButton span:first-child {
+    gap: 0.3125vw;
+  }
+
+  .mobileCategoryIcon {
+    width: 0.5208vw;
+    height: 0.5208vw;
+    border-right: 0.1042vw solid rgba(37, 37, 37, 0.7);
+    border-bottom: 0.1042vw solid rgba(37, 37, 37, 0.7);
+    margin-top: -0.1042vw;
+  }
+
+  .categoryList {
+    gap: 0.625vw 1.0417vw;
+  }
+
+  .categoryButton {
+    font-size: 0.7292vw;
+  }
+
+  .categoryButton sup {
+    margin-left: 0.2083vw;
   }
 }

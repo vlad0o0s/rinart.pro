@@ -13,7 +13,7 @@ export function SecondStageSection() {
       </div>
       <div className={styles.right}>
         <h2 className={styles.title}>
-          Следующий этап проектирования – это разработка эскизного проекта. Начить
+          Следующий этап проектирования – это разработка эскизного проекта. Нужно обозначить
           критерии, которым должен удовлетворять будущий дом.
         </h2>
         <div className={styles.bodyRow}>

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { SiteHeader, PROEKTIR_SUBLINKS } from "@/components/site-header";
 import { Footer } from "@/components/footer";
-import { ProjectDiagram } from "@/components/project-diagram";
 import { PricingTimeline } from "@/components/pricing-timeline";
 import { HeroSection } from "./hero-section";
 import { IntroSection } from "./intro-section";
@@ -32,7 +31,6 @@ export default async function ProektirovaniePage() {
         <WorkTypesSection />
         <StagesSection />
         <ConceptSection />
-        <ProjectDiagram />
         <SecondStageSection />
         <ThirdStageSection />
         <PricingTimeline data={blocks.pricing} />

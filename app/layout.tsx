@@ -10,7 +10,7 @@ import { PageTransition } from "@/components/page-transition";
 import { JsonLd } from "@/components/json-ld";
 import { isBotUserAgent } from "@/lib/is-bot";
 import { organizationSchema, webSiteSchema } from "@/lib/seo/schema";
-import { getAppearanceSettings } from "@/lib/site-settings";
+import { getGlobalBlocks } from "@/lib/global-blocks";
 
 const neueHaasUnica = localFont({
   variable: "--font-neue-haas",
@@ -71,7 +71,8 @@ export default async function RootLayout({
   const headersList = await headers();
   const userAgent = headersList.get("user-agent") ?? "";
   const isBot = isBotUserAgent(userAgent);
-  const appearanceSettings = await getAppearanceSettings();
+  const blocks = await getGlobalBlocks();
+  const transitionImageUrl = blocks["page-transition"]?.imageUrl || "https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png";
 
   return (
     <html lang="ru" data-scroll-behavior="auto">
@@ -116,7 +117,7 @@ export default async function RootLayout({
         <div className="site-shell">
           <PageTransition
             enabled={!isBot}
-            logoUrl={appearanceSettings.transitionImageUrl}
+            logoUrl={transitionImageUrl}
           />
           <JsonLd schema={[organizationSchema(), webSiteSchema()]} />
           {children}

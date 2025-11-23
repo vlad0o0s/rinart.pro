@@ -49,9 +49,25 @@ body::-webkit-scrollbar {
   margin-right: auto;
 }
 
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+@media (min-width: 1921px) {
+  .site-shell {
+    width: 100%;
+  }
+
+  .line {
+    height: 0.1042vw;
+  }
+
+  /* Remove max-width restrictions for Tailwind classes */
+  .max-w-\[1920px\] {
+    max-width: none !important;
+  }
+}
+
 html {
   overflow-x: hidden;
-  scroll-behavior: auto;
+  scroll-behavior: smooth;
   /* Keep main scrollbar visible on html */
 }
 

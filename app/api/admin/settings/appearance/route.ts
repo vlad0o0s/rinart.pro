@@ -37,7 +37,7 @@ export async function PUT(request: NextRequest) {
       homeHeroImageUrl: blocks["home-hero"]?.imageUrl || "/img/01-ilichevka.jpg",
       transitionImageUrl: blocks["page-transition"]?.imageUrl || "https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png",
     };
-    revalidatePath("/");
+    revalidatePath("/", "layout");
     revalidatePath("/masterskaja");
     revalidatePath("/proektirovanie");
     revalidatePath("/kontakty");

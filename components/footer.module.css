@@ -482,3 +482,132 @@
   }
 }
 
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+@media (min-width: 1921px) {
+  .footer {
+    padding: 0.5208vw;
+  }
+
+  .inner {
+    max-width: none;
+    gap: 1.25vw;
+  }
+
+  .row {
+    gap: 1.25vw;
+  }
+
+  .column {
+    gap: 0.625vw;
+  }
+
+  .contactTitle {
+    font-size: 0.8333vw;
+  }
+
+  .ctaButton {
+    gap: 0.2083vw;
+    padding: 0.5208vw 0.625vw;
+    width: 15.625vw;
+    border-radius: 0.2083vw;
+    font-size: 0.625vw;
+  }
+
+  .ctaButton span {
+    font-size: 0.6771vw;
+  }
+
+  .ctaButton:hover,
+  .ctaButton:focus-visible {
+    transform: translateY(-0.1042vw);
+    box-shadow: 0 0.4167vw 0.8333vw rgba(37, 37, 37, 0.15);
+  }
+
+  .ctaButton:hover span,
+  .ctaButton:focus-visible span {
+    transform: translateX(0.2083vw);
+  }
+
+  .city {
+    font-size: 0.8333vw;
+  }
+
+  .phone {
+    font-size: 0.8333vw;
+  }
+
+  .socials {
+    gap: 0.8333vw;
+  }
+
+  .socialLink {
+    width: 2.0833vw;
+    height: 2.0833vw;
+  }
+
+  .socialLink:hover,
+  .socialLink:focus-visible {
+    transform: translateY(-0.2083vw) scale(1.05);
+    box-shadow: 0 0.5208vw 0.9375vw rgba(37, 37, 37, 0.12);
+  }
+
+  .icon {
+    width: 1.25vw;
+    height: 1.25vw;
+  }
+
+  .backToTop {
+    font-size: 0.7292vw;
+  }
+
+  .footerMobile {
+    padding: 1.25vw 0.8333vw 1.6667vw;
+  }
+
+  .footerMobileInner {
+    max-width: none;
+    gap: 0.9375vw;
+  }
+
+  .footerMobileButton {
+    gap: 0.3125vw;
+    padding: 0.5208vw 0.7292vw;
+    font-size: 0.625vw;
+  }
+
+  .footerMobileButton span {
+    font-size: 0.8333vw;
+  }
+
+  .footerMobileButton span::after {
+    font-size: 0.8333vw;
+  }
+
+  .footerMobileButton:hover span::after,
+  .footerMobileButton:focus-visible span::after {
+    transform: translateX(0.2083vw);
+  }
+
+  .footerMobileColumns {
+    gap: 1.0417vw;
+  }
+
+  .footerMobileColumnLeft,
+  .footerMobileColumnRight {
+    gap: 0.5208vw;
+  }
+
+  .footerMobileColumnLeft .contactTitle {
+    font-size: 0.625vw;
+  }
+
+  .footerMobileSocials {
+    gap: 0.2604vw;
+  }
+
+  .footerMobileLocation {
+    gap: 0.625vw;
+    font-size: 0.625vw;
+  }
+}
+

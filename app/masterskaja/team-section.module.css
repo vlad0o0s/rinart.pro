@@ -408,3 +408,86 @@
   }
 }
 
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+/* Должен быть в конце, чтобы не перебиваться другими медиа-запросами */
+@media (min-width: 1921px) {
+  .section {
+    padding: 6.25vw 0;
+    transform: translateY(1.875vw);
+  }
+
+  .wrapper {
+    --team-marker-width: minmax(10.4167vw, 16.6667vw);
+    --team-image-width: 18.75vw; /* Override clamp(200px, 26vw, 360px) */
+    --team-image-active-width: 11.4583vw; /* Override clamp(140px, 16vw, 220px) */
+    --team-content-min: minmax(16.6667vw, 1fr);
+    --team-horizontal-gap: 2.7083vw; /* Override clamp(24px, 5vw, 52px) */
+    padding: 0 0.5208vw;
+    transform: translateY(1.0417vw);
+  }
+
+  .markerColumn {
+    gap: 0.8333vw; /* 16px */
+    transform: translateY(1.0417vw);
+  }
+
+  .marker {
+    font-size: 2.5vw; /* Override clamp(24px, 3.1vw, 48px) */
+  }
+
+  .imageColumn {
+    transform: translateY(1.25vw);
+  }
+
+  .contentColumn {
+    gap: 2.9167vw; /* Override clamp(32px, 5vw, 56px) */
+    transform: translateY(1.4583vw);
+  }
+
+  .intro {
+    font-size: 1.1458vw; /* Override clamp(16px, 1.3vw, 22px) */
+    transform: translateY(0.9375vw);
+  }
+
+  .mobileProfiles {
+    gap: 1.25vw; /* 24px */
+  }
+
+  .mobileProfile {
+    gap: 0.8333vw; /* 16px */
+  }
+
+  .mobileCopy {
+    gap: 0.4167vw; /* 8px */
+  }
+
+  .mobileRole {
+    font-size: 0.9375vw; /* Override clamp(14px, 3.4vw, 18px) */
+  }
+
+  .mobileName {
+    font-size: 1.25vw; /* Override clamp(18px, 4.4vw, 24px) */
+  }
+
+  .desktopProfiles {
+    gap: 3.3333vw; /* Override clamp(40px, 5vw, 64px) */
+  }
+
+  .profileRow {
+    gap: 0.625vw; /* 12px */
+  }
+
+  .profileRow:focus-visible {
+    outline: 0.1042vw dotted rgba(37, 37, 37, 0.4); /* 2px */
+    outline-offset: 0.4167vw; /* 8px */
+  }
+
+  .profileRole {
+    font-size: 1.0417vw; /* Override clamp(14px, 1.3vw, 20px) */
+  }
+
+  .profileName {
+    font-size: 2.6042vw; /* Override clamp(32px, 4vw, 50px) */
+  }
+}
+

@@ -347,3 +347,78 @@
   }
 }
 
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+/* Должен быть в конце, чтобы не перебиваться другими медиа-запросами */
+@media (min-width: 1921px) {
+  .section {
+    padding: 6.25vw 0;
+    transform: translateY(2.0833vw);
+  }
+
+  .wrapper {
+    padding: 0 0.5208vw;
+    grid-template-columns:
+      minmax(8.3333vw, 13.5417vw)
+      minmax(14.5833vw, 23.9583vw)
+      minmax(16.6667vw, 1fr);
+    gap: 2.5vw; /* Override clamp(24px, 4vw, 48px) */
+    transform: translateY(1.25vw);
+  }
+
+  .columnMarker {
+    gap: 1.25vw; /* Override clamp(16px, 3vw, 24px) */
+    transform: translateY(1.0417vw);
+  }
+
+  .columnPhoto {
+    gap: 1.25vw; /* Override clamp(16px, 3vw, 24px) */
+    transform: translateY(1.3542vw);
+  }
+
+  .columnContent {
+    gap: 2.2917vw; /* Override clamp(28px, 4vw, 44px) */
+    transform: translateY(1.5625vw);
+  }
+
+  .marker {
+    font-size: 2vw; /* Override clamp(24px, 3.1vw, 48px) - уменьшено с 2.5vw чтобы не попадало под картинку */
+  }
+
+  .imageWrapper {
+    max-width: none;
+    transform: translateY(1.3542vw) scale(1.04);
+  }
+
+  .lead {
+    font-size: 1.25vw; /* Override clamp(18px, 1.6vw, 24px) */
+  }
+
+  .timeline {
+    gap: 1.25vw; /* Override clamp(12px, 3vw, 24px) */
+  }
+
+  .yearBlock {
+    margin-bottom: 0.2604vw; /* 5px */
+  }
+
+  .year {
+    margin: 0 0 0.625vw; /* 12px */
+    font-size: 1.0417vw; /* Override clamp(14px, 1.8vw, 20px) */
+  }
+
+  .yearBlockRow {
+    gap: 0.3125vw; /* 6px */
+    margin-bottom: 0.8333vw; /* 16px */
+  }
+
+  .liner {
+    height: 0.0521vw; /* 1px */
+  }
+
+  .description {
+    font-size: 1.4vw; /* Override clamp(14px, 1.4vw, 16px) - используем vw часть clamp */
+    line-height: 1.5; /* относительное значение, не переводим */
+    letter-spacing: 0; /* 0, не переводим */
+  }
+}
+
