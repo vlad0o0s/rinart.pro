@@ -31,7 +31,7 @@ export function IntroSection() {
         </div>
         <div className={styles.media}>
           <SafeImage
-            src="/img/proektirovanie-banner-desktop.webp"
+            src="/img/plan.jpg"
             alt="Архитектурный проект"
             fill
             sizes="(max-width: 768px) 100vw, 1100px"

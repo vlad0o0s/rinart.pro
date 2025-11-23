@@ -63,7 +63,7 @@
 .media {
   position: relative;
   width: min(100%, 1024px);
-  aspect-ratio: 1024 / 378;
+  aspect-ratio: 1024 / 500;
   align-self: flex-end;
   overflow: hidden;
   margin-top: 100px;
@@ -72,7 +72,7 @@
 }
 
 .image {
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .section[data-visible="true"] {
