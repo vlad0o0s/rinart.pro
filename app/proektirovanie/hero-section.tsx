@@ -9,8 +9,7 @@ export function HeroSection() {
   return (
     <section ref={sectionRef} className={styles.hero} data-visible="false">
       <h1 className={styles.title}>
-        Основное направление деятельности мастерской — проектирование частных
-        домов и сопутствующих построек.
+        Основное направление деятельности мастерской — проектирование частных загородных домов и интерьеров.
       </h1>
     </section>
   );
