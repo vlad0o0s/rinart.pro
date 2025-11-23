@@ -158,7 +158,7 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
         }
       });
     }, 900);
-  }, [activeCategory, filteredProjects, styles]);
+  }, [activeCategory, filteredProjects]);
 
   const showSkeleton = enrichedProjects.length === 0;
 
@@ -169,7 +169,6 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
   const handleCategorySelect = (categoryId: ActiveCategory) => {
     console.log(`[Transition Debug] ===== CATEGORY SELECTED =====`);
     console.log(`[Transition Debug] From: ${activeCategory} -> To: ${categoryId}`);
-    console.log(`[Transition Debug] Timestamp: ${Date.now()}`);
     
     // Проверяем текущее состояние элементов перед изменением
     if (gridRef.current) {
