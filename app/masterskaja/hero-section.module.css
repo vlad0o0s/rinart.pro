@@ -194,6 +194,44 @@
   }
 }
 
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+@media (min-width: 1921px) {
+  .section {
+    padding: 6.25vw 0 2.6042vw;
+    transform: translateY(1.875vw);
+  }
+
+  .inner {
+    padding: 0 0.5208vw;
+    gap: 1.4583vw;
+  }
+
+  .headingRow {
+    gap: 0.8333vw;
+    transform: translateY(1.0417vw);
+  }
+
+  .title {
+    font-size: 3.125vw; /* Override clamp(36px, 4vw, 60px) */
+    transform: translateY(0.7292vw);
+  }
+
+  .lead {
+    font-size: 1.0417vw; /* Override clamp(16px, 3.6vw, 20px) */
+    transform: translateY(1.0417vw);
+  }
+
+  .imageContainer {
+    padding: 0 0.5208vw;
+  }
+
+  .imageWrapper {
+    height: 22.4479vw; /* 431px */
+    min-height: 22.4479vw;
+    transform: translateY(1.25vw);
+  }
+}
+
 @keyframes heroSectionFade {
   from {
     opacity: 0;

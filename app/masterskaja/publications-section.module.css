@@ -167,3 +167,32 @@
   }
 }
 
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+/* Должен быть в конце, чтобы не перебиваться другими медиа-запросами */
+@media (min-width: 1921px) {
+  .section {
+    padding: 6.25vw 0 7.2917vw;
+    transform: translateY(1.875vw);
+  }
+
+  .wrapper {
+    padding: 0 0.5208vw;
+    transform: translateY(1.1458vw);
+  }
+
+  .marker {
+    gap: 0.625vw; /* 12px */
+    transform: translateY(1.0417vw);
+  }
+
+  .markerLabel {
+    font-size: 2.5vw; /* Override clamp(24px, 3.1vw, 48px) */
+  }
+
+  .list {
+    padding-left: 0.9375vw; /* 18px */
+    gap: 1.0417vw; /* Override clamp(12px, 2vw, 20px) */
+    font-size: 0.9375vw; /* Override clamp(14px, 1vw, 18px) */
+  }
+}
+

@@ -212,3 +212,62 @@
   }
 }
 
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+@media (min-width: 1921px) {
+  .section {
+    padding: 7.2917vw 0.5208vw 0;
+    transform: translateY(1.6667vw);
+  }
+
+  .left,
+  .right {
+    transform: translateY(1.1458vw);
+  }
+
+  .preheading {
+    font-size: 2.7083vw; /* Override clamp(28px, 3.2vw, 52px) */
+  }
+
+  .title {
+    font-size: 2.5vw; /* Override clamp(28px, 2.1vw, 48px) */
+    margin: 0 0 1.6667vw;
+  }
+
+  .body {
+    font-size: 1.25vw; /* Override clamp(18px, 1.4vw, 24px) */
+    margin: 0 0 2.0833vw;
+  }
+
+  .sectionsTitle {
+    font-size: 1.1458vw; /* Override clamp(18px, 1.6vw, 22px) */
+    margin: 0 0 1.25vw;
+  }
+
+  .sectionsBlock {
+    gap: 1.25vw;
+  }
+
+  .sectionsList {
+    gap: 0.9375vw;
+  }
+
+  .sectionItem {
+    gap: 0.9375vw;
+    font-size: 1.0417vw; /* Override clamp(16px, 1.2vw, 20px) */
+    padding-bottom: 0.625vw;
+    border-bottom: 0.0521vw solid #252525;
+  }
+
+  .progressSquares {
+    grid-template-columns: repeat(2, 0.5208vw);
+    grid-template-rows: repeat(2, 0.5208vw);
+    gap: 0.0521vw;
+  }
+
+  .progressSquare {
+    width: 0.5208vw;
+    height: 0.5208vw;
+    border: 0.0521vw solid #252525;
+  }
+}
+

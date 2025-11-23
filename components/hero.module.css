@@ -106,3 +106,16 @@
   }
 }
 
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+@media (min-width: 1921px) {
+  .hero {
+    min-height: calc(100vh - var(--header-height, 0px) - 2.5vw);
+    padding-bottom: 2.5vw;
+  }
+
+  .content {
+    max-width: none;
+    padding: 2.0833vw 1.25vw;
+  }
+}
+

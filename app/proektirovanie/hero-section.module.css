@@ -81,3 +81,20 @@
   }
 }
 
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+@media (min-width: 1921px) {
+  .hero {
+    padding: 6.7708vw 0.5208vw 2.0833vw;
+    transform: translateY(1.0417vw);
+  }
+
+  .title {
+    font-size: 3.125vw; /* Override clamp(36px, 4vw, 60px) */
+    transform: translateY(0.7292vw);
+  }
+
+  .lead {
+    font-size: 1.3vw;
+  }
+}
+

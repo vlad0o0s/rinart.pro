@@ -671,3 +671,166 @@
     padding: 12px;
   }
 }
+
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+@media (min-width: 1921px) {
+  .page {
+    padding: 3.3854vw 0.5208vw 4.1667vw;
+    max-width: none;
+  }
+
+  .layout {
+    --project-offset: 6.25vw;
+    gap: 2.0833vw;
+  }
+
+  .infoColumn {
+    gap: 0.5208vw;
+    padding-right: 0.9375vw;
+    transform: translateY(1.25vw);
+  }
+
+  .featureImageMobile {
+    margin: 1.0417vw 0;
+  }
+
+  .breadcrumbRow {
+    gap: 0.3125vw;
+  }
+
+  .breadcrumb {
+    gap: 0.4167vw;
+    font-size: 0.5729vw;
+    letter-spacing: 0.14em;
+  }
+
+  .breadcrumbCurrent {
+    font-size: 0.5729vw;
+  }
+
+  .title {
+    font-size: 1.6667vw;
+  }
+
+  .lead {
+    font-size: 1.0417vw;
+  }
+
+  .description {
+    gap: 0.625vw;
+    font-size: 1.0417vw;
+  }
+
+  .description b {
+    font-size: 0.9375vw;
+  }
+
+  .relatedSection {
+    padding-top: 1.0417vw;
+    gap: 1.875vw;
+  }
+
+  .relatedArrow {
+    width: 2.5vw;
+    height: 2.5vw;
+  }
+
+  .relatedArrow::after {
+    width: 0.7292vw;
+    height: 0.7292vw;
+  }
+
+  .relatedArrowPrev {
+    left: 1.25vw;
+  }
+
+  .relatedArrowNext {
+    right: 1.25vw;
+  }
+
+  .relatedSwiper :global(.swiper) {
+    padding-bottom: 1.25vw;
+  }
+
+  .relatedSwiper :global(.swiper-button-prev),
+  .relatedSwiper :global(.swiper-button-next) {
+    width: 1.7708vw;
+    height: 1.7708vw;
+  }
+
+  .relatedTile {
+    gap: 0.5208vw;
+  }
+
+  .relatedTileImage {
+    width: 11.4583vw;
+    height: 8.3333vw;
+  }
+
+  .relatedTileArrow::before {
+    width: 0.625vw;
+    height: 0.625vw;
+  }
+
+  .relatedTileMeta {
+    gap: 0.3125vw;
+  }
+
+  .relatedTileNumber {
+    font-size: 0.625vw;
+  }
+
+  .relatedTileTitle {
+    font-size: 0.7292vw;
+  }
+
+  .mediaColumnDesktop {
+    padding-right: 0.9375vw;
+    transform: translateY(1.25vw);
+  }
+
+  .scrollContent {
+    gap: 1.0417vw;
+    min-height: 2000px; /* Оставляем px, так как это внутренний контент */
+  }
+
+  .mediaColumnMobile {
+    gap: 1.0417vw;
+    margin-top: 1.6667vw;
+  }
+
+  .mediaFrame {
+    gap: 0.625vw;
+    transform: translateY(0.9375vw);
+  }
+
+  .mediaCaption {
+    font-size: 0.5729vw;
+  }
+
+  .modalInner {
+    max-width: 62.5vw;
+    max-height: 40.625vh;
+    gap: 0.625vw;
+    transform: translateY(1.25vw) scale(0.96);
+  }
+
+  .modalClose {
+    top: 1.6667vw;
+    right: 1.6667vw;
+    font-size: 1.7708vw;
+  }
+
+  .modalNav {
+    font-size: 1.7708vw;
+    padding: 0.9375vw;
+  }
+
+  .modalPrev {
+    left: 2.0833vw;
+  }
+
+  .modalNext {
+    right: 2.0833vw;
+  }
+}

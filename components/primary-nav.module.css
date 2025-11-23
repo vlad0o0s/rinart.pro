@@ -114,3 +114,18 @@
   }
 }
 
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+@media (min-width: 1921px) {
+  .primaryNav {
+    padding: 0.5208vw;
+  }
+
+  .list {
+    gap: 0.8333vw;
+  }
+
+  .item a {
+    font-size: 1.5625vw;
+  }
+}
+

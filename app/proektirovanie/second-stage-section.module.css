@@ -183,3 +183,37 @@
     transform: none;
   }
 }
+
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+@media (min-width: 1921px) {
+  .section {
+    padding: 4.1667vw 0.5208vw 0;
+    transform: translateY(1.4583vw);
+  }
+
+  .left {
+    transform: translateY(0.9375vw);
+  }
+
+  .number {
+    font-size: 9.375vw; /* Override clamp(96px, 10vw, 180px) */
+    transform: translateY(1.1458vw);
+  }
+
+  .right {
+    gap: 1.25vw;
+    transform: translateY(1.1458vw);
+  }
+
+  .title {
+    font-size: 1.9792vw; /* Override clamp(24px, 2.2vw, 38px) */
+  }
+
+  .bodyRow {
+    gap: 1.6667vw;
+  }
+
+  .body {
+    font-size: 1.1458vw; /* Override clamp(16px, 1.3vw, 22px) */
+  }
+}

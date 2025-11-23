@@ -618,3 +618,162 @@
   }
 }
 
+/* Wide screens (1921px+) - scale all sizes proportionally using vw/vh */
+@media (min-width: 1921px) {
+  .mobileControls {
+    padding: 0.5208vw 0.625vw;
+    gap: 0.625vw;
+  }
+
+  .accent {
+    margin-top: 0.2083vw;
+  }
+
+  .mobileTopLine {
+    gap: 0.625vw;
+  }
+
+  .mobileBrandCompact {
+    font-size: 0.625vw;
+  }
+
+  .mobileBrandPlaceholder {
+    min-height: 1.25vw;
+    min-width: 0.0521vw;
+  }
+
+  .header {
+    --header-height: 4.0625vw;
+  }
+
+  .wrapper {
+    display: flex;
+    max-width: none;
+    padding: 0.9375vw 0.5208vw 0.5208vw;
+    gap: 0.5208vw;
+  }
+
+  .desktopNav {
+    display: flex;
+  }
+
+  .desktopNavList {
+    font-size: 1.3542vw; /* Override clamp(16px, 1.2vw, 26px) */
+  }
+
+  .desktopNavItem a {
+    font-size: 1.3542vw; /* Override clamp(16px, 1.2vw, 26px) */
+  }
+
+  .burger {
+    grid-template-rows: repeat(2, 0.5208vw);
+    grid-template-columns: repeat(2, 0.5208vw);
+    width: 1.1458vw;
+    min-width: 1.1458vw;
+    height: 1.1458vw;
+    min-height: 1.1458vw;
+  }
+
+  .burgerElement {
+    border: 0.1042vw solid currentColor;
+  }
+
+  .menuPanel {
+    width: 16.6667vw; /* убираем min() ограничение */
+    max-width: none;
+    padding: 1.6667vw 1.0417vw 2.0833vw;
+    box-shadow: -0.2083vw 0 1.25vw rgba(37, 37, 37, 0.1);
+  }
+
+  .menuContent {
+    gap: 1.6667vw;
+  }
+
+  .menuList {
+    gap: 0.625vw;
+  }
+
+  .menuItem a {
+    line-height: 1.0417vw;
+    font-size: 0.9375vw;
+  }
+
+  .menuItem a:focus-visible,
+  .menuItem a:hover {
+    transform: translateY(-0.1042vw);
+  }
+
+  .socials {
+    gap: 0.7813vw;
+    padding-top: 0.8333vw;
+  }
+
+  .socials a {
+    width: 1.6667vw;
+    height: 1.6667vw;
+  }
+
+  .socials a:hover,
+  .socials a:focus-visible {
+    transform: translateY(-0.1563vw);
+    box-shadow: 0 0.3125vw 0.625vw rgba(37, 37, 37, 0.12);
+  }
+
+  .icon {
+    width: 0.9375vw;
+    height: 0.9375vw;
+  }
+
+  .subnav {
+    padding: 0 0.5208vw 0.5208vw;
+  }
+
+  .subnavList {
+    margin: 1.0417vw auto 0;
+    padding: 0 0.5208vw;
+    gap: 0.8333vw;
+    max-width: none;
+  }
+
+  .subnavItem a {
+    font-size: 1.0417vw;
+  }
+
+  .mobileBreadcrumbsLink,
+  .mobileBreadcrumbsCurrent {
+    font-size: 0.625vw;
+  }
+
+  @media (min-width: 768px) {
+    .accent {
+      margin-left: 0.3125vw;
+    }
+
+    .wrapper {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.25vw;
+    }
+
+    .desktopNav {
+      display: flex;
+      width: 100%;
+      justify-content: center;
+      flex: 1;
+    }
+
+    .desktopBrand {
+      display: inline-block;
+    }
+
+    .architectBrand {
+      display: inline;
+    }
+
+    .subnavList {
+      margin-top: 1.0417vw;
+    }
+  }
+}
+
