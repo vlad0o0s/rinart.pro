@@ -188,6 +188,14 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
               </article>
             );
 
+            if (isInactive) {
+              return (
+                <div key={project.slug} className={styles.portfolioLink}>
+                  {card}
+                </div>
+              );
+            }
+
             return (
               <Link key={project.slug} href={`/${project.slug}`} className={styles.portfolioLink}>
                 {card}

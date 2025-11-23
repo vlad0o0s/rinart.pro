@@ -23,7 +23,9 @@
 .stageLayer {
   position: relative;
   opacity: 0;
+  -webkit-transform: translateY(35px);
   transform: translateY(35px);
+  -webkit-animation: stageFade 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   animation: stageFade 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
@@ -31,7 +33,9 @@
   .stageLayer {
     display: block;
     opacity: 1;
+    -webkit-transform: none;
     transform: none;
+    -webkit-animation: none;
     animation: none;
   }
 }
@@ -65,14 +69,30 @@
   display: block;
 }
 
-@keyframes stageFade {
+@-webkit-keyframes stageFade {
   from {
     opacity: 0;
+    -webkit-transform: translateY(35px);
     transform: translateY(35px);
   }
 
   to {
     opacity: 1;
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes stageFade {
+  from {
+    opacity: 0;
+    -webkit-transform: translateY(35px);
+    transform: translateY(35px);
+  }
+
+  to {
+    opacity: 1;
+    -webkit-transform: translateY(0);
     transform: translateY(0);
   }
 }
@@ -84,23 +104,45 @@
 .stageLayer[data-stage="portfolio"]::before {
   content: "";
   position: absolute;
+  top: -40px;
+  right: 0;
+  left: 0;
+  bottom: auto;
+  /* Modern shorthand for supported browsers */
   inset: -40px 0 auto;
   height: 80px;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0));
   opacity: 0;
   z-index: 0;
+  -webkit-animation: revealHighlight 1s ease forwards 0.85s;
   animation: revealHighlight 1s ease forwards 0.85s;
 }
 
-@keyframes revealHighlight {
+@-webkit-keyframes revealHighlight {
   from {
     opacity: 0;
+    -webkit-transform: translateY(30px);
     transform: translateY(30px);
   }
 
   to {
     opacity: 1;
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes revealHighlight {
+  from {
+    opacity: 0;
+    -webkit-transform: translateY(30px);
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    -webkit-transform: translateY(0);
     transform: translateY(0);
   }
 }
@@ -114,17 +156,34 @@
   background: linear-gradient(90deg, rgba(37, 37, 37, 0) 0%, rgba(37, 37, 37, 0.22) 50%, rgba(37, 37, 37, 0) 100%);
   opacity: 0;
   pointer-events: none;
+  -webkit-animation: dividerFade 1.1s ease forwards 1.1s;
   animation: dividerFade 1.1s ease forwards 1.1s;
 }
 
-@keyframes dividerFade {
+@-webkit-keyframes dividerFade {
   from {
     opacity: 0;
+    -webkit-transform: scaleX(0.96);
     transform: scaleX(0.96);
   }
 
   to {
     opacity: 1;
+    -webkit-transform: scaleX(1);
+    transform: scaleX(1);
+  }
+}
+
+@keyframes dividerFade {
+  from {
+    opacity: 0;
+    -webkit-transform: scaleX(0.96);
+    transform: scaleX(0.96);
+  }
+
+  to {
+    opacity: 1;
+    -webkit-transform: scaleX(1);
     transform: scaleX(1);
   }
 }
@@ -136,22 +195,44 @@
 .stageLayer[data-stage="footer"]::before {
   content: "";
   position: absolute;
+  top: -100px;
+  right: 0;
+  left: 0;
+  bottom: auto;
+  /* Modern shorthand for supported browsers */
   inset: -100px 0 auto;
   height: 100px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
   opacity: 0;
   pointer-events: none;
+  -webkit-animation: footerGlow 0.9s ease forwards 1.05s;
   animation: footerGlow 0.9s ease forwards 1.05s;
 }
 
-@keyframes footerGlow {
+@-webkit-keyframes footerGlow {
   from {
     opacity: 0;
+    -webkit-transform: translateY(18px);
     transform: translateY(18px);
   }
 
   to {
     opacity: 1;
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes footerGlow {
+  from {
+    opacity: 0;
+    -webkit-transform: translateY(18px);
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    -webkit-transform: translateY(0);
     transform: translateY(0);
   }
 }
@@ -219,10 +300,17 @@
 }
 
 .portfolioGrid {
+  display: -ms-grid;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  grid-gap: 10px 10px;
+  -ms-grid-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(6, minmax(0px, 1fr));
+  gap: 10px;
   align-items: stretch;
+  /* Fallback for older browsers */
+  grid-gap: 10px;
+  /* Ensure consistent rendering */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .portfolioSkeletonCard {
@@ -248,6 +336,13 @@
   text-decoration: none;
   color: inherit;
   grid-column: span 1;
+  /* Ensure consistent box model */
+  box-sizing: border-box;
+  /* Fix for clickable area consistency */
+  -webkit-tap-highlight-color: transparent;
+  /* Smooth transition for grid layout changes */
+  -webkit-transition: opacity 0.6s ease, transform 0.6s ease;
+  transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
 .portfolioLink:nth-of-type(8n + 2),
@@ -262,11 +357,25 @@
   display: flex;
   flex-direction: column;
   min-height: 267px;
-  transition: opacity 0.3s ease;
+  -webkit-transition: opacity 0.6s ease, transform 0.6s ease;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  /* Ensure consistent box model */
+  box-sizing: border-box;
 }
 
 .portfolioCardDimmed {
   opacity: 0.2;
+  pointer-events: none;
+  -webkit-transform: scale(0.98);
+  transform: scale(0.98);
+}
+
+.portfolioCardDimmed .portfolioImage {
+  opacity: 0.3;
+  -webkit-filter: grayscale(1) brightness(1.2);
+  filter: grayscale(1) brightness(1.2);
+  -webkit-transition: opacity 0.6s ease, -webkit-filter 0.6s ease, filter 0.6s ease;
+  transition: opacity 0.6s ease, filter 0.6s ease;
 }
 
 .portfolioImageWrapper {
@@ -282,31 +391,58 @@
   width: 100%;
   height: 267px;
   overflow: hidden;
+  /* Ensure consistent rendering */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  /* Fix for Safari rendering issues */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .portfolioImage,
 .portfolioImageFallback {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   width: 100%;
   height: 100%;
+  /* Modern shorthand for supported browsers */
+  inset: 0;
 }
 
 .portfolioImage {
+  /* Transform with vendor prefixes for better browser support */
+  -webkit-transform: scale(1.15);
   transform: scale(1.15);
+  /* Object-fit with fallback */
+  -o-object-fit: cover;
   object-fit: cover;
+  -o-object-position: center;
   object-position: center;
+  /* Filter with vendor prefixes */
+  -webkit-filter: grayscale(1);
   filter: grayscale(1);
   opacity: 0.75;
   position: absolute;
   z-index: 0;
+  /* Transitions with vendor prefixes */
+  -webkit-transition: -webkit-filter 0.4s ease, filter 0.4s ease, opacity 0.4s ease, -webkit-transform 0.4s ease, transform 0.4s ease;
   transition: filter 0.4s ease, opacity 0.4s ease, transform 0.4s ease;
+  /* Performance optimization */
+  will-change: transform, opacity, filter;
+  /* Ensure consistent rendering */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .portfolioLink:hover .portfolioImage,
 .portfolioLink:focus-visible .portfolioImage {
+  -webkit-filter: grayscale(0);
   filter: grayscale(0);
   opacity: 1;
+  -webkit-transform: scale(1.2);
   transform: scale(1.2);
 }
 
@@ -339,14 +475,29 @@
 .skeleton::after {
   content: "";
   position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  /* Modern shorthand for supported browsers */
   inset: 0;
+  -webkit-transform: translateX(-100%);
   transform: translateX(-100%);
   background: linear-gradient(90deg, rgba(232, 235, 244, 0) 0%, rgba(255, 255, 255, 0.65) 50%, rgba(232, 235, 244, 0) 100%);
+  -webkit-animation: homeSkeletonShimmer 1.3s ease-in-out infinite;
   animation: homeSkeletonShimmer 1.3s ease-in-out infinite;
+}
+
+@-webkit-keyframes homeSkeletonShimmer {
+  to {
+    -webkit-transform: translateX(100%);
+    transform: translateX(100%);
+  }
 }
 
 @keyframes homeSkeletonShimmer {
   to {
+    -webkit-transform: translateX(100%);
     transform: translateX(100%);
   }
 }
@@ -402,13 +553,16 @@
   height: 10px;
   border-right: 2px solid rgba(37, 37, 37, 0.7);
   border-bottom: 2px solid rgba(37, 37, 37, 0.7);
+  -webkit-transform: rotate(45deg);
   transform: rotate(45deg);
   vertical-align: middle;
   margin-top: -2px;
+  -webkit-transition: -webkit-transform 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
   transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
 .mobileCategoryButton[aria-expanded="true"] .mobileCategoryIcon {
+  -webkit-transform: rotate(-135deg);
   transform: rotate(-135deg);
 }
 
@@ -433,6 +587,7 @@
   letter-spacing: 0.02em;
   color: rgba(37, 37, 37, 0.5);
   cursor: pointer;
+  -webkit-transition: color 0.25s ease;
   transition: color 0.25s ease;
 }
 
@@ -491,7 +646,14 @@
     max-height: 0;
     opacity: 0;
     padding-bottom: 0;
+    -webkit-transform: translateY(-12px);
     transform: translateY(-12px);
+    -webkit-transition:
+      max-height 300ms cubic-bezier(0.33, 1, 0.68, 1),
+      opacity 250ms ease,
+      -webkit-transform 280ms ease,
+      transform 280ms ease,
+      padding-bottom 250ms ease;
     transition:
       max-height 300ms cubic-bezier(0.33, 1, 0.68, 1),
       opacity 250ms ease,
@@ -503,12 +665,18 @@
     max-height: 380px;
     opacity: 1;
     padding-bottom: 12px;
+    -webkit-transform: translateY(0);
     transform: translateY(0);
   }
 
   .categoryList button {
     opacity: 0;
+    -webkit-transform: translateY(12px);
     transform: translateY(12px);
+    -webkit-transition:
+      opacity 300ms ease,
+      -webkit-transform 320ms ease,
+      transform 320ms ease;
     transition:
       opacity 300ms ease,
       transform 320ms ease;
@@ -516,6 +684,7 @@
 
   .categoryListOpen button {
     opacity: 1;
+    -webkit-transform: translateY(0);
     transform: translateY(0);
   }
 

@@ -49,7 +49,7 @@ export function TeamSection({ members }: TeamSectionProps) {
 
         <div className={styles.contentColumn}>
           <p className={styles.intro}>
-            Каждая работа -формирует новые задачи, имеет свои особые условия и настроения, отвечая на
+            Каждая работа - формирует новые задачи, имеет свои особые условия и настроения, отвечая на
             них каждый раз изобретаешь что-то новое.
           </p>
 
