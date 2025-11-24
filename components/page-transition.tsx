@@ -55,6 +55,13 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
     }
   }, []);
 
+  const finishWaiting = useCallback(() => {
+    clearWaitTimer();
+    pendingPathRef.current = null;
+    readyPathRef.current = null;
+    setPhase("open");
+  }, [clearWaitTimer]);
+
   const startTransition = useCallback(
     (options?: { awaitRoute?: boolean }) => {
       clearNavigationTimer();
@@ -289,15 +296,16 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
     if (isInitialLoadRef.current && previousPathRef.current !== null) {
       isInitialLoadRef.current = false;
     }
+    
+    // If we're waiting for a route and pathname matches pendingPath, finish waiting
+    if (phase === "wait" && pendingPathRef.current && pathname === pendingPathRef.current) {
+      queueMicrotask(() => {
+        finishWaiting();
+      });
+    }
+    
     previousPathRef.current = pathname;
-  }, [pathname, isActive, phase]);
-
-  const finishWaiting = useCallback(() => {
-    clearWaitTimer();
-    pendingPathRef.current = null;
-    readyPathRef.current = null;
-    setPhase("open");
-  }, [clearWaitTimer]);
+  }, [pathname, isActive, phase, finishWaiting]);
 
   useEffect(() => {
     if (phase !== "wait") {
@@ -305,15 +313,18 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
       return;
     }
 
-    if (
-      pendingPathRef.current &&
-      readyPathRef.current &&
-      readyPathRef.current === pendingPathRef.current
-    ) {
-      queueMicrotask(() => {
-        finishWaiting();
-      });
-      return;
+    // Check if paths match (either from readyPath or current pathname)
+    if (pendingPathRef.current) {
+      const pathsMatch = 
+        (readyPathRef.current && readyPathRef.current === pendingPathRef.current) ||
+        (pathname && pathname === pendingPathRef.current);
+      
+      if (pathsMatch) {
+        queueMicrotask(() => {
+          finishWaiting();
+        });
+        return;
+      }
     }
 
     waitTimerRef.current = setTimeout(() => {
@@ -324,7 +335,7 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
     return () => {
       clearWaitTimer();
     };
-  }, [phase, finishWaiting, clearWaitTimer]);
+  }, [phase, finishWaiting, clearWaitTimer, pathname]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -350,11 +361,9 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
         (readyPathRef.current && readyPathRef.current === pendingPathRef.current) ||
         (currentPathname && currentPathname === pendingPathRef.current);
 
-      if (!pathsMatch) {
-        return;
+      if (pathsMatch) {
+        finishWaiting();
       }
-
-      finishWaiting();
     };
 
     window.addEventListener("rinart:route-ready", handleRouteReady as EventListener);

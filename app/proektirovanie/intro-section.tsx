@@ -36,6 +36,7 @@ export function IntroSection() {
             fill
             sizes="(max-width: 768px) 100vw, 1100px"
             className={styles.image}
+            style={{ objectPosition: "left center" }}
             priority
           />
         </div>
