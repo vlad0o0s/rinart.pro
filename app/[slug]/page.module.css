@@ -444,14 +444,29 @@
   opacity: 0;
   transform: translateY(24px) scale(0.96);
   animation: modalZoom 0.45s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+  overflow: hidden;
+  width: min(1200px, 90vw);
+  height: min(90vh, 780px);
+}
+
+@media (min-width: 1400px) {
+  .modalInner {
+    max-width: min(80vw, 1600px);
+    max-height: min(85vh, 1000px);
+    width: min(80vw, 1600px);
+    height: min(85vh, 1000px);
+  }
 }
 
 .modalImage {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background-color: #ffffff;
-  border: 1px solid rgba(37, 37, 37, 0.12);
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  background-color: transparent;
+  border: none;
 }
 
 .modalCaption {
@@ -662,6 +677,13 @@
     font-size: 14px;
   }
 
+  .modalInner {
+    max-width: 95vw;
+    max-height: 85vh;
+    width: 95vw;
+    height: 85vh;
+  }
+
   .modalClose {
     font-size: 28px;
   }
@@ -809,8 +831,10 @@
   }
 
   .modalInner {
-    max-width: 62.5vw;
-    max-height: 40.625vh;
+    max-width: 80vw;
+    max-height: 85vh;
+    width: 80vw;
+    height: 85vh;
     gap: 0.625vw;
     transform: translateY(1.25vw) scale(0.96);
   }
