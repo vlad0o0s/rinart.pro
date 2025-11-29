@@ -28,6 +28,12 @@
   justify-content: center;
 }
 
+/* Longer duration for opening animation */
+.wrapper.phaseOpen .panelTop,
+.wrapper.phaseOpen .panelBottom {
+  transition: transform 1.4s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
 .panelBottom {
   top: auto;
   bottom: 0;
@@ -43,7 +49,7 @@
 .wrapper.phaseCover .panelTop,
 .wrapper.phaseCover .panelBottom {
   transform: translateY(0);
-  transition: none;
+  transition: transform 0.1s ease-out;
 }
 .wrapper.phaseWait .panelTop,
 .wrapper.phaseWait .panelBottom {
@@ -141,3 +147,5 @@
     background-size: 20%;
   }
 }
+
+/* Ensure overlay doesn't block content on mobile after animation completes */

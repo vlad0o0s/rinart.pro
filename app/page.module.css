@@ -31,12 +31,17 @@
 
 @media (max-width: 767px) {
   .stageLayer {
-    display: block;
-    opacity: 1;
-    -webkit-transform: none;
-    transform: none;
-    -webkit-animation: none;
-    animation: none;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    -webkit-transform: none !important;
+    transform: none !important;
+    -webkit-animation: none !important;
+    animation: none !important;
+  }
+  
+  .page {
+    padding: 60px 0 40px;
   }
 }
 

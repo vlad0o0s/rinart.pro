@@ -6,11 +6,12 @@ import { usePathname, useRouter } from "next/navigation";
 import styles from "./page-transition.module.css";
 
 const SESSION_KEY = "rinart-preload-shown";
-const PRE_ANIMATION_DELAY = 50;
-const CLOSE_DURATION = 800;
-const LINE_DURATION = 600;
-const OPEN_DURATION = 800;
+const PRE_ANIMATION_DELAY = 0;
+const CLOSE_DURATION = 600;
+const LINE_DURATION = 500;
+const OPEN_DURATION = 1400;
 const MAX_WAIT_DURATION = 8000;
+const NAVIGATION_DELAY = 650; // Delay before starting navigation to allow close animation
 type Phase = "idle" | "cover" | "close" | "line" | "wait" | "open";
 
 type PageTransitionProps = {
@@ -74,14 +75,11 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
         pendingPathRef.current = null;
         readyPathRef.current = null;
         pendingHashRef.current = null;
-        setPhase("idle");
         setIsActive(true);
-        requestAnimationFrame(() => {
-          setPhase("cover");
-          requestAnimationFrame(() => {
-            setPhase("line");
-          });
-        });
+        // Fastest start - immediately cover and line, minimal delay
+        setPhase("cover");
+        // Transition to line very quickly (10ms instead of animation frame)
+        setTimeout(() => setPhase("line"), 10);
       } else {
         // Route change: normal close → line sequence
         readyPathRef.current = null;
@@ -109,13 +107,39 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
     }
 
     if (phase === "line") {
-      const timer = setTimeout(() => setPhase(shouldAwaitRouteRef.current ? "wait" : "open"), LINE_DURATION);
+      // For initial load, wait longer to ensure page is fully ready before opening
+      const delay = shouldAwaitRouteRef.current ? LINE_DURATION : LINE_DURATION + 400;
+      const timer = setTimeout(() => setPhase(shouldAwaitRouteRef.current ? "wait" : "open"), delay);
       return () => clearTimeout(timer);
     }
 
     if (phase === "open") {
-      // Only scroll to top on route changes, not on initial load
-      // Also check that previousPathRef is set (meaning we had a previous route)
+      const hasAnchor = pendingHashRef.current && pendingHashRef.current.length > 0;
+      
+      // If there's an anchor, don't scroll to top - scroll directly to anchor
+      if (hasAnchor) {
+        const timer = setTimeout(() => {
+          setIsActive(false);
+          // Scroll to anchor immediately after animation completes
+          if (typeof window !== "undefined" && pendingHashRef.current) {
+            const hash = pendingHashRef.current;
+            pendingHashRef.current = null;
+            // Wait for page to render, then scroll immediately to anchor
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                const element = document.querySelector(hash);
+                if (element) {
+                  // Instant scroll to avoid visible scroll to top
+                  element.scrollIntoView({ behavior: "instant", block: "start" });
+                }
+              });
+            });
+          }
+        }, OPEN_DURATION);
+        return () => clearTimeout(timer);
+      }
+      
+      // No anchor: scroll to top on route changes (not on initial load)
       if (
         typeof window !== "undefined" &&
         shouldAwaitRouteRef.current &&
@@ -126,22 +150,9 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
       }
+      
       const timer = setTimeout(() => {
         setIsActive(false);
-        // After animation completes, scroll to anchor if there is one
-        if (typeof window !== "undefined" && pendingHashRef.current) {
-          const hash = pendingHashRef.current;
-          pendingHashRef.current = null;
-          // Wait a bit for page to be fully rendered
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              const element = document.querySelector(hash);
-              if (element) {
-                element.scrollIntoView({ behavior: "smooth", block: "start" });
-              }
-            });
-          });
-        }
       }, OPEN_DURATION);
       return () => clearTimeout(timer);
     }
@@ -246,21 +257,23 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
       // Store hash to scroll to it after navigation completes
       pendingHashRef.current = targetHash || null;
 
-      // Start transition - this will clear any existing navigation timer
-      startTransition({ awaitRoute: true });
-
       // Prevent default navigation to handle it ourselves
       event.preventDefault();
       event.stopPropagation();
 
-      try {
-        // Call router.push directly - no setTimeout, no queueMicrotask
-        // This should work if router is correctly initialized
-        router.push(destination);
-      } catch {
-        // Fallback: try window.location as last resort
-        window.location.href = destination;
-      }
+      // Start transition - this will clear any existing navigation timer
+      startTransition({ awaitRoute: true });
+
+      // Wait for closing animation to complete before loading new page
+      // This ensures the screen is fully covered before navigation starts
+      setTimeout(() => {
+        try {
+          router.push(destination);
+        } catch {
+          // Fallback: try window.location as last resort
+          window.location.href = destination;
+        }
+      }, NAVIGATION_DELAY);
     };
 
     document.addEventListener("click", handleClick, true);
@@ -275,10 +288,9 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
     const hasShownPreload = sessionStorage.getItem(SESSION_KEY);
     
     if (!hasShownPreload) {
-      initialTimerRef.current = setTimeout(() => {
-        startTransition();
-        sessionStorage.setItem(SESSION_KEY, "true");
-      }, PRE_ANIMATION_DELAY);
+      // Start immediately without delay
+      startTransition();
+      sessionStorage.setItem(SESSION_KEY, "true");
     }
 
     return () => {
@@ -346,6 +358,23 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
       const currentPathname = pathname;
       
       readyPathRef.current = readyPath ?? null;
+
+      // If there's an anchor, scroll to it immediately when page is ready
+      // This prevents visible scroll to top
+      if (pendingHashRef.current && typeof window !== "undefined") {
+        const hash = pendingHashRef.current;
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const element = document.querySelector(hash);
+            if (element) {
+              // Scroll immediately to anchor to prevent scroll to top
+              element.scrollIntoView({ behavior: "instant", block: "start" });
+              // Prevent browser's default scroll to top
+              window.scrollTo(window.scrollX, element.getBoundingClientRect().top + window.scrollY);
+            }
+          });
+        });
+      }
 
       // Check if we're waiting and paths match
       if (phase !== "wait") {

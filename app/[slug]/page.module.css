@@ -396,6 +396,36 @@
   transform: none;
 }
 
+/* Disable click and hover effects on mobile */
+@media (max-width: 768px) {
+  .mediaColumnMobile .mediaImage {
+    cursor: default !important;
+    pointer-events: none;
+  }
+
+  .mediaColumnMobile .mediaFrame:focus-within .mediaImage,
+  .mediaColumnMobile .mediaFrame:hover .mediaImage {
+    transform: scale(1);
+    filter: saturate(0.92) contrast(0.95);
+  }
+
+  .mediaColumnMobile .mediaFrame:focus-within::after,
+  .mediaColumnMobile .mediaFrame:hover::after {
+    opacity: 0;
+  }
+  
+  /* Disable click on images in description on mobile */
+  .description img {
+    cursor: default !important;
+    pointer-events: none;
+  }
+  
+  /* Hide modal on mobile */
+  .modal {
+    display: none !important;
+  }
+}
+
 .mediaCaption {
   margin: 0;
   font-size: 11px;
@@ -667,6 +697,10 @@
 }
 
 @media (max-width: 640px) {
+  .title {
+    font-size: 28px;
+  }
+
   .description {
     font-size: 4.4vw;
   }

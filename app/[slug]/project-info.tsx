@@ -40,6 +40,16 @@ export function ProjectInfo({ title, descriptionHtml, descriptionParagraphs, onH
     }
   }, [descriptionHtml, title]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const closeModal = useCallback(() => setActiveIndex(null), []);
   const showPrev = useCallback(() => {
@@ -85,6 +95,15 @@ export function ProjectInfo({ title, descriptionHtml, descriptionParagraphs, onH
       return;
     }
     const imgs = Array.from(node.querySelectorAll("img")) as HTMLImageElement[];
+    
+    if (isMobile) {
+      // On mobile, remove pointer cursor and don't add click handlers
+      imgs.forEach((img) => {
+        img.style.cursor = "default";
+      });
+      return;
+    }
+    
     const handleClick = (event: Event) => {
       const target = event.currentTarget as HTMLImageElement;
       const src = target.getAttribute("src");
@@ -101,7 +120,7 @@ export function ProjectInfo({ title, descriptionHtml, descriptionParagraphs, onH
     return () => {
       imgs.forEach((img) => img.removeEventListener("click", handleClick));
     };
-  }, [descImages]);
+  }, [descImages, isMobile]);
 
   useEffect(() => {
     if (!onHeightChange) {
@@ -163,7 +182,8 @@ export function ProjectInfo({ title, descriptionHtml, descriptionParagraphs, onH
         </div>
       ) : null}
 
-      {activeIndex !== null && descImages[activeIndex]
+      {/* Show modal only on desktop - hide on mobile */}
+      {activeIndex !== null && descImages[activeIndex] && !isMobile
         ? (typeof document !== "undefined"
             ? createPortal(
                 <div className={`${styles.modal} ${styles.modalOpen}`} role="dialog" aria-modal="true">

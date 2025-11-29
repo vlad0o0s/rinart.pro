@@ -184,6 +184,16 @@
     font-size: 3.8vw;
     line-height: 1;
   }
+
+  .media {
+    margin-left: 0;
+    align-self: center;
+    width: 100%;
+  }
+
+  .image {
+    object-position: center center !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

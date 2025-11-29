@@ -50,8 +50,18 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
   }, [featureImage, gallery, schemes, title]);
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const closeModal = useCallback(() => {
     setActiveIndex(null);
@@ -264,7 +274,6 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
               height={1000}
               sizes="100vw"
               unoptimized
-              onClick={() => setActiveIndex(index)}
             />
             {item.type === "scheme" && item.caption ? (
               <figcaption className={styles.mediaCaption}>{item.caption}</figcaption>
@@ -273,7 +282,8 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
         ))}
       </div>
 
-      {activeItem ? (
+      {/* Show modal only on desktop - hide on mobile */}
+      {activeItem && !isMobile ? (
         <div className={`${styles.modal} ${styles.modalOpen}`} role="dialog" aria-modal="true">
           <button type="button" className={styles.modalClose} onClick={closeModal} aria-label="Закрыть">
             ×
