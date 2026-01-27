@@ -532,9 +532,15 @@ export async function reorderProjects(order: string[]): Promise<void> {
     return;
   }
   await withTransaction(async (connection) => {
-    for (let index = 0; index < order.length; index += 1) {
-      await connection.execute("UPDATE Project SET `order` = ? WHERE slug = ?", [index, order[index]]);
-    }
+    // Обновляем порядок для всех проектов в списке параллельно
+    await Promise.all(
+      order.map((slug, index) => {
+        if (!slug || typeof slug !== "string") {
+          return Promise.resolve();
+        }
+        return connection.execute("UPDATE Project SET `order` = ? WHERE slug = ?", [index, slug]);
+      }),
+    );
   });
 }
 

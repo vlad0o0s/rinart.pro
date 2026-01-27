@@ -1113,7 +1113,11 @@ function GalleryItemCard({ item }: { item: GalleryItem; index: number }) {
 }
 
 export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[] }) {
-  const [projects, setProjects] = useState<ProjectSummary[]>(initialProjects);
+  // Сортируем initialProjects по order для корректного отображения при загрузке
+  const sortedInitialProjects = [...initialProjects].sort((a, b) => a.order - b.order);
+  const [projects, setProjects] = useState<ProjectSummary[]>(sortedInitialProjects);
+  const [orderChanged, setOrderChanged] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
   
   // Восстанавливаем выбранный проект из localStorage
   const getInitialSelectedSlug = useCallback((): string | null => {
@@ -2085,6 +2089,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
           .sort((a, b) => a.order - b.order);
 
         setProjects(mappedSummaries);
+        setOrderChanged(false); // Сбрасываем флаг изменений при загрузке
         const libraryAssetsFromDb = (data.mediaLibrary ?? [])
           .map((asset) => createMediaAsset(asset.url, asset.title ?? "", "library", `library-${asset.id}`))
           .filter((asset) => isOptimizedImageUrl(asset.url));
@@ -2218,6 +2223,8 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         const reordered = arrayMove(prev, oldIndex, newIndex);
         return reordered.map((project, index) => ({ ...project, order: index }));
       });
+      // Помечаем, что порядок был изменен при перетаскивании
+      setOrderChanged(true);
     },
     [],
   );
@@ -2232,37 +2239,76 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         return;
       }
 
-      let nextOrder: string[] = [];
       setProjects((prev) => {
         const oldIndex = prev.findIndex((project) => project.slug === active.id);
         const newIndex = prev.findIndex((project) => project.slug === over.id);
-        if (oldIndex === -1 || newIndex === -1) {
-          nextOrder = prev.map((project) => project.slug);
+        if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
           return prev;
         }
         const reordered = arrayMove(prev, oldIndex, newIndex);
-        nextOrder = reordered.map((project) => project.slug);
         return reordered.map((project, index) => ({ ...project, order: index }));
       });
-
-      if (!nextOrder.length) {
-        return;
-      }
-
-      (async () => {
-        try {
-          await fetchJson("/api/admin/projects/reorder", {
-            method: "POST",
-            body: JSON.stringify({ order: nextOrder }),
-          });
-          setSuccessStatus("Порядок обновлён");
-        } catch (error: unknown) {
-          reportError(error, "Не удалось обновить порядок");
-        }
-      })();
+      
+      // Помечаем, что порядок был изменен (выносим за пределы setProjects)
+      setOrderChanged(true);
     },
-    [reportError],
+    [],
   );
+
+  const handleSaveOrder = useCallback(async () => {
+    const currentOrder = projects.map((project) => project.slug);
+    if (!currentOrder.length) {
+      return;
+    }
+
+    setSavingOrder(true);
+    try {
+      const response = await fetchJson<{ success: boolean }>("/api/admin/projects/reorder", {
+        method: "POST",
+        body: JSON.stringify({ order: currentOrder }),
+      });
+      
+      if (response.success) {
+        setSuccessStatus("Порядок проектов сохранён");
+        setOrderChanged(false);
+        
+        // Перезагружаем проекты из API, чтобы получить актуальный порядок из БД
+        const data = await fetchJson<{
+          projects: Array<{
+            id: number;
+            slug: string;
+            title: string;
+            tagline: string | null;
+            heroImageUrl: string | null;
+            categories: string[] | null;
+            order: number;
+          }>;
+          mediaLibrary: Array<{ id: number; url: string; title: string | null }>;
+        }>("/api/admin/projects");
+        
+        const mappedSummaries = data.projects
+          .map((project) => ({
+            id: project.id,
+            slug: project.slug,
+            title: project.title,
+            tagline: project.tagline,
+            heroImageUrl: project.heroImageUrl,
+            categories: (project.categories ?? []) as string[],
+            order: project.order,
+          }))
+          .sort((a, b) => a.order - b.order);
+        
+        setProjects(mappedSummaries);
+      } else {
+        throw new Error("API returned success: false");
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      reportError(error, `Не удалось сохранить порядок: ${errorMessage}`);
+    } finally {
+      setSavingOrder(false);
+    }
+  }, [projects, reportError]);
 
   const updateEditorField = useCallback(
     <K extends keyof EditorState>(field: K, value: EditorState[K]) => {
@@ -2401,6 +2447,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         return;
       }
 
+      // Вычисляем новую галерею и сохраняем в БД
       setEditorState((prev) => {
         if (!prev) return prev;
         const oldIndex = prev.gallery.findIndex((item) => item.id === active.id);
@@ -2409,10 +2456,32 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
           return prev;
         }
         const reordered = arrayMove(prev.gallery, oldIndex, newIndex);
+        
+        // Автоматически сохраняем порядок галереи в БД
+        if (selectedSlug && reordered.length > 0) {
+          (async () => {
+            try {
+              await fetchJson(`/api/admin/projects/${selectedSlug}/media`, {
+                method: "POST",
+                body: JSON.stringify({
+                  gallery: reordered.map((item, index) => ({
+                    url: item.url,
+                    caption: item.caption,
+                    order: index,
+                  })),
+                }),
+              });
+              setSuccessStatus("Порядок галереи обновлён");
+            } catch (error: unknown) {
+              reportError(error, "Не удалось обновить порядок галереи");
+            }
+          })();
+        }
+        
         return { ...prev, gallery: reordered };
       });
     },
-    [],
+    [selectedSlug, reportError],
   );
 
   const persistMedia = useCallback(async () => {
@@ -2829,6 +2898,20 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
                   <h2 className={styles.columnTitle}>Проекты</h2>
                   <p className={styles.columnSubtitle}>Перетаскивайте карточки, чтобы изменить порядок вывода.</p>
                 </div>
+                <button
+                  className={styles.primaryButton}
+                  type="button"
+                  disabled={savingOrder || loading || !orderChanged}
+                  onClick={handleSaveOrder}
+                  style={{ 
+                    marginRight: "8px",
+                    opacity: orderChanged ? 1 : 0.5,
+                    cursor: orderChanged ? "pointer" : "not-allowed"
+                  }}
+                  title={orderChanged ? "Сохранить изменения порядка" : "Перетащите проекты, чтобы изменить порядок"}
+                >
+                  {savingOrder ? "Сохранение..." : "Сохранить порядок"}
+                </button>
                 <button
                   className={styles.primaryButton}
                   type="button"

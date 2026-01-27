@@ -47,7 +47,17 @@ type HomeProjectsSectionProps = {
 export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
   const [activeCategory, setActiveCategory] = useState<ActiveCategory>("all");
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const enrichedProjects = useMemo(() => {
     return projects.map((project) => {
@@ -85,13 +95,24 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
 
   const filteredProjects = useMemo(() => {
     if (activeCategory === "all") {
+      // На мобильной версии показываем все проекты с isInactive: false
+      // На десктопе также все проекты
       return enrichedProjects.map((project) => ({ project, isInactive: false }));
     }
+    
+    // На мобильной версии полностью фильтруем - оставляем только те, что в категории
+    if (isMobile) {
+      return enrichedProjects
+        .filter((project) => project.categories.includes(activeCategory))
+        .map((project) => ({ project, isInactive: false }));
+    }
+    
+    // На десктопе показываем все, но помечаем неактивные
     return enrichedProjects.map((project) => ({
       project,
       isInactive: !project.categories.includes(activeCategory),
     }));
-  }, [enrichedProjects, activeCategory]);
+  }, [enrichedProjects, activeCategory, isMobile]);
 
   // Детальное логирование для отладки переходов
   useEffect(() => {
@@ -242,18 +263,15 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
           <HomePortfolioSkeleton />
         ) : (
           filteredProjects.map(({ project, isInactive }, index) => {
-            // Вычисляем позицию в grid на основе индекса
+            // Вычисляем позицию в grid на основе индекса отфильтрованного массива
             // Паттерн: каждые 8 элементов повторяется (nth-of-type(8n + 2), 8n + 4, 8n + 5, 8n + 7)
             // В 0-based индексации это: index % 8 === 1, 3, 4, 6
             const cycleIndex = index % 8;
             const isWideItem = cycleIndex === 1 || cycleIndex === 3 || cycleIndex === 4 || cycleIndex === 6;
 
-
-            // Используем индекс для сохранения порядка элементов в grid
             const card = (
               <article
                 className={`${styles.portfolioCard} ${isInactive ? styles.portfolioCardDimmed : ""}`}
-                style={{ order: index }}
               >
                 <div className={styles.portfolioImageWrapper}>
                   <div className={styles.portfolioImageContainer}>
@@ -279,9 +297,13 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
             );
 
             // Создаем стили для сохранения позиции в grid
-            const linkStyle: React.CSSProperties = {
+            // На мобильной версии не используем order и gridColumn - элементы идут по порядку DOM
+            const linkStyle: React.CSSProperties = isMobile ? {
+              // На мобильной версии не устанавливаем стили - CSS уже задает все необходимое
+              // Элементы будут идти по порядку массива
+            } : {
+              // На десктопе используем order для сохранения позиции в grid
               order: index,
-              // Явно указываем grid-column для сохранения позиции
               gridColumn: isWideItem ? 'span 2' : 'span 1',
             };
 

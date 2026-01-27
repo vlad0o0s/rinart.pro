@@ -1,10 +1,52 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 export function RouteReadyAnnouncer() {
   const pathname = usePathname();
+  const previousPathnameRef = useRef<string | null>(null);
+
+  // Immediate scroll to top when pathname changes to a project page
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const previousPath = previousPathnameRef.current;
+    const pathnameChanged = previousPath !== null && previousPath !== pathname;
+    
+    // Update ref immediately
+    previousPathnameRef.current = pathname;
+    
+    if (!pathnameChanged) return;
+
+    // Check if this is a project page (dynamic route like /[slug])
+    const isProjectPage = pathname && pathname !== "/" && 
+      pathname !== "/admin" && 
+      pathname !== "/kontakty" && 
+      pathname !== "/masterskaja" && 
+      pathname !== "/proektirovanie" &&
+      !pathname.startsWith("/admin") &&
+      !pathname.startsWith("/projects") &&
+      !pathname.startsWith("/api");
+
+    const hasHash = window.location.hash;
+
+    // Scroll immediately to top for project pages (without hash)
+    if (isProjectPage && !hasHash) {
+      // Immediate scroll - don't wait for anything
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      
+      // Also set scroll position on all scrollable containers
+      const scrollableContainers = document.querySelectorAll('[style*="overflow"], .scrollPc');
+      scrollableContainers.forEach((container) => {
+        if (container instanceof HTMLElement) {
+          container.scrollTop = 0;
+        }
+      });
+    }
+  }, [pathname]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -36,8 +78,6 @@ export function RouteReadyAnnouncer() {
           detail: { pathname },
         }),
       );
-      
-      // Don't force scroll to top here - let PageTransition handle it only on route changes
     };
 
     // Maximum wait time - always dispatch after this

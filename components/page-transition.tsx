@@ -252,6 +252,23 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
       const targetPath = url.pathname;
       const targetHash = url.hash;
 
+      // Check if this is a project page - scroll immediately if it is
+      const isProjectPage = targetPath && targetPath !== "/" && 
+        targetPath !== "/admin" && 
+        targetPath !== "/kontakty" && 
+        targetPath !== "/masterskaja" && 
+        targetPath !== "/proektirovanie" &&
+        !targetPath.startsWith("/admin") &&
+        !targetPath.startsWith("/projects") &&
+        !targetPath.startsWith("/api");
+
+      // Scroll to top immediately for project pages (without hash)
+      if (isProjectPage && !targetHash) {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+
       // Set pendingPath BEFORE router.push so route-ready event can match it
       pendingPathRef.current = targetPath;
       // Store hash to scroll to it after navigation completes
