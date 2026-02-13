@@ -4,6 +4,7 @@ import { fetchAllProjects } from "@/lib/project-repository";
 const SITE_URL = "https://rinart.pro";
 
 export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseRoutes: MetadataRoute.Sitemap = [

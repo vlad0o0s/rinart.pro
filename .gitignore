@@ -30,9 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (tracking enabled per project policy)
-# (previously ignored)
-# .env*
+# env files (secrets - do not commit)
+.env
+.env.local
+.env.*.local
 
 # vercel
 .vercel
