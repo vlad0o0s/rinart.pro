@@ -15,6 +15,48 @@ type LeadFormProps = {
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
 
+function getPhoneDigits(value: string) {
+  const digits = value.replace(/\D/g, "");
+  const withoutCountry = digits.startsWith("8") ? digits.slice(1) : digits.startsWith("7") ? digits.slice(1) : digits;
+  return withoutCountry.slice(0, 10);
+}
+
+function formatPhone(value: string) {
+  const digits = getPhoneDigits(value);
+  const area = digits.slice(0, 3);
+  const prefix = digits.slice(3, 6);
+  const firstPair = digits.slice(6, 8);
+  const secondPair = digits.slice(8, 10);
+
+  if (!digits.length) {
+    return "";
+  }
+
+  let formatted = "+7";
+
+  if (area) {
+    formatted += ` (${area}`;
+  }
+
+  if (area.length === 3) {
+    formatted += ")";
+  }
+
+  if (prefix) {
+    formatted += ` ${prefix}`;
+  }
+
+  if (firstPair) {
+    formatted += `-${firstPair}`;
+  }
+
+  if (secondPair) {
+    formatted += `-${secondPair}`;
+  }
+
+  return formatted;
+}
+
 export function LeadForm({
   source,
   title = "Напишите нам",
@@ -105,6 +147,22 @@ export function LeadForm({
     }
   }
 
+  function handlePhoneChange(value: string) {
+    setPhone(formatPhone(value));
+  }
+
+  function handlePhoneFocus() {
+    if (!phone) {
+      setPhone("+7 ");
+    }
+  }
+
+  function handlePhoneBlur() {
+    if (!getPhoneDigits(phone).length) {
+      setPhone("");
+    }
+  }
+
   return (
     <section className={`${styles.section} ${placement === "hero" ? styles.sectionHero : ""}`} aria-labelledby={titleId}>
       <button className={styles.openButton} type="button" onClick={() => setIsOpen(true)}>
@@ -150,9 +208,13 @@ export function LeadForm({
                     type="tel"
                     name="phone"
                     autoComplete="tel"
+                    inputMode="tel"
                     value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                    placeholder="Телефон"
+                    onChange={(event) => handlePhoneChange(event.target.value)}
+                    onFocus={handlePhoneFocus}
+                    onBlur={handlePhoneBlur}
+                    placeholder="+7 (___) ___-__-__"
+                    maxLength={18}
                     required
                   />
                 </label>
