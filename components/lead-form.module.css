@@ -1,15 +1,88 @@
 .section {
   width: min(100%, 1180px);
   margin: clamp(42px, 7vw, 86px) auto;
-  padding: clamp(28px, 4vw, 48px) clamp(18px, 4vw, 44px);
-  border: 1px solid rgba(37, 37, 37, 0.18);
-  background: #fbfbf8;
+  padding: 0 clamp(10px, 2vw, 18px);
   color: #252525;
   font-family: "Neue Haas Unica", "Helvetica Neue", Arial, sans-serif;
 }
 
+.openButton {
+  width: 100%;
+  min-height: 68px;
+  border: 1px solid #252525;
+  border-radius: 0;
+  background: #ffffff;
+  color: #252525;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transition:
+    background 0.24s ease,
+    color 0.24s ease;
+}
+
+.openButton:hover,
+.openButton:focus-visible {
+  background: #252525;
+  color: #ffffff;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(18px, 4vw, 48px);
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+
+.panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 920px);
+  max-height: min(90vh, 760px);
+  overflow-y: auto;
+  padding: clamp(30px, 4vw, 54px);
+  border: 1px solid #252525;
+  background: #ffffff;
+  color: #252525;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.12);
+}
+
+.close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  background: transparent;
+  color: #252525;
+  cursor: pointer;
+  font-size: 34px;
+  font-weight: 300;
+  line-height: 1;
+}
+
 .header {
   margin-bottom: clamp(24px, 4vw, 36px);
+  padding-right: 54px;
 }
 
 .title {
@@ -62,7 +135,7 @@
   padding: 0 22px;
   border: 0;
   border-radius: 0;
-  background: #eeeeef;
+  background: #f1f1f1;
   color: #252525;
   font: inherit;
   font-size: 16px;
@@ -126,17 +199,27 @@
 }
 
 .messageSuccess {
-  color: #557654;
+  color: #252525;
 }
 
 .messageError {
-  color: #9f3a2f;
+  color: #252525;
 }
 
 @media (max-width: 720px) {
   .section {
     margin: 36px auto 46px;
-    padding: 26px 16px;
+    padding: 0 10px;
+  }
+
+  .modal {
+    align-items: stretch;
+    padding: 14px;
+  }
+
+  .panel {
+    max-height: none;
+    padding: 30px 18px 24px;
   }
 
   .fields {
@@ -156,7 +239,7 @@
   .section {
     width: 61.4583vw;
     margin: 4.4792vw auto;
-    padding: 2.5vw 2.2917vw;
+    padding: 0 0.9375vw;
   }
 
   .title {

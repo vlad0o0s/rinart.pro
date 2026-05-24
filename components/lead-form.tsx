@@ -1,7 +1,7 @@
 "use client";
 
 import { SmartCaptcha } from "@yandex/smart-captcha";
-import { FormEvent, useId, useMemo, useState } from "react";
+import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import styles from "./lead-form.module.css";
 
 const CAPTCHA_SITE_KEY = "ysc1_kSspdc4CreezvRnhYrKOF8CfF79arnKlhequLaHL7fe55cea";
@@ -25,8 +25,31 @@ export function LeadForm({
   const [captchaNonce, setCaptchaNonce] = useState(0);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [message, setMessage] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
   const titleId = useId();
   const captchaKey = useMemo(() => `${source}-${captchaNonce}`, [source, captchaNonce]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,58 +105,74 @@ export function LeadForm({
 
   return (
     <section className={styles.section} aria-labelledby={titleId}>
-      <div className={styles.header}>
-        <h2 className={styles.title} id={titleId}>
-          {title}
-        </h2>
-        <p className={styles.subtitle}>{subtitle}</p>
-      </div>
+      <button className={styles.openButton} type="button" onClick={() => setIsOpen(true)}>
+        Оставить заявку
+      </button>
 
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <div className={styles.fields}>
-          <label className={styles.field}>
-            <span className={styles.label}>Имя *</span>
-            <input
-              className={styles.input}
-              type="text"
-              name="name"
-              autoComplete="name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Имя"
-              required
-            />
-          </label>
+      {isOpen ? (
+        <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+          <button className={styles.backdrop} type="button" aria-label="Закрыть форму" onClick={() => setIsOpen(false)} />
 
-          <label className={styles.field}>
-            <span className={styles.label}>Телефон *</span>
-            <input
-              className={styles.input}
-              type="tel"
-              name="phone"
-              autoComplete="tel"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              placeholder="Телефон"
-              required
-            />
-          </label>
+          <div className={styles.panel}>
+            <button className={styles.close} type="button" aria-label="Закрыть форму" onClick={() => setIsOpen(false)}>
+              ×
+            </button>
+
+            <div className={styles.header}>
+              <h2 className={styles.title} id={titleId}>
+                {title}
+              </h2>
+              <p className={styles.subtitle}>{subtitle}</p>
+            </div>
+
+            <form className={styles.form} onSubmit={handleSubmit}>
+              <div className={styles.fields}>
+                <label className={styles.field}>
+                  <span className={styles.label}>Имя *</span>
+                  <input
+                    className={styles.input}
+                    type="text"
+                    name="name"
+                    autoComplete="name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Имя"
+                    required
+                  />
+                </label>
+
+                <label className={styles.field}>
+                  <span className={styles.label}>Телефон *</span>
+                  <input
+                    className={styles.input}
+                    type="tel"
+                    name="phone"
+                    autoComplete="tel"
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    placeholder="Телефон"
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className={styles.captcha}>
+                <SmartCaptcha key={captchaKey} sitekey={CAPTCHA_SITE_KEY} onSuccess={setCaptchaToken} />
+              </div>
+
+              <button className={styles.submit} type="submit" disabled={submitState === "submitting"}>
+                {submitState === "submitting" ? "Отправляем" : "Отправить"}
+              </button>
+
+              {message ? (
+                <p className={`${styles.message} ${submitState === "success" ? styles.messageSuccess : styles.messageError}`}>
+                  {message}
+                </p>
+              ) : null}
+            </form>
+          </div>
         </div>
-
-        <div className={styles.captcha}>
-          <SmartCaptcha key={captchaKey} sitekey={CAPTCHA_SITE_KEY} onSuccess={setCaptchaToken} />
-        </div>
-
-        <button className={styles.submit} type="submit" disabled={submitState === "submitting"}>
-          {submitState === "submitting" ? "Отправляем" : "Отправить"}
-        </button>
-
-        {message ? (
-          <p className={`${styles.message} ${submitState === "success" ? styles.messageSuccess : styles.messageError}`}>
-            {message}
-          </p>
-        ) : null}
-      </form>
+      ) : null}
     </section>
   );
 }
