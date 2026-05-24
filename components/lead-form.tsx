@@ -5,6 +5,9 @@ import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import styles from "./lead-form.module.css";
 
 const CAPTCHA_SITE_KEY = "ysc1_kSspdc4CreezvRnhYrKOF8CfF79arnKlhequLaHL7fe55cea";
+const METRIKA_COUNTER_ID = 105099236;
+const GOAL_FORM_OPEN = "lead_form_open";
+const GOAL_FORM_SUBMIT = "lead_form_submit";
 
 type LeadFormProps = {
   source: string;
@@ -14,6 +17,24 @@ type LeadFormProps = {
 };
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
+
+type WindowWithMetrika = Window & {
+  ym?: (counterId: number, method: "reachGoal", target: string, params?: Record<string, string>) => void;
+};
+
+function reachMetrikaGoal(target: string, source: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const { ym } = window as WindowWithMetrika;
+
+  if (typeof ym !== "function") {
+    return;
+  }
+
+  ym(METRIKA_COUNTER_ID, "reachGoal", target, { source });
+}
 
 function getPhoneDigits(value: string) {
   const digits = value.replace(/\D/g, "");
@@ -72,6 +93,11 @@ export function LeadForm({
   const [isOpen, setIsOpen] = useState(false);
   const titleId = useId();
   const captchaKey = useMemo(() => `${source}-${captchaNonce}`, [source, captchaNonce]);
+
+  function openModal() {
+    setIsOpen(true);
+    reachMetrikaGoal(GOAL_FORM_OPEN, source);
+  }
 
   useEffect(() => {
     if (!isOpen) {
@@ -139,6 +165,7 @@ export function LeadForm({
       setCaptchaNonce((value) => value + 1);
       setSubmitState("success");
       setMessage("Заявка отправлена. Мы скоро свяжемся с вами.");
+      reachMetrikaGoal(GOAL_FORM_SUBMIT, source);
     } catch (error) {
       setCaptchaToken("");
       setCaptchaNonce((value) => value + 1);
@@ -165,7 +192,7 @@ export function LeadForm({
 
   return (
     <section className={`${styles.section} ${placement === "hero" ? styles.sectionHero : ""}`} aria-labelledby={titleId}>
-      <button className={styles.openButton} type="button" onClick={() => setIsOpen(true)}>
+      <button className={styles.openButton} type="button" onClick={openModal}>
         Оставить заявку
       </button>
 
