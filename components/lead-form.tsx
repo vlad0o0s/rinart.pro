@@ -10,6 +10,7 @@ type LeadFormProps = {
   source: string;
   title?: string;
   subtitle?: string;
+  placement?: "default" | "hero";
 };
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
@@ -18,6 +19,7 @@ export function LeadForm({
   source,
   title = "Напишите нам",
   subtitle = "Оставьте имя и телефон, мы свяжемся с вами и ответим на вопросы.",
+  placement = "default",
 }: LeadFormProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -104,7 +106,7 @@ export function LeadForm({
   }
 
   return (
-    <section className={styles.section} aria-labelledby={titleId}>
+    <section className={`${styles.section} ${placement === "hero" ? styles.sectionHero : ""}`} aria-labelledby={titleId}>
       <button className={styles.openButton} type="button" onClick={() => setIsOpen(true)}>
         Оставить заявку
       </button>

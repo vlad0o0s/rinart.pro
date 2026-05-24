@@ -1,6 +1,7 @@
 "use client";
 
 import { SafeImage as Image } from "@/components/safe-image";
+import { LeadForm } from "@/components/lead-form";
 import { useMemo } from "react";
 import styles from "./hero.module.css";
 
@@ -31,8 +32,9 @@ export function Hero({ imageUrl }: { imageUrl?: string }) {
         />
       </div>
       <div className={styles.overlay}></div>
-      <div className={styles.content}>{/* Content for hero section will be added in subsequent steps */}</div>
+      <div className={styles.content}>
+        <LeadForm source="Главная страница" placement="hero" />
+      </div>
     </section>
   );
 }
-
