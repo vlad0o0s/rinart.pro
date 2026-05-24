@@ -243,6 +243,8 @@ type ContactSettingsState = {
   cityLabel: string;
   whatsappLabel: string;
   whatsappUrl: string;
+  maxChannelUrl: string;
+  maxChannelLabel: string;
   backToTopLabel: string;
 };
 
@@ -278,8 +280,10 @@ const CONTACT_DEFAULTS: ContactSettingsState = {
   heroImageUrl: "/img/group-1005.webp",
   footerTitle: "Обсудим ваш проект:",
   cityLabel: "г. Москва",
-  whatsappLabel: "Написать в WhatsApp",
-  whatsappUrl: "https://wa.me/79031474430",
+  whatsappLabel: "Перейти в MAX",
+  whatsappUrl: "https://max.ru/u/f9LHodD0cOJh_cKr5v3ZlDYwFYqPyrvQAHu9h_-XdifygXGo0tdja8HwEuk",
+  maxChannelUrl: "https://max.ru/id165504914483_biz",
+  maxChannelLabel: "rinartburo",
   backToTopLabel: "В начало",
 };
 
@@ -316,7 +320,7 @@ const SOCIAL_PLATFORM_OPTIONS: { label: string; value: SocialPlatformOption }[] 
 const SOCIAL_DEFAULTS: SocialLinkState[] = [
   { id: "instagram", platform: "instagram", label: "INST: rinart.buro", url: "https://www.instagram.com/rinart.buro/" },
   { id: "telegram", platform: "telegram", label: "TG: rinart_buro", url: "https://t.me/rinart_buro" },
-  { id: "vk", platform: "vk", label: "VK: rinart_buro", url: "https://vk.com/rinart_buro" },
+  { id: "vk", platform: "vk", label: "VK: rinart_buro", url: "https://vk.ru/rinart_buro" },
   { id: "pinterest", platform: "pinterest", label: "Pinterest: rinartburo", url: "https://www.pinterest.com/rinartburo" },
 ];
 
@@ -360,6 +364,8 @@ function normalizeContactSettings(value?: Partial<ContactSettingsState> | null):
     cityLabel: value.cityLabel?.trim() || CONTACT_DEFAULTS.cityLabel,
     whatsappLabel: value.whatsappLabel?.trim() || CONTACT_DEFAULTS.whatsappLabel,
     whatsappUrl: value.whatsappUrl?.trim() || CONTACT_DEFAULTS.whatsappUrl,
+    maxChannelUrl: value.maxChannelUrl?.trim() || CONTACT_DEFAULTS.maxChannelUrl,
+    maxChannelLabel: value.maxChannelLabel?.trim() || CONTACT_DEFAULTS.maxChannelLabel,
     backToTopLabel: value.backToTopLabel?.trim() || CONTACT_DEFAULTS.backToTopLabel,
   };
 }
@@ -4706,8 +4712,8 @@ function SettingsView({
         <div className={`${styles.formGrid} ${styles.gridTwo}`}>
           <label className={styles.inputGroup}>
             <LabelWithHint
-              label="CTA WhatsApp"
-              hint="Текст кнопки для связи через WhatsApp (например «Написать в WhatsApp»)."
+              label="CTA MAX"
+              hint="Текст кнопки в подвале (например «Перейти в MAX»)."
             />
             <input
               className={styles.textInput}
@@ -4718,13 +4724,39 @@ function SettingsView({
           </label>
           <label className={styles.inputGroup}>
             <LabelWithHint
-              label="Ссылка WhatsApp"
-              hint="Ссылка формата https://wa.me/номер для открытия чата."
+              label="Ссылка кнопки MAX"
+              hint="Личный профиль или чат для кнопки в подвале (например …/max.ru/u/…)."
             />
             <input
               className={styles.textInput}
               value={contactSettings.whatsappUrl}
               onChange={(event) => onContactChange("whatsappUrl", event.target.value)}
+              disabled={settingsLoading}
+            />
+          </label>
+        </div>
+        <div className={`${styles.formGrid} ${styles.gridTwo}`}>
+          <label className={styles.inputGroup}>
+            <LabelWithHint
+              label="Канал MAX (иконка и контакты)"
+              hint="Ссылка на канал для иконки в подвале и строки «Max: …» на /kontakty."
+            />
+            <input
+              className={styles.textInput}
+              value={contactSettings.maxChannelUrl}
+              onChange={(event) => onContactChange("maxChannelUrl", event.target.value)}
+              disabled={settingsLoading}
+            />
+          </label>
+          <label className={styles.inputGroup}>
+            <LabelWithHint
+              label="Подпись Max на контактах"
+              hint="Текст после «Max: » на странице контактов (например rinartburo)."
+            />
+            <input
+              className={styles.textInput}
+              value={contactSettings.maxChannelLabel}
+              onChange={(event) => onContactChange("maxChannelLabel", event.target.value)}
               disabled={settingsLoading}
             />
           </label>

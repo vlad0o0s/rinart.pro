@@ -37,13 +37,23 @@ export default function ContactsHero({ contact, socials }: ContactsHeroProps) {
           ))}
         </div>
 
-        {socialItems.length ? (
+        {socialItems.length || contact.maxChannelUrl ? (
           <div className={styles.contactSocialsList} style={{ "--reveal-index": 2 } as CSSProperties}>
             {socialItems.map((item) => (
               <a key={item.id} href={item.url} className={styles.contactSocialLine} target="_blank" rel="noopener noreferrer">
                 {item.label}
               </a>
             ))}
+            {contact.maxChannelUrl ? (
+              <a
+                href={contact.maxChannelUrl}
+                className={styles.contactSocialLine}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Max: {contact.maxChannelLabel}
+              </a>
+            ) : null}
           </div>
         ) : null}
 

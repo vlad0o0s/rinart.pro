@@ -32,7 +32,7 @@ const MASTERSKAJA_SUBLINKS = [
 const DEFAULT_SOCIAL_LINKS: SocialLink[] = [
   { id: "instagram", platform: "instagram", label: "Instagram", url: "https://www.instagram.com/rinart.buro/" },
   { id: "telegram", platform: "telegram", label: "Telegram", url: "https://t.me/rinart_buro" },
-  { id: "vk", platform: "vk", label: "VK", url: "https://vk.com/rinart_buro" },
+  { id: "vk", platform: "vk", label: "VK", url: "https://vk.ru/rinart_buro" },
   { id: "pinterest", platform: "pinterest", label: "Pinterest", url: "https://www.pinterest.com/rinartburo" },
 ];
 

@@ -60,7 +60,7 @@ export const STATIC_SEO_PAGES: StaticSeoPage[] = [
     defaults: {
       title: "Контакты — RINART",
       description:
-        "Контактная информация архитектурного бюро RINART: телефон, почта, WhatsApp, Telegram и социальные сети. Москва, Россия.",
+        "Контактная информация архитектурного бюро RINART: телефон, почта, MAX, Telegram и социальные сети. Москва, Россия.",
       keywords: ["контакты rinart", "архитектор контакт", "rinart buro"],
       ogImageUrl: null,
     },

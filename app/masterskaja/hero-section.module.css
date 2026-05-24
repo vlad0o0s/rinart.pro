@@ -67,8 +67,8 @@
   position: relative;
   width: 100%;
   margin: 0;
-  height: 431px;
-  min-height: 431px;
+  height: 781px;
+  min-height: 781px;
   overflow: hidden;
   opacity: 0;
   transform: translateY(24px);
@@ -157,8 +157,8 @@
   }
 
   .imageWrapper {
-    height: 431px;
-    min-height: 431px;
+    height: 781px;
+    min-height: 781px;
   }
 }
 
@@ -173,8 +173,8 @@
   }
 
   .imageWrapper {
-    height: 431px;
-    min-height: 431px;
+    height: 781px;
+    min-height: 781px;
   }
 }
 
@@ -226,8 +226,8 @@
   }
 
   .imageWrapper {
-    height: 22.4479vw; /* 431px */
-    min-height: 22.4479vw;
+    height: 40.6771vw; /* ~781px при 1920px */
+    min-height: 40.6771vw;
     transform: translateY(1.25vw);
   }
 }

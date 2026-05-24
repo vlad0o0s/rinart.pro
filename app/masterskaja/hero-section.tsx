@@ -22,8 +22,8 @@ export function MasterskajaHero() {
       <div className={styles.imageContainer}>
         <div className={styles.imageWrapper}>
           <Image
-            src="/img/123.png"
-            alt="Интерьерная деталь мастерской RINART"
+            src="/img/main_photo.jpg"
+            alt="Архитектурная мастерская RINART"
             fill
             className={styles.image}
             sizes="(max-width: 768px) 100vw, 1400px"

@@ -12,6 +12,10 @@ import { isBotUserAgent } from "@/lib/is-bot";
 import { organizationSchema, webSiteSchema } from "@/lib/seo/schema";
 import { getGlobalBlocks } from "@/lib/global-blocks";
 
+/** Явно: без статического кеша оболочки на CDN — иначе после деплоя остаются старые ссылки на чанки (.js/.css). */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const neueHaasUnica = localFont({
   variable: "--font-neue-haas",
   display: "swap",
@@ -99,16 +103,25 @@ export default async function RootLayout({
                 }
               }
               k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-            })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105324096', 'ym');
+            })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105099236', 'ym');
 
-            ym(105324096, 'init', { ssr: true, webvisor: true, clickmap: true, ecommerce: "dataLayer", accurateTrackBounce: true, trackLinks: true });
+            ym(105099236, 'init', {
+              ssr: true,
+              webvisor: true,
+              clickmap: true,
+              ecommerce: "dataLayer",
+              referrer: document.referrer,
+              url: location.href,
+              accurateTrackBounce: true,
+              trackLinks: true,
+            });
           `}
         </Script>
         <noscript>
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://mc.yandex.ru/watch/105324096"
+              src="https://mc.yandex.ru/watch/105099236"
               style={{ position: "absolute", left: "-9999px" }}
               alt=""
             />

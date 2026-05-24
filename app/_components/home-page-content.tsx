@@ -1,7 +1,7 @@
 "use client";
 
 import { SafeImage as Image } from "@/components/safe-image";
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import styles from "../page.module.css";
 
@@ -48,7 +48,6 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
   const [activeCategory, setActiveCategory] = useState<ActiveCategory>("all");
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -114,73 +113,6 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
     }));
   }, [enrichedProjects, activeCategory, isMobile]);
 
-  // Детальное логирование для отладки переходов
-  useEffect(() => {
-    if (!gridRef.current) return;
-
-    const cards = gridRef.current.querySelectorAll(`.${styles.portfolioCard}`);
-    
-    console.log(`[Transition Debug] Category changed to: ${activeCategory}, Total cards: ${cards.length}`);
-    
-    cards.forEach((card, index) => {
-      if (index < 3) {
-        const hasDimmed = card.classList.contains(styles.portfolioCardDimmed);
-        const computed = window.getComputedStyle(card);
-        
-        // Проверяем состояние ДО применения изменений
-        console.log(`[Transition Debug] Card ${index} BEFORE state:`, {
-          hasDimmedClass: hasDimmed,
-          computedOpacity: computed.opacity,
-          transitionProperty: computed.transitionProperty,
-          transitionDuration: computed.transitionDuration,
-          transitionTimingFunction: computed.transitionTimingFunction,
-          willChange: computed.willChange
-        });
-        
-        // Проверяем, есть ли transition в computed styles
-        const transition = computed.transition || computed.webkitTransition;
-        console.log(`[Transition Debug] Card ${index} transition value:`, transition);
-        
-        // Проверяем изображение
-        const image = card.querySelector(`.${styles.portfolioImage}`);
-        if (image) {
-          const imageComputed = window.getComputedStyle(image);
-          console.log(`[Transition Debug] Card ${index} image:`, {
-            opacity: imageComputed.opacity,
-            transition: imageComputed.transition || imageComputed.webkitTransition,
-            transitionDuration: imageComputed.transitionDuration
-          });
-        }
-      }
-    });
-    
-    // Проверяем состояние через небольшую задержку
-    setTimeout(() => {
-      cards.forEach((card, index) => {
-        if (index < 3) {
-          const computed = window.getComputedStyle(card);
-          console.log(`[Transition Debug] Card ${index} AFTER 50ms:`, {
-            opacity: computed.opacity,
-            transitionInProgress: computed.transitionProperty !== 'none'
-          });
-        }
-      });
-    }, 50);
-    
-    // Проверяем состояние после завершения перехода
-    setTimeout(() => {
-      cards.forEach((card, index) => {
-        if (index < 3) {
-          const computed = window.getComputedStyle(card);
-          console.log(`[Transition Debug] Card ${index} AFTER 900ms (should be complete):`, {
-            opacity: computed.opacity,
-            finalState: card.classList.contains(styles.portfolioCardDimmed) ? 'dimmed' : 'active'
-          });
-        }
-      });
-    }, 900);
-  }, [activeCategory, filteredProjects]);
-
   const showSkeleton = enrichedProjects.length === 0;
 
   const toggleMobileCategories = () => {
@@ -188,19 +120,6 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
   };
 
   const handleCategorySelect = (categoryId: ActiveCategory) => {
-    console.log(`[Transition Debug] ===== CATEGORY SELECTED =====`);
-    console.log(`[Transition Debug] From: ${activeCategory} -> To: ${categoryId}`);
-    
-    // Проверяем текущее состояние элементов перед изменением
-    if (gridRef.current) {
-      const cards = gridRef.current.querySelectorAll(`.${styles.portfolioCard}`);
-      console.log(`[Transition Debug] Current state before change:`, {
-        totalCards: cards.length,
-        firstCardHasDimmed: cards[0]?.classList.contains(styles.portfolioCardDimmed),
-        firstCardOpacity: window.getComputedStyle(cards[0] || document.body).opacity
-      });
-    }
-    
     setActiveCategory(categoryId);
     setMobileCategoriesOpen(false);
   };
@@ -258,7 +177,7 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
         )}
       </div>
 
-      <div className={styles.portfolioGrid} ref={gridRef}>
+      <div className={styles.portfolioGrid}>
         {showSkeleton ? (
           <HomePortfolioSkeleton />
         ) : (

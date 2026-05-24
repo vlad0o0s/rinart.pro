@@ -2,7 +2,7 @@
 
 import { SafeImage as Image } from "@/components/safe-image";
 import Link from "next/link";
-import { useMemo, useRef } from "react";
+import { useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import styles from "./page.module.css";
@@ -11,40 +11,15 @@ type RelatedProject = {
   slug: string;
   title: string;
   heroImageUrl?: string;
-  tagline?: string;
-  createdAt: string;
 };
 
-function formatDate(value: string) {
-  if (!value) {
-    return "";
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(date);
-}
-
 export function RelatedProjectsSlider({ projects }: { projects: RelatedProject[] }) {
-  const items = useMemo(
-    () =>
-      projects.map((project) => ({
-        ...project,
-        formattedDate: formatDate(project.createdAt),
-      })),
-    [projects],
-  );
   const prevRef = useRef<HTMLButtonElement | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
   // Показываем стрелки если проектов больше чем видно на экране (2 на мобильной, 6 на больших экранах)
-  const showArrows = items.length > 2;
+  const showArrows = projects.length > 2;
 
-  if (!items.length) {
+  if (!projects.length) {
     return null;
   }
 
@@ -91,7 +66,7 @@ export function RelatedProjectsSlider({ projects }: { projects: RelatedProject[]
           swiper.navigation.init();
           swiper.navigation.update();
         }}
-        allowTouchMove={items.length > 1}
+        allowTouchMove={projects.length > 1}
         loop={false}
         watchOverflow
         breakpoints={{
@@ -103,7 +78,7 @@ export function RelatedProjectsSlider({ projects }: { projects: RelatedProject[]
         }}
         className={styles.relatedSwiper}
       >
-        {items.map((project, index) => (
+        {projects.map((project) => (
           <SwiperSlide key={project.slug} className={styles.relatedTileSlide}>
             <Link href={`/${project.slug}`} className={styles.relatedTile} prefetch={false}>
               <div className={styles.relatedTileImage}>
@@ -121,7 +96,6 @@ export function RelatedProjectsSlider({ projects }: { projects: RelatedProject[]
                 )}
               </div>
               <p className={styles.relatedTileMeta}>
-                <span className={styles.relatedTileNumber}>{index + 1}</span>
                 <span className={styles.relatedTileTitle}>{project.title}</span>
               </p>
             </Link>

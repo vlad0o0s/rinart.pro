@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { getContactSettings, getSocialLinks } from "@/lib/site-settings";
 import type { ContactSettings, SocialLink, SocialPlatform } from "@/types/site";
 import styles from "./footer.module.css";
@@ -45,24 +46,7 @@ function FooterDesktop({ contact, socials }: FooterSectionProps) {
 
           <div className={`${styles.column} ${styles.columnRight}`}>
             <div className={styles.socials}>
-              {socials.map((social) => {
-                const iconClass = getIconClass(social.platform);
-                if (!iconClass) {
-                  return null;
-                }
-                return (
-                  <a
-                    key={social.id}
-                    className={styles.socialLink}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={social.label}
-                  >
-                    <span className={`${styles.icon} ${iconClass}`} />
-                  </a>
-                );
-              })}
+              {renderFooterSocialLinks(socials, contact)}
             </div>
           </div>
 
@@ -93,24 +77,7 @@ function FooterMobile({ contact, socials }: FooterSectionProps) {
               {contact.backToTopLabel}
             </a>
             <div className={styles.footerMobileSocials}>
-              {socials.map((social) => {
-                const iconClass = getIconClass(social.platform);
-                if (!iconClass) {
-                  return null;
-                }
-                return (
-                  <a
-                    key={`mobile-${social.id}`}
-                    className={styles.socialLink}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={social.label}
-                  >
-                    <span className={`${styles.icon} ${iconClass}`} />
-                  </a>
-                );
-              })}
+              {renderFooterSocialLinks(socials, contact, "mobile-")}
             </div>
             <div className={styles.footerMobileLocation}>
               <span>{contact.cityLabel}</span>
@@ -128,5 +95,65 @@ function FooterMobile({ contact, socials }: FooterSectionProps) {
 function getIconClass(platform: SocialPlatform) {
   const key = ICON_CLASS_MAP[platform];
   return key ? styles[key] : null;
+}
+
+/** Соцсети из настроек; иконка MAX — канал (`maxChannelUrl`), не кнопка CTA. */
+function renderFooterSocialLinks(socials: SocialLink[], contact: ContactSettings, keyPrefix = "") {
+  const nodes: ReactNode[] = [];
+  let maxInserted = false;
+  const maxAria =
+    contact.maxChannelLabel.trim().length > 0
+      ? `Max: ${contact.maxChannelLabel.trim()}`
+      : "MAX";
+
+  for (const social of socials) {
+    const iconClass = getIconClass(social.platform);
+    if (iconClass) {
+      nodes.push(
+        <a
+          key={`${keyPrefix}${social.id}`}
+          className={styles.socialLink}
+          href={social.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={social.label}
+        >
+          <span className={`${styles.icon} ${iconClass}`} />
+        </a>,
+      );
+    }
+    if (social.platform === "pinterest" && contact.maxChannelUrl) {
+      nodes.push(
+        <a
+          key={`${keyPrefix}max-messenger`}
+          className={styles.socialLink}
+          href={contact.maxChannelUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={maxAria}
+        >
+          <span className={`${styles.icon} ${styles.iconMax}`} />
+        </a>,
+      );
+      maxInserted = true;
+    }
+  }
+
+  if (!maxInserted && contact.maxChannelUrl) {
+    nodes.push(
+      <a
+        key={`${keyPrefix}max-messenger`}
+        className={styles.socialLink}
+        href={contact.maxChannelUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={maxAria}
+      >
+        <span className={`${styles.icon} ${styles.iconMax}`} />
+      </a>,
+    );
+  }
+
+  return nodes;
 }
 

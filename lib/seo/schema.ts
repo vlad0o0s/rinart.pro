@@ -14,7 +14,7 @@ export function organizationSchema() {
     email: "rinartburo@mail.ru",
     telephone: "+7-903-147-44-30",
     sameAs: [
-      "https://vk.com/rinart_buro",
+      "https://vk.ru/rinart_buro",
       "https://t.me/rinart_buro",
       "https://www.instagram.com/rinart.buro/",
     ],
@@ -130,7 +130,7 @@ export function contactPageSchema() {
       telephone: "+7-903-147-44-30",
       email: "rinartburo@mail.ru",
       sameAs: [
-        "https://vk.com/rinart_buro",
+        "https://vk.ru/rinart_buro",
         "https://t.me/rinart_buro",
         "https://www.instagram.com/rinart.buro/",
       ],

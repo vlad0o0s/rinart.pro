@@ -217,6 +217,11 @@
   -webkit-mask-image: url("/icons/instagram.svg");
 }
 
+.iconMax {
+  mask-image: url("/icons/max.svg");
+  -webkit-mask-image: url("/icons/max.svg");
+}
+
 .footerMobile {
   display: none;
   width: 100%;

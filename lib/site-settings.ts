@@ -26,15 +26,18 @@ const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
   heroImageUrl: "/img/group-1005.webp",
   footerTitle: "Обсудим ваш проект:",
   cityLabel: "г. Москва",
-  whatsappLabel: "Написать в WhatsApp",
-  whatsappUrl: "https://wa.me/79031474430",
+  whatsappLabel: "Перейти в MAX",
+  whatsappUrl:
+    "https://max.ru/u/f9LHodD0cOJh_cKr5v3ZlDYwFYqPyrvQAHu9h_-XdifygXGo0tdja8HwEuk",
+  maxChannelUrl: "https://max.ru/id165504914483_biz",
+  maxChannelLabel: "rinartburo",
   backToTopLabel: "В начало",
 };
 
 const DEFAULT_SOCIAL_LINKS: SocialLink[] = [
   { id: "instagram", platform: "instagram", label: "INST: rinart.buro", url: "https://www.instagram.com/rinart.buro/" },
   { id: "telegram", platform: "telegram", label: "TG: rinart_buro", url: "https://t.me/rinart_buro" },
-  { id: "vk", platform: "vk", label: "VK: rinart_buro", url: "https://vk.com/rinart_buro" },
+  { id: "vk", platform: "vk", label: "VK: rinart_buro", url: "https://vk.ru/rinart_buro" },
   { id: "pinterest", platform: "pinterest", label: "Pinterest: rinartburo", url: "https://www.pinterest.com/rinartburo" },
 ];
 
@@ -201,6 +204,8 @@ export function normalizeContactSettings(value: unknown): ContactSettings {
     cityLabel: stringOrDefault(source.cityLabel, DEFAULT_CONTACT_SETTINGS.cityLabel),
     whatsappLabel: stringOrDefault(source.whatsappLabel, DEFAULT_CONTACT_SETTINGS.whatsappLabel),
     whatsappUrl: stringOrDefault(source.whatsappUrl, DEFAULT_CONTACT_SETTINGS.whatsappUrl),
+    maxChannelUrl: stringOrDefault(source.maxChannelUrl, DEFAULT_CONTACT_SETTINGS.maxChannelUrl),
+    maxChannelLabel: stringOrDefault(source.maxChannelLabel, DEFAULT_CONTACT_SETTINGS.maxChannelLabel),
     backToTopLabel: stringOrDefault(source.backToTopLabel, DEFAULT_CONTACT_SETTINGS.backToTopLabel),
   };
 }

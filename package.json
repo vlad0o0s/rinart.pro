@@ -5,11 +5,13 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production node server.cjs",
     "lint": "eslint",
     "seed": "node scripts/seed.mjs",
     "create-admin": "node scripts/create-admin-user.mjs",
-    "optimize-media": "node scripts/optimize-existing-media.mjs"
+    "optimize-media": "node scripts/optimize-existing-media.mjs",
+    "patch-contact-max": "node scripts/patch-contact-max.mjs",
+    "patch-social-vk": "node scripts/patch-social-vk.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

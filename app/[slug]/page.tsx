@@ -54,12 +54,7 @@ async function ProjectPageComponent({ params }: { params: Promise<{ slug: string
   }
 
   const { title, heroImageUrl, descriptionBody, descriptionHtml, schemes, gallery } = project;
-  const relatedProjects = allProjects
-    .filter((item) => item.slug !== slug)
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+  const relatedProjects = allProjects.filter((item) => item.slug !== slug);
 
   const descriptionParagraphs = descriptionBody.filter(
     (paragraph): paragraph is string => typeof paragraph === "string" && paragraph.trim().length > 0,
