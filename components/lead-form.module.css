@@ -1,0 +1,170 @@
+.section {
+  width: min(100%, 1180px);
+  margin: clamp(42px, 7vw, 86px) auto;
+  padding: clamp(28px, 4vw, 48px) clamp(18px, 4vw, 44px);
+  border: 1px solid rgba(37, 37, 37, 0.18);
+  background: #fbfbf8;
+  color: #252525;
+  font-family: "Neue Haas Unica", "Helvetica Neue", Arial, sans-serif;
+}
+
+.header {
+  margin-bottom: clamp(24px, 4vw, 36px);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(26px, 3.2vw, 48px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  color: #252525;
+}
+
+.subtitle {
+  max-width: 620px;
+  margin: 14px 0 0;
+  font-size: clamp(14px, 1.25vw, 18px);
+  line-height: 1.45;
+  color: rgba(37, 37, 37, 0.62);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(14px, 2vw, 28px);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(37, 37, 37, 0.48);
+}
+
+.input {
+  width: 100%;
+  min-height: 58px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 0;
+  background: #eeeeef;
+  color: #252525;
+  font: inherit;
+  font-size: 16px;
+  outline: 1px solid transparent;
+  transition:
+    background 0.2s ease,
+    outline-color 0.2s ease;
+}
+
+.input::placeholder {
+  color: rgba(37, 37, 37, 0.38);
+}
+
+.input:hover,
+.input:focus {
+  background: #e8e8e8;
+}
+
+.input:focus {
+  outline-color: rgba(37, 37, 37, 0.42);
+}
+
+.captcha {
+  min-height: 102px;
+}
+
+.submit {
+  width: 100%;
+  min-height: 68px;
+  border: 1px solid #252525;
+  border-radius: 0;
+  background: transparent;
+  color: #252525;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transition:
+    background 0.24s ease,
+    color 0.24s ease,
+    opacity 0.24s ease;
+}
+
+.submit:hover,
+.submit:focus-visible {
+  background: #252525;
+  color: #ffffff;
+}
+
+.submit:disabled {
+  cursor: progress;
+  opacity: 0.62;
+}
+
+.message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.messageSuccess {
+  color: #557654;
+}
+
+.messageError {
+  color: #9f3a2f;
+}
+
+@media (max-width: 720px) {
+  .section {
+    margin: 36px auto 46px;
+    padding: 26px 16px;
+  }
+
+  .fields {
+    grid-template-columns: 1fr;
+  }
+
+  .input {
+    min-height: 56px;
+  }
+
+  .submit {
+    min-height: 60px;
+  }
+}
+
+@media (min-width: 1921px) {
+  .section {
+    width: 61.4583vw;
+    margin: 4.4792vw auto;
+    padding: 2.5vw 2.2917vw;
+  }
+
+  .title {
+    font-size: 2.5vw;
+  }
+
+  .subtitle {
+    max-width: 32.2917vw;
+    font-size: 0.9375vw;
+  }
+}

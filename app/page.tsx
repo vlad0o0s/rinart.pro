@@ -12,6 +12,7 @@ import { homePageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 import { getGlobalBlocks } from "@/lib/global-blocks";
+import { LeadForm } from "@/components/lead-form";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -54,6 +55,9 @@ export default async function Home() {
           </div>
           <div className={styles.stageLayer} data-stage="portfolio">
             <HomeProjectsSection projects={summaries} />
+          </div>
+          <div className={styles.stageLayer} data-stage="lead-form">
+            <LeadForm source="Главная страница" />
           </div>
           <div className={styles.stageLayer} data-stage="footer">
             <Footer />

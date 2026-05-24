@@ -10,6 +10,7 @@ import ProjectBody from "./project-body";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 import { RelatedProjectsSlider } from "./related-projects";
 import { getSocialLinks } from "@/lib/site-settings";
+import { LeadForm } from "@/components/lead-form";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -71,6 +72,11 @@ async function ProjectPageComponent({ params }: { params: Promise<{ slug: string
           featureImage={heroImageUrl}
           schemes={schemes.map((scheme) => ({ title: scheme.title, image: scheme.url }))}
           gallery={gallery.map((item) => item.url)}
+        />
+        <LeadForm
+          source={`Проект: ${title}`}
+          title="Обсудить проект"
+          subtitle="Оставьте имя и телефон, мы свяжемся с вами и расскажем, как может начаться работа."
         />
         <RelatedProjectsSlider projects={relatedProjects} />
       </div>
