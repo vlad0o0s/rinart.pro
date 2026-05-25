@@ -7,7 +7,7 @@
 }
 
 .sectionHero {
-  width: 100%;
+  width: 100vw;
   margin: 0;
   padding: 0;
 }
@@ -50,8 +50,11 @@
 }
 
 .sectionHero .openButton {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   min-height: clamp(52px, 5vw, 60px);
-  padding: 0 clamp(22px, 12vw, 240px) 0 20px;
+  padding: 0 clamp(24px, 12.5vw, 240px) 0 20px;
   border-right: 0;
   border-left: 0;
   border-color: rgba(37, 37, 37, 0.42);
@@ -71,6 +74,16 @@
 .sectionProject .openButton,
 .sectionContact .openButton {
   background: transparent;
+}
+
+.sectionProject .openButton:hover,
+.sectionProject .openButton:focus-visible,
+.sectionProject .openButton:active,
+.sectionContact .openButton:hover,
+.sectionContact .openButton:focus-visible,
+.sectionContact .openButton:active {
+  background: #252525;
+  color: #ffffff !important;
 }
 
 .modal {
@@ -97,7 +110,7 @@
   z-index: 1;
   width: min(100%, 920px);
   max-height: min(90vh, 760px);
-  overflow: visible;
+  overflow: visible !important;
   padding: clamp(30px, 4vw, 54px);
   border: 1px solid #252525;
   background: #ffffff;

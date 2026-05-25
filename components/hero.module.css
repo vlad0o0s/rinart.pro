@@ -52,12 +52,12 @@
 }
 
 .content {
-  position: absolute;
+  position: fixed;
   top: 78px;
-  right: 0;
   left: 0;
+  right: auto;
   z-index: 3;
-  width: 100%;
+  width: 100vw;
   max-width: none;
   padding: 0;
   display: flex;
@@ -74,7 +74,9 @@
   }
 
   .content {
+    position: absolute;
     top: 48px;
+    width: 100%;
   }
 }
 
