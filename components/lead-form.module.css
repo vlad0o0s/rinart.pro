@@ -94,6 +94,8 @@
   align-items: center;
   justify-content: center;
   padding: clamp(18px, 4vw, 48px);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .backdrop {
@@ -111,6 +113,7 @@
   width: min(100%, 920px);
   max-height: min(90vh, 760px);
   overflow: visible !important;
+  box-sizing: border-box;
   padding: clamp(30px, 4vw, 54px);
   border: 1px solid #252525;
   background: #ffffff;
@@ -216,6 +219,7 @@
 
 .captcha {
   min-height: 102px;
+  overflow: hidden;
 }
 
 .submit {
@@ -276,7 +280,7 @@
 
   .modal {
     align-items: center;
-    padding: 14px;
+    padding: calc(env(safe-area-inset-top, 0px) + 18px) 14px 14px;
   }
 
   .sectionHero .openButton {
@@ -288,8 +292,21 @@
 
   .panel {
     width: min(100%, 560px);
+    max-width: calc(100vw - 28px);
     max-height: none;
     padding: 30px 18px 24px;
+  }
+
+  .close {
+    top: 8px;
+    right: 8px;
+    width: 38px;
+    height: 38px;
+    font-size: 30px;
+  }
+
+  .header {
+    padding-right: 42px;
   }
 
   .fields {
