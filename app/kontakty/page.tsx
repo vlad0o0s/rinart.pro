@@ -8,6 +8,7 @@ import { contactPageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 import { getContactSettings, getSocialLinks } from "@/lib/site-settings";
+import { LeadForm } from "@/components/lead-form";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -24,6 +25,7 @@ export default async function KontaktyPage() {
       <SiteHeader showDesktopNav socialLinks={socialLinks} />
       <main className={styles.page}>
         <ContactsHero contact={contactSettings} socials={socialLinks} />
+        <LeadForm source="Контакты" placement="contact" />
       </main>
       <Footer />
       <JsonLd schema={contactPageSchema()} />

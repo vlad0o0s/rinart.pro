@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding-top: var(--header-height, 0px);
+  padding-top: 78px;
   padding-bottom: 48px;
   box-sizing: border-box;
   opacity: 1;
@@ -52,17 +52,30 @@
 }
 
 .content {
-  position: relative;
+  position: absolute;
+  top: 78px;
+  right: 0;
+  left: 0;
   z-index: 3;
   width: 100%;
-  max-width: 1200px;
-  padding: 40px 24px;
+  max-width: none;
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: #ffffff;
   opacity: 1;
+}
+
+@media (max-width: 767px) {
+  .hero {
+    padding-top: 48px;
+  }
+
+  .content {
+    top: 48px;
+  }
 }
 
 @keyframes heroFade {
@@ -116,6 +129,6 @@
 
   .content {
     max-width: none;
-    padding: 2.0833vw 1.25vw;
+    padding: 0;
   }
 }

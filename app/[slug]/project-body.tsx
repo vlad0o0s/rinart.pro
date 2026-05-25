@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import styles from "./page.module.css";
 import { ProjectInfo } from "./project-info";
 import { ProjectMedia } from "./project-media";
+import { LeadForm } from "@/components/lead-form";
 
 type ProjectBodyProps = {
   title: string;
@@ -43,7 +44,14 @@ export default function ProjectBody({
         gallery={gallery}
         infoHeight={infoHeight}
       />
+      <div className={styles.projectLeadForm}>
+        <LeadForm
+          source={`Проект: ${title}`}
+          title="Обсудить проект"
+          subtitle="Оставьте имя и телефон, мы свяжемся с вами и расскажем, как может начаться работа."
+          placement="project"
+        />
+      </div>
     </div>
   );
 }
-

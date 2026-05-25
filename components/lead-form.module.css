@@ -7,9 +7,22 @@
 }
 
 .sectionHero {
-  width: min(420px, calc(100vw - 40px));
+  width: 100%;
   margin: 0;
   padding: 0;
+}
+
+.sectionProject {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.sectionContact {
+  width: 100%;
+  max-width: none;
+  margin: clamp(24px, 4vw, 36px) auto 0;
+  padding: 0 10px;
 }
 
 .openButton {
@@ -37,17 +50,27 @@
 }
 
 .sectionHero .openButton {
-  min-height: 58px;
-  border-color: #ffffff;
-  background: rgba(255, 255, 255, 0.94);
+  min-height: clamp(52px, 5vw, 60px);
+  padding: 0 clamp(22px, 12vw, 240px) 0 20px;
+  border-right: 0;
+  border-left: 0;
+  border-color: rgba(37, 37, 37, 0.42);
+  background: transparent;
   color: #252525;
+  text-align: right;
+  justify-content: flex-end;
 }
 
 .sectionHero .openButton:hover,
 .sectionHero .openButton:focus-visible {
-  background: #252525;
+  background: rgba(255, 255, 255, 0.18);
   border-color: #252525;
-  color: #ffffff;
+  color: #252525;
+}
+
+.sectionProject .openButton,
+.sectionContact .openButton {
+  background: transparent;
 }
 
 .modal {
@@ -232,12 +255,27 @@
     padding: 0 10px;
   }
 
+  .sectionHero {
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+  }
+
   .modal {
     align-items: center;
     padding: 14px;
   }
 
+  .sectionHero .openButton {
+    min-height: 56px;
+    padding-right: 18px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+  }
+
   .panel {
+    width: min(100%, 560px);
+    max-height: none;
     padding: 30px 18px 24px;
   }
 
@@ -251,13 +289,6 @@
 
   .submit {
     min-height: 60px;
-  }
-}
-
-@media (max-height: 680px) {
-  .panel {
-    max-height: calc(100vh - 28px);
-    overflow-y: auto;
   }
 }
 

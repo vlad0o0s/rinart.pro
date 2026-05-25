@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import type { LeadRequest } from "./lead-storage";
 
-const RECIPIENT = process.env.CONTACT_FORM_RECIPIENT_EMAIL || "vlad-2028@mail.ru";
+const RECIPIENT = process.env.CONTACT_FORM_RECIPIENT_EMAIL || "rinartburo@mail.ru";
 
 function getSmtpPort() {
   const rawPort = process.env.SMTP_PORT;

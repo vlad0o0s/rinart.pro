@@ -13,7 +13,7 @@ type LeadFormProps = {
   source: string;
   title?: string;
   subtitle?: string;
-  placement?: "default" | "hero";
+  placement?: "default" | "hero" | "project" | "contact";
 };
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
@@ -93,6 +93,12 @@ export function LeadForm({
   const [isOpen, setIsOpen] = useState(false);
   const titleId = useId();
   const captchaKey = useMemo(() => `${source}-${captchaNonce}`, [source, captchaNonce]);
+  const placementClass = {
+    default: "",
+    hero: styles.sectionHero,
+    project: styles.sectionProject,
+    contact: styles.sectionContact,
+  }[placement];
 
   function openModal() {
     setIsOpen(true);
@@ -191,7 +197,7 @@ export function LeadForm({
   }
 
   return (
-    <section className={`${styles.section} ${placement === "hero" ? styles.sectionHero : ""}`} aria-labelledby={titleId}>
+    <section className={`${styles.section} ${placementClass}`} aria-labelledby={titleId}>
       <button className={styles.openButton} type="button" onClick={openModal}>
         Оставить заявку
       </button>

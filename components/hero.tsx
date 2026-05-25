@@ -32,7 +32,7 @@ export function Hero({ imageUrl }: { imageUrl?: string }) {
         />
       </div>
       <div className={styles.overlay}></div>
-      <div className={styles.content}>
+      <div className={styles.content} aria-label="Заявка">
         <LeadForm source="Главная страница" placement="hero" />
       </div>
     </section>
