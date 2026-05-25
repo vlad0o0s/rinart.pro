@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding-top: 78px;
+  padding-top: var(--lead-button-top, 78px);
   padding-bottom: 48px;
   box-sizing: border-box;
   opacity: 1;
@@ -53,7 +53,7 @@
 
 .content {
   position: fixed;
-  top: 78px;
+  top: var(--lead-button-top, 78px);
   left: 0;
   right: auto;
   z-index: 3;
@@ -70,12 +70,12 @@
 
 @media (max-width: 767px) {
   .hero {
-    padding-top: 48px;
+    padding-top: var(--lead-button-top, 48px);
   }
 
   .content {
     position: absolute;
-    top: 48px;
+    top: var(--lead-button-top, 48px);
     width: 100%;
   }
 }
@@ -126,10 +126,12 @@
 @media (min-width: 1921px) {
   .hero {
     min-height: calc(100vh - var(--header-height, 0px) - 2.5vw);
+    padding-top: var(--lead-button-top, 67px);
     padding-bottom: 2.5vw;
   }
 
   .content {
+    top: var(--lead-button-top, 67px);
     max-width: none;
     padding: 0;
   }

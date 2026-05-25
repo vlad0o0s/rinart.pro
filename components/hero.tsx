@@ -2,7 +2,7 @@
 
 import { SafeImage as Image } from "@/components/safe-image";
 import { LeadForm } from "@/components/lead-form";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import styles from "./hero.module.css";
 
 const HERO_IMAGE = "/img/01-ilichevka.jpg";
@@ -12,6 +12,31 @@ export function Hero({ imageUrl }: { imageUrl?: string }) {
     const value = imageUrl?.trim();
     return value && value.length ? value : HERO_IMAGE;
   }, [imageUrl]);
+
+  useEffect(() => {
+    const updateLeadButtonTop = () => {
+      const header = document.querySelector("header");
+      const top = header?.getBoundingClientRect().bottom ?? 0;
+      document.documentElement.style.setProperty("--lead-button-top", `${Math.round(top)}px`);
+    };
+
+    updateLeadButtonTop();
+    window.addEventListener("resize", updateLeadButtonTop);
+    window.addEventListener("orientationchange", updateLeadButtonTop);
+
+    const header = document.querySelector("header");
+    const observer = header ? new ResizeObserver(updateLeadButtonTop) : null;
+
+    if (header && observer) {
+      observer.observe(header);
+    }
+
+    return () => {
+      window.removeEventListener("resize", updateLeadButtonTop);
+      window.removeEventListener("orientationchange", updateLeadButtonTop);
+      observer?.disconnect();
+    };
+  }, []);
 
   // const isRemoteHero = /^https?:\/\//i.test(heroImage);
 
