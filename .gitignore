@@ -45,3 +45,6 @@ next-env.d.ts
 # uploaded media (tracking enabled per project policy)
 # public/uploads/
 data/leads.json
+*.bak
+*.bak-*
+*.bak*

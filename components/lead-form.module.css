@@ -86,6 +86,14 @@
   color: #ffffff !important;
 }
 
+.openButton.preserveOpenButtonStyle:hover,
+.openButton.preserveOpenButtonStyle:focus-visible,
+.openButton.preserveOpenButtonStyle:active {
+  background: #ffffff !important;
+  color: #252525 !important;
+  border-color: #ffffff !important;
+}
+
 .modal {
   position: fixed;
   inset: 0;

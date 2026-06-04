@@ -2,6 +2,7 @@
 
 import { SmartCaptcha } from "@yandex/smart-captcha";
 import { FormEvent, useEffect, useId, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import styles from "./lead-form.module.css";
 
 const CAPTCHA_SITE_KEY = "ysc1_kSspdc4CreezvRnhYrKOF8CfF79arnKlhequLaHL7fe55cea";
@@ -14,6 +15,8 @@ type LeadFormProps = {
   title?: string;
   subtitle?: string;
   placement?: "default" | "hero" | "project" | "contact";
+  openButtonClassName?: string;
+  preserveOpenButtonStyle?: boolean;
 };
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
@@ -83,6 +86,8 @@ export function LeadForm({
   title = "Напишите нам",
   subtitle = "Оставьте имя и телефон, мы свяжемся с вами и ответим на вопросы.",
   placement = "default",
+  openButtonClassName,
+  preserveOpenButtonStyle = false,
 }: LeadFormProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -99,6 +104,13 @@ export function LeadForm({
     project: styles.sectionProject,
     contact: styles.sectionContact,
   }[placement];
+  const openButtonClass = [
+    styles.openButton,
+    preserveOpenButtonStyle ? styles.preserveOpenButtonStyle : "",
+    openButtonClassName ?? "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   function openModal() {
     setIsOpen(true);
@@ -196,14 +208,8 @@ export function LeadForm({
     }
   }
 
-  return (
-    <section className={`${styles.section} ${placementClass}`} aria-labelledby={titleId}>
-      <button className={styles.openButton} type="button" onClick={openModal}>
-        Оставить заявку
-      </button>
-
-      {isOpen ? (
-        <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+  const modal = isOpen ? (
+    <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby={titleId}>
           <button className={styles.backdrop} type="button" aria-label="Закрыть форму" onClick={() => setIsOpen(false)} />
 
           <div className={styles.panel}>
@@ -268,8 +274,16 @@ export function LeadForm({
               ) : null}
             </form>
           </div>
-        </div>
-      ) : null}
+    </div>
+  ) : null;
+
+  return (
+    <section className={`${styles.section} ${placementClass}`} aria-labelledby={titleId}>
+      <button className={openButtonClass} type="button" onClick={openModal}>
+        Оставить заявку
+      </button>
+
+      {modal ? createPortal(modal, document.body) : null}
     </section>
   );
 }
