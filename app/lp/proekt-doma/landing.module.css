@@ -1,6 +1,9 @@
 .page {
   --ink: #252525;
   --line: rgba(37, 37, 37, 0.14);
+  /* Единый контейнер и поля — ориентир как у портфолио главной (1920 + равные гуттеры) */
+  --maxw: 1920px;
+  --pad: clamp(16px, 1.6vw, 32px);
   color: var(--ink);
   background: #ffffff;
 }
@@ -18,10 +21,18 @@
   transform: none;
 }
 
-/* ---------- HERO (текст слева) ---------- */
+/* ---------- ПЕРВЫЙ ЭКРАН: hero + преимущества = ровно высота экрана ---------- */
+.firstScreen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100svh;
+}
+/* ---------- HERO (текст слева, по центру по вертикали) ---------- */
 .hero {
   position: relative;
-  min-height: clamp(500px, 74vh, 720px);
+  flex: 1 1 auto;
+  min-height: 58vh;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -58,9 +69,9 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: none;
+  max-width: var(--maxw);
   margin: 0 auto;
-  padding: clamp(28px, 4vw, 56px) clamp(20px, 5vw, 120px);
+  padding: clamp(28px, 4vw, 56px) var(--pad);
 }
 .heroCol {
   max-width: 680px;
@@ -216,12 +227,16 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
   background: var(--line);
+  border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 .trustItem {
   background: #fff;
-  padding: clamp(22px, 3vw, 38px) clamp(20px, 3.5vw, 44px);
+  padding: clamp(22px, 3vw, 38px) var(--pad);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -238,25 +253,20 @@
   opacity: 0.7;
 }
 
-/* ---------- SECTIONS ---------- */
-/* Полноширинные секции с вертикальным ритмом (уменьшенные отступы) и тянущимися гуттерами */
-.section {
-  width: 100%;
-  margin: 0;
-  padding: clamp(36px, 4vw, 72px) clamp(20px, 5vw, 120px);
-}
-/* Визуальный блок «край-в-край» (портфолио) — минимальные гуттеры, тянется как на главной */
-.sectionWide {
-  width: 100%;
-  margin: 0;
-  padding: clamp(36px, 4vw, 72px) clamp(12px, 2.2vw, 56px);
-}
-/* Фокус-блок (квиз, FAQ) — по центру в комфортной ширине, не растягиваем */
+/* ---------- SECTIONS (единый контейнер, равные поля — ориентир портфолио) ---------- */
+.section,
+.sectionWide,
 .sectionCenter {
   width: 100%;
-  max-width: 1160px;
+  max-width: var(--maxw);
   margin: 0 auto;
-  padding: clamp(36px, 4vw, 72px) clamp(20px, 5vw, 48px);
+  padding: clamp(36px, 4vw, 72px) var(--pad);
+}
+/* Портфолио (компонент главной) наследует контейнер лендинга — поля совпадают со всеми блоками */
+.sectionWide :global(#portfolio) {
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 .sectionHead {
   max-width: 720px;
@@ -376,7 +386,6 @@
 /* ---------- FAQ ---------- */
 .faq {
   border-top: 1px solid var(--line);
-  max-width: 860px;
 }
 .faqItem {
   border-bottom: 1px solid var(--line);
@@ -450,7 +459,7 @@ details[open] .faqQ::after {
 }
 .options {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 12px;
 }
 .option {
@@ -634,6 +643,16 @@ details[open] .faqQ::after {
   }
   .included {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+/* Выше 1920px тянем контент на всю ширину (как портфолио/оболочка сайта) */
+@media (min-width: 1921px) {
+  .section,
+  .sectionWide,
+  .sectionCenter,
+  .trust,
+  .heroInner {
+    max-width: none;
   }
 }
 @media (min-width: 2200px) {

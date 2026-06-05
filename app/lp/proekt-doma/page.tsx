@@ -92,6 +92,8 @@ export default async function LandingPage() {
     <>
       <SiteHeader showDesktopBrand />
       <main className={`${styles.page} min-h-screen bg-white text-neutral-900 antialiased`}>
+        {/* ПЕРВЫЙ ЭКРАН: HERO + ПРЕИМУЩЕСТВА (низ преимуществ = край экрана) */}
+        <div className={styles.firstScreen}>
         {/* HERO / ОФФЕР — текст слева */}
         <section className={styles.hero} aria-label="Проектирование частных домов">
           <div className={styles.heroMedia} aria-hidden="true">
@@ -148,8 +150,7 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* ДОВЕРИЕ */}
-        <Reveal>
+        {/* ПРЕИМУЩЕСТВА — закреплены внизу первого экрана */}
           <section className={styles.trust} aria-label="О мастерской">
             <div className={styles.trustItem}>
               <span className={styles.num}>15+</span>
@@ -164,7 +165,7 @@ export default async function LandingPage() {
               <span className={styles.trustLabel}>проект, документация и авторский надзор</span>
             </div>
           </section>
-        </Reveal>
+        </div>
 
         {/* КВИЗ / КАЛЬКУЛЯТОР */}
         <section id="raschet" className={styles.sectionCenter} aria-label="Расчёт стоимости проекта">
