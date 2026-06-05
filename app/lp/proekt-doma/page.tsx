@@ -4,6 +4,7 @@ import { Footer } from "@/components/footer";
 import { LeadForm } from "@/components/lead-form";
 import { SafeImage } from "@/components/safe-image";
 import { getAllProjects } from "@/lib/projects";
+import { HomeProjectsSection } from "@/app/_components/home-page-content";
 import { LandingQuiz } from "./quiz";
 import { Reveal } from "./reveal";
 import styles from "./landing.module.css";
@@ -75,14 +76,16 @@ const FAQ = [
 
 export default async function LandingPage() {
   const projectsRaw = (await getAllProjects().catch(() => [])) as RawProject[];
+  // Полный список проектов из той же базы, что и главная (управляется через админку),
+  // чтобы портфолио на лендинге было синхронно с главной: фото, названия, порядок, категории.
   const projects = projectsRaw
-    .filter((p) => p && p.slug && p.heroImageUrl)
-    .slice(0, 6)
+    .filter((p) => p && p.slug)
     .map((p) => ({
       slug: p.slug,
       title: p.title,
       tagline: p.tagline ?? undefined,
-      heroImageUrl: p.heroImageUrl as string,
+      heroImageUrl: p.heroImageUrl ?? undefined,
+      categories: p.categories ?? [],
     }));
 
   return (
@@ -153,7 +156,7 @@ export default async function LandingPage() {
               <span className={styles.trustLabel}>реализованных проектов в портфолио</span>
             </div>
             <div className={styles.trustItem}>
-              <span className={styles.num}>10 лет</span>
+              <span className={styles.num}>15 лет</span>
               <span className={styles.trustLabel}>опыта архитектора Рината Гильмутдинова</span>
             </div>
             <div className={styles.trustItem}>
@@ -220,34 +223,18 @@ export default async function LandingPage() {
           </Reveal>
         </section>
 
-        {/* ПОРТФОЛИО */}
+        {/* ПОРТФОЛИО — синхронизировано с главной (общий источник данных через админку) */}
         {projects.length ? (
-          <section id="portfolio" className={styles.section} aria-label="Примеры проектов">
+          <section className={styles.section} aria-label="Портфолио проектов">
             <Reveal>
               <div className={styles.sectionHead}>
                 <p className={styles.kickerDark}>Портфолио</p>
                 <h2 className={styles.h2}>Наши проекты</h2>
               </div>
             </Reveal>
-            <div className={styles.pgrid}>
-              {projects.map((p, i) => (
-                <Reveal key={p.slug} delay={i * 80}>
-                  <a className={styles.pcard} href={`/${p.slug}`}>
-                    <span className={styles.pimg}>
-                      <SafeImage
-                        src={p.heroImageUrl}
-                        alt={p.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className={styles.pimgInner}
-                        unoptimized
-                      />
-                    </span>
-                    <span className={styles.ptitle}>{p.title}</span>
-                  </a>
-                </Reveal>
-              ))}
-            </div>
+            <Reveal>
+              <HomeProjectsSection projects={projects} />
+            </Reveal>
           </section>
         ) : null}
 
