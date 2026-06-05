@@ -58,12 +58,12 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1280px;
+  max-width: none;
   margin: 0 auto;
-  padding: clamp(28px, 4.5vw, 60px) clamp(20px, 5vw, 72px);
+  padding: clamp(28px, 4vw, 56px) clamp(20px, 5vw, 120px);
 }
 .heroCol {
-  max-width: 600px;
+  max-width: 680px;
   color: #fff;
 }
 .heroCol > * {
@@ -239,10 +239,24 @@
 }
 
 /* ---------- SECTIONS ---------- */
+/* Полноширинные секции с вертикальным ритмом (уменьшенные отступы) и тянущимися гуттерами */
 .section {
-  max-width: 1100px;
+  width: 100%;
+  margin: 0;
+  padding: clamp(36px, 4vw, 72px) clamp(20px, 5vw, 120px);
+}
+/* Визуальный блок «край-в-край» (портфолио) — минимальные гуттеры, тянется как на главной */
+.sectionWide {
+  width: 100%;
+  margin: 0;
+  padding: clamp(36px, 4vw, 72px) clamp(12px, 2.2vw, 56px);
+}
+/* Фокус-блок (квиз, FAQ) — по центру в комфортной ширине, не растягиваем */
+.sectionCenter {
+  width: 100%;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: clamp(40px, 4.6vw, 72px) clamp(20px, 5vw, 64px);
+  padding: clamp(36px, 4vw, 72px) clamp(20px, 5vw, 48px);
 }
 .sectionHead {
   max-width: 720px;
@@ -362,6 +376,7 @@
 /* ---------- FAQ ---------- */
 .faq {
   border-top: 1px solid var(--line);
+  max-width: 860px;
 }
 .faqItem {
   border-bottom: 1px solid var(--line);
@@ -609,6 +624,24 @@ details[open] .faqQ::after {
 @media (max-width: 480px) {
   .pgrid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- ULTRAWIDE (ПК, широкие мониторы) ---------- */
+@media (min-width: 1500px) {
+  .stages {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .included {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 2200px) {
+  .heroCol {
+    max-width: 760px;
+  }
+  .sectionHead {
+    max-width: 820px;
   }
 }
 

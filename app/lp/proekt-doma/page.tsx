@@ -167,7 +167,7 @@ export default async function LandingPage() {
         </Reveal>
 
         {/* КВИЗ / КАЛЬКУЛЯТОР */}
-        <section id="raschet" className={styles.section} aria-label="Расчёт стоимости проекта">
+        <section id="raschet" className={styles.sectionCenter} aria-label="Расчёт стоимости проекта">
           <Reveal>
             <div className={styles.sectionHead}>
               <p className={styles.kickerDark}>Расчёт за 1 минуту</p>
@@ -225,7 +225,7 @@ export default async function LandingPage() {
 
         {/* ПОРТФОЛИО — синхронизировано с главной (общий источник данных через админку) */}
         {projects.length ? (
-          <section className={styles.section} aria-label="Портфолио проектов">
+          <section className={styles.sectionWide} aria-label="Портфолио проектов">
             <Reveal>
               <div className={styles.sectionHead}>
                 <p className={styles.kickerDark}>Портфолио</p>
@@ -239,7 +239,7 @@ export default async function LandingPage() {
         ) : null}
 
         {/* FAQ */}
-        <section className={styles.section} aria-label="Вопросы и ответы">
+        <section className={styles.sectionCenter} aria-label="Вопросы и ответы">
           <Reveal>
             <div className={styles.sectionHead}>
               <p className={styles.kickerDark}>Частые вопросы</p>
