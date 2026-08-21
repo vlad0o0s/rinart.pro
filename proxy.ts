@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
  * (иначе браузер запрашивает уже удалённые `/_next/static/chunks/*` → 500/ошибки).
  * Статика `/_next/static` и прочие исключения не трогаем.
  */
-export function middleware(_request: NextRequest) {
+export function proxy(_request: NextRequest) {
   const response = NextResponse.next();
   response.headers.set(
     "Cache-Control",
