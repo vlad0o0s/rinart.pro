@@ -17,6 +17,9 @@ const NAV_LINKS = [
 
 const ARCHITECT_WORD = "Архитектор";
 
+const PHONE_DISPLAY = "+7 903 147-44-30";
+const PHONE_HREF = "tel:+79031474430";
+
 const PROEKTIR_SUBLINKS = [
   { href: "#vidy", label: "Виды работ" },
   { href: "#etap", label: "Этапы проектирования" },
@@ -228,6 +231,11 @@ function DesktopNavigation() {
             <Link href={link.href}>{link.label}</Link>
           </li>
         ))}
+        <li className={styles.desktopNavItem}>
+          <a href={PHONE_HREF} style={{ whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
+            {PHONE_DISPLAY}
+          </a>
+        </li>
       </ul>
     </nav>
   );
@@ -265,7 +273,19 @@ function MobileHeaderSection({
         ) : (
           <span aria-hidden className={`${styles.root} ${styles.mobileBrandPlaceholder}`} />
         )}
-        <div className={styles.mobileControlsButtonWrapper}>
+        <div className={styles.mobileControlsButtonWrapper} style={{ alignItems: "center", gap: "18px" }}>
+          <a
+            href={PHONE_HREF}
+            aria-label="Позвонить архитектору"
+            style={{ display: "inline-flex", alignItems: "center", flex: "0 0 auto", color: "#5c5c5c", lineHeight: 0 }}
+          >
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M6.6 10.8c1.5 2.9 3.7 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.3 0 .7-.2 1l-2.3 2.2Z"
+                fill="currentColor"
+              />
+            </svg>
+          </a>
           <button
             type="button"
             className={`${styles.burger} ${styles.mobileBurger}`}

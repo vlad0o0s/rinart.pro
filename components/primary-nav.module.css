@@ -34,7 +34,8 @@
 .item a {
   display: block;
   text-transform: uppercase;
-  color: rgba(37, 37, 37, 0.45);
+  /* было 0.45 — контраст 2.8:1 не дотягивал до нормы 3:1 для крупного текста */
+  color: rgba(37, 37, 37, 0.62);
   font-size: clamp(18px, 1.6vw, 30px);
   font-weight: 900;
   text-decoration: none;

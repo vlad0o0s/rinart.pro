@@ -576,6 +576,22 @@ details[open] .faqQ::after {
   gap: clamp(20px, 3vw, 38px);
   flex-wrap: wrap;
 }
+/* Кнопка заявки финального CTA: светлая по умолчанию, при наведении слегка выцветает.
+   Класс .maxBtnLg используется ТОЛЬКО на этой кнопке (в hero — .maxBtn), так что
+   другие кнопки не затрагиваются. Удвоенный класс + !important нужны, чтобы перебить
+   hover-правила компонента lead-form (.openButton.preserveOpenButtonStyle:hover). */
+.finalActions .maxBtnLg.maxBtnLg {
+  background: #ffffff !important;
+  color: #252525 !important;
+  border-color: #ffffff !important;
+}
+.finalActions .maxBtnLg.maxBtnLg:hover,
+.finalActions .maxBtnLg.maxBtnLg:focus-visible {
+  background: rgba(255, 255, 255, 0.7) !important;
+  color: #252525 !important;
+  border-color: rgba(255, 255, 255, 0.7) !important;
+  transform: none !important;
+}
 .phoneDark {
   color: #fff;
   font-size: clamp(18px, 2vw, 24px);
@@ -677,4 +693,31 @@ details[open] .faqQ::after {
     opacity: 1 !important;
     transform: none !important;
   }
+}
+
+/* Блок с расчётом стоимости на финальном экране квиза */
+.estimate {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 26px;
+  padding: clamp(18px, 2.4vw, 26px) clamp(18px, 2.4vw, 28px);
+  background: var(--ink);
+  color: #fff;
+}
+.estimateLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  opacity: 0.6;
+}
+.estimateValue {
+  font-size: clamp(22px, 3.2vw, 36px);
+  font-weight: 600;
+  line-height: 1.15;
+}
+.estimateNote {
+  font-size: clamp(13px, 1.2vw, 15px);
+  line-height: 1.55;
+  opacity: 0.72;
 }

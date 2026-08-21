@@ -19,7 +19,26 @@ export type GlobalBlocks = {
   "pricing": PricingData;
 };
 
+/**
+ * getGlobalBlocks() вызывается в корневом layout, то есть на каждый рендер любой страницы,
+ * и делает запрос к базе на удалённом хосте плюс проверки файлов на диске. Без кеша это
+ * был самый нагруженный путь на сайте. Инвалидация происходит в saveGlobalBlock() —
+ * единственной точке записи, через которую ходит весь админский API, поэтому правки
+ * в админке видны сразу, а не через TTL.
+ */
+type GlobalBlocksCache = { value: GlobalBlocks; expiresAt: number };
+const GLOBAL_BLOCKS_TTL = 60 * 1000;
+let globalBlocksCache: GlobalBlocksCache | null = null;
+
+export function invalidateGlobalBlocksCache() {
+  globalBlocksCache = null;
+}
+
 export async function getGlobalBlocks(): Promise<GlobalBlocks> {
+  if (globalBlocksCache && globalBlocksCache.expiresAt > Date.now()) {
+    return globalBlocksCache.value;
+  }
+
   const all = await fetchAllGlobalBlocks();
   const pick = async (slug: keyof GlobalBlocks) => {
     const record = all.find((r) => r.slug === slug);
@@ -121,11 +140,13 @@ export async function getGlobalBlocks(): Promise<GlobalBlocks> {
     };
   };
 
-  return {
+  const result: GlobalBlocks = {
     "home-hero": home,
     "page-transition": transition,
     "pricing": pickPricing(),
   };
+  globalBlocksCache = { value: result, expiresAt: Date.now() + GLOBAL_BLOCKS_TTL };
+  return result;
 }
 
 export async function getGlobalBlock(slug: keyof GlobalBlocks): Promise<GlobalBlocks[typeof slug]> {
@@ -158,6 +179,7 @@ export async function saveGlobalBlock(slug: keyof GlobalBlocks, data: GlobalBloc
       bottomItems: Array.isArray(pricingData.bottomItems) ? pricingData.bottomItems : [],
     };
     const saved = await upsertGlobalBlock(slug, sanitized);
+    invalidateGlobalBlocksCache();
     const value = (saved?.data ?? {}) as Record<string, unknown>;
     return {
       topItems: (value.topItems as PricingItem[]) ?? [],
@@ -192,6 +214,7 @@ export async function saveGlobalBlock(slug: keyof GlobalBlocks, data: GlobalBloc
     imageUrl: sanitizedImageUrl,
   };
   const saved = await upsertGlobalBlock(slug, sanitized);
+  invalidateGlobalBlocksCache();
   const value = (saved?.data ?? {}) as Record<string, unknown>;
   return {
     imageUrl: typeof value.imageUrl === "string" && value.imageUrl.trim().length ? value.imageUrl.trim() : null,

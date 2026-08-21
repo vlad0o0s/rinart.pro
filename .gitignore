@@ -48,3 +48,10 @@ data/leads.json
 *.bak
 *.bak-*
 *.bak*
+
+# каталоги сборки, создаваемые scripts/deploy.sh
+.next-prev/
+.next-build/
+
+# резервные копии файлов
+*.orig

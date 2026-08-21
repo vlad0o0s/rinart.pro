@@ -5,7 +5,7 @@ import { Footer } from "@/components/footer";
 import { getAllProjects, getProjectBySlug } from "@/lib/projects";
 import styles from "./page.module.css";
 import { JsonLd } from "@/components/json-ld";
-import { projectPageSchema } from "@/lib/seo/schema";
+import { projectPageSchema, SITE_URL } from "@/lib/seo/schema";
 import ProjectBody from "./project-body";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 import { RelatedProjectsSlider } from "./related-projects";
@@ -27,17 +27,38 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const seo = project.seo ?? {};
   const firstParagraph = project.descriptionBody?.[0];
   const description = seo.description ?? firstParagraph ?? undefined;
-  const ogImages = seo.ogImage ? [seo.ogImage] : [];
+  const canonical = `${SITE_URL}/${project.slug}`;
+
+  // Если картинка для соцсетей не задана вручную, берём главное изображение проекта:
+  // раньше og:image просто отсутствовал и ссылка в мессенджерах выглядела пустой.
+  const ogImageSource = seo.ogImage ?? project.heroImageUrl ?? null;
+  const ogImage = ogImageSource
+    ? ogImageSource.startsWith("http")
+      ? ogImageSource
+      : `${SITE_URL}${ogImageSource.startsWith("/") ? "" : "/"}${ogImageSource}`
+    : null;
 
   return {
     title: seo.title ?? `${project.title} — RINART`,
     description,
     keywords: seo.keywords,
+    alternates: { canonical },
     openGraph: {
       title: seo.title ?? project.title,
       description,
-      images: ogImages.length ? ogImages : undefined,
+      url: canonical,
+      siteName: "RINART",
+      type: "article",
+      images: ogImage ? [{ url: ogImage }] : undefined,
     },
+    twitter: ogImage
+      ? {
+          card: "summary_large_image",
+          title: seo.title ?? project.title,
+          description,
+          images: [ogImage],
+        }
+      : undefined,
   };
 }
 

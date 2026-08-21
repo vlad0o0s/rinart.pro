@@ -68,6 +68,47 @@
   opacity: 1;
 }
 
+.heroTagline {
+  /* Тег h1: гасим браузерные отступы и размер, чтобы вид не отличался от прежнего span */
+  margin: 0;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: calc(clamp(20px, 2vw, 40px) + 12 * clamp(12px, 0.9vw, 22px) + 24px);
+  display: flex;
+  align-items: center;
+  padding-right: 22px;
+  border-right: 1px solid rgba(37, 37, 37, 0.35);
+  font-family: "Neue Haas Unica", "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(12px, 0.9vw, 22px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6f6f6f;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (max-width: 1023px) {
+  /* На узких экранах подпись не помещается в макет, но это H1 страницы.
+     display: none убрал бы его из мобильной версии, по которой индексирует Google,
+     поэтому прячем визуально, оставляя заголовок в потоке для поиска и скринридеров. */
+  .heroTagline {
+    top: auto;
+    bottom: auto;
+    right: auto;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+
 @media (max-width: 767px) {
   .hero {
     padding-top: var(--lead-button-top, 48px);
@@ -77,6 +118,11 @@
     position: absolute;
     top: var(--lead-button-top, 48px);
     width: 100%;
+    /* Ниже шапки (z-index: 100). Полоса кнопки непрозрачная, и при малейшем
+       выходе текста шапки за её нижнюю границу она срезала логотип: рисовалась
+       поверх, потому что 3000 больше 100. Здесь .content лежит внутри hero,
+       перекрывать ему нужно только фото (0) и затемнение (2). */
+    z-index: 50;
   }
 }
 

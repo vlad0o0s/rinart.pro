@@ -130,7 +130,12 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
   }, [activeCategory, categories]);
 
   return (
-    <section className={styles.portfolioSection} id="portfolio">
+    <section className={styles.portfolioSection} id="portfolio" aria-labelledby="portfolio-heading">
+      {/* Секция портфолио в макете идёт без видимого заголовка, из-за чего на главной
+          не было ни одного H2. Даём разделу имя для поиска и скринридеров. */}
+      <h2 id="portfolio-heading" className={styles.srOnly}>
+        Портфолио: проекты частных домов, интерьеров и арт-объектов
+      </h2>
       <div className={styles.categoryHeader}>
         {showSkeleton ? (
           <>
@@ -155,14 +160,19 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
               <span className={styles.mobileCategoryIcon} aria-hidden />
             </button>
 
+            {/* Здесь стояла роль tablist, но внутри обычные кнопки без role="tab" — по спецификации
+                ARIA такое дерево считается некорректным. Это фильтр, а не вкладки: группа
+                кнопок-переключателей с aria-pressed описывает поведение точнее. */}
             <div
               className={`${styles.categoryList} ${mobileCategoriesOpen ? styles.categoryListOpen : ""}`}
-              role="tablist"
+              role="group"
+              aria-label="Фильтр проектов по категориям"
             >
               {categories.map((category) => (
                 <button
                   key={category.id}
                   type="button"
+                  aria-pressed={category.id === activeCategory}
                   className={`${styles.categoryButton} ${
                     category.id === activeCategory ? styles.categoryButtonActive : ""
                   }`}
@@ -197,13 +207,17 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
                     {project.heroImageUrl ? (
                       <Image
                         src={project.heroImageUrl}
-                        alt={project.title}
+                        // Название проекта идёт рядом отдельной подписью, поэтому картинка
+                        // помечена как декоративная: иначе скринридер читает одно и то же дважды.
+                        alt=""
                         className={styles.portfolioImage}
                         loading={index === 0 ? "eager" : "lazy"}
                         fetchPriority={index === 0 ? "high" : undefined}
                         priority={index === 0}
                         fill
-                        sizes="(max-width: 640px) 88vw, (max-width: 1200px) 40vw, 22vw"
+                        // Плитка неравномерная: широкие карточки занимают около 40vw, и при
+                        // прежних 22vw браузер подбирал слишком мелкий файл — изображение мылило.
+                        sizes="(max-width: 640px) 90vw, (max-width: 1200px) 50vw, 40vw"
                         quality={75}
                       />
                     ) : (

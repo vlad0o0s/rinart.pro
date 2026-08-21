@@ -178,46 +178,12 @@ type MediaAsset = {
   origin: "library" | "project";
 };
 
-type SeoPageDefaults = {
-  title?: string | null;
-  description?: string | null;
-  keywords?: string[];
-  ogImageUrl?: string | null;
-};
-
-type SeoPageResponse = {
-  slug: string;
-  label: string;
-  path: string;
-  defaults: SeoPageDefaults;
-  seo: {
-    title: string | null;
-    description: string | null;
-    keywords: string[];
-    ogImageUrl: string | null;
-  };
-};
-
-type SeoPageState = {
-  slug: string;
-  label: string;
-  path: string;
-  title: string;
-  description: string;
-  keywords: string;
-  ogImageUrl: string;
-  defaults: SeoPageDefaults;
-};
-
-type SeoEditorField = "title" | "description" | "keywords" | "ogImageUrl";
-
 type MediaLibraryMode =
   | "hero"
   | "gallery-add"
   | "gallery-replace"
   | "scheme"
   | "seo"
-  | "seo-page"
   | "team-image"
   | "team-mobile-image"
   | "site-hero"
@@ -1212,7 +1178,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     setLibraryAssets((prev) => prev.filter((item) => item.id !== asset.id));
   };
   // Инициализируем с дефолтным значением для избежания проблем с гидратацией
-  const [activeView, setActiveView] = useState<"projects" | "seo" | "settings">("projects");
+  const [activeView, setActiveView] = useState<"projects" | "settings">("projects");
 
   // Восстанавливаем активную вкладку из localStorage после гидратации
   useEffect(() => {
@@ -1221,7 +1187,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     }
     try {
       const savedView = localStorage.getItem(STORAGE_KEY_ACTIVE_VIEW);
-      if (savedView === "projects" || savedView === "seo" || savedView === "settings") {
+      if (savedView === "projects" || savedView === "settings") {
         setActiveView(savedView);
       }
     } catch {
@@ -1253,10 +1219,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const [founderBiographyLoading, setFounderBiographyLoading] = useState(false);
   const [founderBiographySaving, setFounderBiographySaving] = useState(false);
   const [founderLeadText, setFounderLeadText] = useState<string>("");
-  const [seoPages, setSeoPages] = useState<SeoPageState[]>([]);
-  const [selectedSeoSlug, setSelectedSeoSlug] = useState<string | null>(null);
-  const [seoLoading, setSeoLoading] = useState(false);
-  const [seoSavingSlug, setSeoSavingSlug] = useState<string | null>(null);
   const [contactSettings, setContactSettings] = useState<ContactSettingsState>(CONTACT_DEFAULTS);
   const [socialLinks, setSocialLinks] = useState<SocialLinkState[]>(SOCIAL_DEFAULTS);
   const [settingsLoading, setSettingsLoading] = useState(false);
@@ -1285,12 +1247,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   const existingSlugSet = useMemo(() => new Set(projects.map((project) => project.slug)), [projects]);
   const showProjectSkeleton = loading && projects.length === 0;
   const showEditorSkeleton = (loading && !editorState) || editorLoading || mediaSaving;
-  const selectedSeoPage = useMemo(
-    () => (selectedSeoSlug ? seoPages.find((page) => page.slug === selectedSeoSlug) ?? null : null),
-    [seoPages, selectedSeoSlug],
-  );
-  const showSeoSkeleton = seoLoading && !seoPages.length;
-  const seoSaving = selectedSeoSlug ? seoSavingSlug === selectedSeoSlug : false;
   const activeTeamMember = useMemo(
     () => (teamActiveDragId ? teamMembers.find((member) => member.id === teamActiveDragId) ?? null : null),
     [teamMembers, teamActiveDragId],
@@ -2031,15 +1987,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
             };
           });
         }
-      } else if (mediaLibrary.mode === "seo-page" && mediaLibrary.targetId) {
-        const seoAsset = assets[0];
-        if (seoAsset) {
-          setSeoPages((prev) =>
-            prev.map((page) =>
-              page.slug === mediaLibrary.targetId ? { ...page, ogImageUrl: seoAsset.url } : page,
-            ),
-          );
-        }
       } else if (mediaLibrary.mode === "contact-hero") {
         const heroAsset = assets[0];
         if (heroAsset) {
@@ -2136,54 +2083,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     };
   }, [reportError]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadSeo() {
-      try {
-        setSeoLoading(true);
-        const data = await fetchJson<{ pages: SeoPageResponse[] }>("/api/admin/seo");
-        if (cancelled) return;
-        const mapped = data.pages.map<SeoPageState>((page) => {
-          const seo = page.seo ?? {};
-          const defaults = page.defaults ?? {};
-          return {
-            slug: page.slug,
-            label: page.label,
-            path: page.path,
-            title: (seo.title ?? defaults.title ?? "").trim(),
-            description: (seo.description ?? defaults.description ?? "").trim(),
-            keywords: Array.isArray(seo.keywords) && seo.keywords.length > 0
-              ? seo.keywords.join(", ")
-              : Array.isArray(defaults.keywords) && defaults.keywords.length > 0
-                ? defaults.keywords.join(", ")
-                : "",
-            ogImageUrl: (seo.ogImageUrl ?? defaults.ogImageUrl ?? "").trim(),
-            defaults: defaults,
-          };
-        });
-        setSeoPages(mapped);
-        setSelectedSeoSlug((prev) => prev ?? (mapped[0]?.slug ?? null));
-      } catch (error: unknown) {
-        reportError(error, "Не удалось загрузить SEO");
-      } finally {
-        if (!cancelled) {
-          setSeoLoading(false);
-        }
-      }
-    }
-
-    loadSeo();
-    return () => {
-      cancelled = true;
-    };
-  }, [reportError]);
-
-  useEffect(() => {
-    if (activeView === "seo" && !selectedSeoSlug && seoPages.length) {
-      setSelectedSeoSlug(seoPages[0].slug);
-    }
-  }, [activeView, selectedSeoSlug, seoPages]);
 
   // Settings view removed
 
@@ -2321,73 +2220,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
       setEditorState((prev) => (prev ? { ...prev, [field]: value } : prev));
     },
     [],
-  );
-
-  const handleSeoSelect = useCallback((slug: string) => {
-    setSelectedSeoSlug(slug);
-  }, []);
-
-  const updateSeoField = useCallback((slug: string, field: SeoEditorField, value: string) => {
-    setSeoPages((prev) =>
-      prev.map((page) => (page.slug === slug ? { ...page, [field]: value } : page)),
-    );
-  }, []);
-
-  const handleSeoOgClear = useCallback((slug: string) => {
-    setSeoPages((prev) =>
-      prev.map((page) => (page.slug === slug ? { ...page, ogImageUrl: "" } : page)),
-    );
-  }, []);
-
-  const handleSeoSave = useCallback(
-    async (slug: string) => {
-      const page = seoPages.find((item) => item.slug === slug);
-      if (!page) {
-        return;
-      }
-      try {
-        setSeoSavingSlug(slug);
-        const response = await fetchJson<{ page: SeoPageResponse }>("/api/admin/seo", {
-          method: "PUT",
-          body: JSON.stringify({
-            slug,
-            title: page.title.trim() || null,
-            description: page.description.trim() || null,
-            keywords: splitKeywordsInput(page.keywords),
-            ogImageUrl: page.ogImageUrl.trim() || null,
-          }),
-        });
-        const updated = response.page;
-        const seo = updated.seo ?? {};
-        const defaults = updated.defaults ?? {};
-        setSeoPages((prev) =>
-          prev.map((item) =>
-            item.slug === slug
-              ? {
-                  slug: updated.slug,
-                  label: updated.label,
-                  path: updated.path,
-                  title: (seo.title ?? defaults.title ?? "").trim(),
-                  description: (seo.description ?? defaults.description ?? "").trim(),
-                  keywords: Array.isArray(seo.keywords) && seo.keywords.length > 0
-                    ? seo.keywords.join(", ")
-                    : Array.isArray(defaults.keywords) && defaults.keywords.length > 0
-                      ? defaults.keywords.join(", ")
-                      : "",
-                  ogImageUrl: (seo.ogImageUrl ?? defaults.ogImageUrl ?? "").trim(),
-                  defaults: defaults,
-                }
-              : item,
-          ),
-        );
-        setSuccessStatus("SEO обновлено");
-      } catch (error: unknown) {
-        reportError(error, "Не удалось сохранить SEO");
-      } finally {
-        setSeoSavingSlug(null);
-      }
-    },
-    [reportError, seoPages],
   );
 
   const toggleCategory = useCallback((category: string) => {
@@ -2855,7 +2687,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         <div className={styles.branding}>
           <span className={styles.brandTitle}>RINART Admin</span>
           <span className={styles.brandSubtitle}>
-            {activeView === "projects" ? "Управление портфолио" : activeView === "seo" ? "SEO сайта" : "Настройки"}
+            {activeView === "projects" ? "Управление портфолио" : "Настройки"}
           </span>
           <nav className={styles.viewTabs} aria-label="Разделы админки">
             <button
@@ -2866,15 +2698,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               disabled={activeView === "projects"}
             >
               Проекты
-            </button>
-            <button
-              type="button"
-              className={styles.viewTabButton}
-              data-active={activeView === "seo"}
-              onClick={() => setActiveView("seo")}
-              disabled={activeView === "seo"}
-            >
-              SEO
             </button>
             <button
               type="button"
@@ -3026,25 +2849,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               ) : null}
             </aside>
           </>
-        ) : activeView === "seo" ? (
-          <SeoView
-            seoPages={seoPages}
-            selectedSeoSlug={selectedSeoSlug}
-            onSeoSelect={handleSeoSelect}
-            selectedSeoPage={selectedSeoPage}
-            onSeoFieldChange={(field: SeoEditorField, value: string) => updateSeoField(selectedSeoPage?.slug ?? "", field, value)}
-            onSeoSave={() => handleSeoSave(selectedSeoPage?.slug ?? "")}
-            onSeoOgClear={() => handleSeoOgClear(selectedSeoPage?.slug ?? "")}
-            onSeoOgPicker={() =>
-              selectedSeoPage &&
-              openMediaLibrary("seo-page", {
-                targetId: selectedSeoPage.slug,
-                initialSelection: selectedSeoPage.ogImageUrl ? [selectedSeoPage.ogImageUrl] : [],
-              })
-            }
-            seoSaving={seoSaving}
-            seoLoading={showSeoSkeleton}
-          />
         ) : activeView === "settings" ? (
           <SettingsView
             contactSettings={contactSettings}
@@ -3130,152 +2934,6 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         />
       ) : null}
     </div>
-  );
-}
-
-function SeoListSkeleton() {
-  return <ProjectListSkeleton />;
-}
-
-function SeoEditorSkeleton() {
-  return <EditorSkeleton />;
-}
-
-function SeoPageListItem({
-  page,
-  isActive,
-  onSelect,
-}: {
-  page: SeoPageState;
-  isActive: boolean;
-  onSelect: (slug: string) => void;
-}) {
-  const hasOverrides =
-    page.title.trim().length > 0 ||
-    page.description.trim().length > 0 ||
-    page.keywords.trim().length > 0 ||
-    page.ogImageUrl.trim().length > 0;
-  return (
-    <button
-      type="button"
-      className={styles.seoPageButton}
-      data-active={isActive}
-      data-overridden={hasOverrides}
-      onClick={() => onSelect(page.slug)}
-    >
-      <span className={styles.seoPageLabel}>{page.label}</span>
-      <span className={styles.seoPagePath}>{page.path}</span>
-      {hasOverrides ? <span className={styles.seoPageMeta}>Используются собственные данные</span> : null}
-    </button>
-  );
-}
-
-function SeoEditorPanel({
-  page,
-  onFieldChange,
-  onSave,
-  onOpenOgPicker,
-  onClearOgImage,
-  saving,
-}: {
-  page: SeoPageState;
-  onFieldChange: (field: SeoEditorField, value: string) => void;
-  onSave: () => void;
-  onOpenOgPicker: () => void;
-  onClearOgImage: () => void;
-  saving: boolean;
-}) {
-  const defaultKeywords = page.defaults.keywords?.length ? page.defaults.keywords.join(", ") : "";
-  const hasOgImage = Boolean(page.ogImageUrl.trim());
-
-  const handleSubmit = (event: ReactFormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    onSave();
-  };
-
-  return (
-    <form className={styles.settingsPanel} onSubmit={handleSubmit}>
-      <div className={styles.settingsCard}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <p className={styles.sectionEyebrow}>SEO</p>
-            <h2 className={styles.columnTitle}>{page.label}</h2>
-            <p className={styles.columnSubtitle}>Настройте заголовки, описания и изображение для соцсетей.</p>
-            <code className={styles.seoPathBadge}>{page.path}</code>
-          </div>
-        </div>
-
-        <label className={styles.inputGroup}>
-          <LabelWithHint label="Title" hint="Заголовок, который появляется в результатах поиска и во вкладке браузера." />
-          <input
-            className={styles.textInput}
-            value={page.title}
-            onChange={(event) => onFieldChange("title", event.target.value)}
-            placeholder={page.defaults.title ?? ""}
-          />
-        </label>
-
-        <label className={styles.inputGroup}>
-          <LabelWithHint
-            label="Description"
-            hint="Краткое описание страницы для поисковых систем и социальных сетей."
-          />
-          <textarea
-            className={`${styles.textInput} ${styles.seoTextarea}`}
-            value={page.description}
-            onChange={(event) => onFieldChange("description", event.target.value)}
-            placeholder={page.defaults.description ?? ""}
-            rows={5}
-          />
-        </label>
-
-        <label className={styles.inputGroup}>
-          <LabelWithHint label="Ключевые слова" hint="Перечислите слова через запятую. Они помогут поисковикам понять контент." />
-          <input
-            className={styles.textInput}
-            value={page.keywords}
-            onChange={(event) => onFieldChange("keywords", event.target.value)}
-            placeholder={defaultKeywords}
-          />
-          <span className={styles.seoHelperText}>Например: архитектура, rinart, мастерская</span>
-        </label>
-
-        <div className={styles.seoOgSection}>
-          <LabelWithHint
-            label="OG-изображение"
-            hint="Будет показано при шаринге страницы в социальных сетях и мессенджерах."
-          />
-          <div className={styles.seoOgPreview}>
-            {hasOgImage ? (
-              <SafeImage
-                src={page.ogImageUrl}
-                alt="OG-превью"
-                className={styles.seoOgPreviewImage}
-                width={640}
-                height={360}
-              />
-            ) : (
-              <div className={styles.seoOgEmpty}>Изображение не выбрано</div>
-            )}
-          </div>
-          <div className={styles.seoOgActions}>
-            <button type="button" className={styles.secondaryButton} onClick={onOpenOgPicker}>
-              Выбрать из библиотеки
-            </button>
-            {hasOgImage ? (
-              <button type="button" className={styles.ghostButton} onClick={onClearOgImage}>
-                Очистить
-              </button>
-            ) : null}
-          </div>
-        </div>
-      </div>
-      <div className={styles.settingsActions}>
-        <button className={styles.primaryButton} type="submit" disabled={saving}>
-          {saving ? "Сохраняем..." : "Сохранить"}
-        </button>
-      </div>
-    </form>
   );
 }
 
@@ -4201,90 +3859,6 @@ type SettingsViewProps = {
   activeTeamMember: TeamMemberState | null;
   onOpenMediaLibrary: (mode: MediaLibraryMode, options?: { targetId?: string; initialSelection?: string[] }) => void;
 };
-
-function SeoView({
-  seoPages,
-  selectedSeoSlug,
-  onSeoSelect,
-  selectedSeoPage,
-  onSeoFieldChange,
-  onSeoSave,
-  onSeoOgClear,
-  onSeoOgPicker,
-  seoSaving,
-  seoLoading,
-}: {
-  seoPages: SeoPageState[];
-  selectedSeoSlug: string | null;
-  onSeoSelect: (slug: string) => void;
-  selectedSeoPage: SeoPageState | null;
-  onSeoFieldChange: (field: SeoEditorField, value: string) => void;
-  onSeoSave: () => void;
-  onSeoOgClear: () => void;
-  onSeoOgPicker: () => void;
-  seoSaving: boolean;
-  seoLoading: boolean;
-}) {
-  return (
-    <div className={styles.settingsHub}>
-      <div className={styles.settingsIntro}>
-        <div>
-          <p className={styles.sectionEyebrow}>SEO</p>
-          <h2 className={styles.columnTitle}>Метаданные страниц</h2>
-          <p className={styles.columnSubtitle}>Выберите страницу, чтобы настроить заголовки, описания и изображения для поисковых систем.</p>
-        </div>
-      </div>
-      <div className={styles.settingsLayout}>
-        <nav className={styles.settingsNav} aria-label="Страницы сайта">
-          {seoLoading ? (
-            <div className={styles.emptyState}>Загрузка...</div>
-          ) : seoPages.length ? (
-            seoPages.map((page) => {
-              const hasOverrides =
-                page.title.trim().length > 0 ||
-                page.description.trim().length > 0 ||
-                page.keywords.trim().length > 0 ||
-                page.ogImageUrl.trim().length > 0;
-              return (
-                <button
-                  key={page.slug}
-                  className={styles.settingsNavButton}
-                  type="button"
-                  data-active={selectedSeoSlug === page.slug}
-                  onClick={() => onSeoSelect(page.slug)}
-                >
-                  <span className={styles.settingsNavLabel}>{page.label}</span>
-                  <span className={styles.settingsNavDescription}>
-                    {page.path}
-                    {hasOverrides ? " • Настроено" : ""}
-                  </span>
-                </button>
-              );
-            })
-          ) : (
-            <div className={styles.emptyState}>Нет доступных страниц</div>
-          )}
-        </nav>
-        <div className={styles.settingsContent}>
-          {selectedSeoPage ? (
-            <SeoEditorPanel
-              page={selectedSeoPage}
-              onFieldChange={onSeoFieldChange}
-              onSave={onSeoSave}
-              onClearOgImage={onSeoOgClear}
-              onOpenOgPicker={onSeoOgPicker}
-              saving={seoSaving}
-            />
-          ) : seoLoading ? (
-            <SeoEditorSkeleton />
-          ) : (
-            <div className={styles.emptyState}>Выберите страницу, чтобы изменить SEO.</div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // Settings view removed
 function SettingsView({

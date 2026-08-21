@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { findPageSeoBySlug } from "./page-seo-repository";
 import { getStaticSeoPage } from "./seo/static-pages";
 
 const SITE_URL = "https://rinart.pro";
@@ -22,20 +21,19 @@ function toAbsoluteUrl(url: string | null | undefined): string | null {
   return `${SITE_URL}${url.startsWith("/") ? url : `/${url}`}`;
 }
 
+// Единственный источник мета-тегов статических страниц — lib/seo/static-pages.ts.
+// Переопределения из таблицы PageSeo намеренно не читаются: раздел «SEO сайта» убран из админки,
+// значения правятся в коде и выкатываются сборкой.
 export async function resolvePageSeo(slug: string): Promise<ResolvedPageSeo | null> {
   const definition = getStaticSeoPage(slug);
   if (!definition) {
     return null;
   }
 
-  const override = await findPageSeoBySlug(slug);
-
-  const title = override?.title ?? definition.defaults.title ?? "";
-  const description = override?.description ?? definition.defaults.description ?? "";
-  const keywords = override?.keywords?.length
-    ? override.keywords
-    : definition.defaults.keywords ?? [];
-  const ogImageUrl = override?.ogImageUrl ?? definition.defaults.ogImageUrl ?? null;
+  const title = definition.defaults.title ?? "";
+  const description = definition.defaults.description ?? "";
+  const keywords = definition.defaults.keywords ?? [];
+  const ogImageUrl = definition.defaults.ogImageUrl ?? null;
 
   return {
     slug,

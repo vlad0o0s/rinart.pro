@@ -54,7 +54,8 @@
   align-items: center;
   justify-content: flex-end;
   min-height: clamp(52px, 5vw, 60px);
-  padding: 0 clamp(24px, 12.5vw, 240px) 0 20px;
+  padding: 0 clamp(20px, 2vw, 40px) 0 20px;
+  font-size: clamp(12px, 0.9vw, 22px);
   border-right: 0;
   border-left: 0;
   border-color: rgba(37, 37, 37, 0.42);
@@ -226,8 +227,9 @@
 }
 
 .captcha {
-  min-height: 102px;
-  overflow: hidden;
+  /* Невидимая капча не резервирует видимый блок 102px, как видимый виджет;
+     overflow не ограничиваем, чтобы не обрезать всплывающий челлендж/шильдик, если он появится. */
+  min-height: 0;
 }
 
 .submit {
@@ -280,8 +282,8 @@
     padding: 0 10px;
   }
 
+  /* Гасим отступы .section — ширину полосы задаёт блок max-width: 1023px ниже. */
   .sectionHero {
-    width: 100vw;
     margin: 0;
     padding: 0;
   }
@@ -293,7 +295,6 @@
 
   .sectionHero .openButton {
     min-height: 56px;
-    padding-right: 18px;
     font-size: 11px;
     letter-spacing: 0.18em;
   }
@@ -327,6 +328,38 @@
 
   .submit {
     min-height: 60px;
+  }
+}
+
+/* Граница именно 1023px, а не 720px: ровно до неё в hero.module.css визуально
+   скрыт H1 «Проектирование загородных домов», который на широких экранах
+   занимает левую половину этой же полосы. Без него надпись, прижатая к правому
+   краю, висела над пустой полосой — это и читалось как поехавшая вёрстка.
+   Здесь она единственный элемент строки, поэтому центрируем её и даём фон:
+   над светлым небом на фотографии серый текст почти не читался. */
+@media (max-width: 1023px) {
+  /* 100vw считается вместе с полосой прокрутки и бывает шире родителя —
+     тогда центрированная надпись съезжает на половину этой полосы. */
+  .sectionHero {
+    width: 100%;
+  }
+
+  .sectionHero .openButton {
+    justify-content: center;
+    padding: 0 18px;
+    text-align: center;
+    background: #ffffff;
+  }
+
+  /* Общее правило для hero даёт на наведение полупрозрачный фон — на тачскрине
+     :hover залипает после тапа, и кнопка на секунду становилась прозрачной.
+     Отклик на нажатие делаем как у остальных кнопок сайта — инверсией. */
+  .sectionHero .openButton:hover,
+  .sectionHero .openButton:focus-visible,
+  .sectionHero .openButton:active {
+    background: #252525;
+    border-color: #252525;
+    color: #ffffff;
   }
 }
 

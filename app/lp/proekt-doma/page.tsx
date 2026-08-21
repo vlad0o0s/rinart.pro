@@ -4,9 +4,11 @@ import { Footer } from "@/components/footer";
 import { LeadForm } from "@/components/lead-form";
 import { SafeImage } from "@/components/safe-image";
 import { getAllProjects } from "@/lib/projects";
+import { PRICING_TIERS, MIN_RATE, formatMoney, formatRate } from "@/lib/pricing-tiers";
 import { HomeProjectsSection } from "@/app/_components/home-page-content";
 import { LandingQuiz } from "./quiz";
 import { Reveal } from "./reveal";
+import { ContactTracker } from "./contact-tracker";
 import styles from "./landing.module.css";
 
 // Изолированная посадочная под рекламу: не индексируется, не в sitemap, без входящих ссылок.
@@ -51,14 +53,19 @@ const INCLUDED = [
   "Спецификации и ведомости для сметы",
 ];
 
+// Цена за метр снижается с ростом площади, поэтому в ответе перечисляем всю шкалу целиком.
+const PRICE_SCALE_TEXT = PRICING_TIERS.map(
+  (tier) => `${tier.label} — ${formatRate(tier.base)} ₽/м² за базовый комплект, ${formatRate(tier.full)} ₽/м² с инженерными разделами`,
+).join("; ");
+
 const FAQ = [
   {
     q: "Сколько стоит проект дома?",
-    a: "Стоимость зависит от площади, сложности и состава документации. После короткого расчёта и разговора мы называем точную цену — без скрытых доплат.",
+    a: `Чем больше дом, тем ниже цена за квадратный метр: ${PRICE_SCALE_TEXT}. Базовый комплект — эскизный проект, архитектурные и конструктивные решения; полный дополнен отоплением, водоснабжением и электроснабжением. Например, дом 200 м² — от ${formatMoney(PRICING_TIERS[1].base * 200)}. Для реконструкции применяется коэффициент 1,2: она сложнее в проектировании. Точную цену фиксируем в договоре, без скрытых доплат.`,
   },
   {
     q: "Сколько времени занимает проектирование?",
-    a: "Эскизный проект — в среднем 3–4 недели, полный рабочий проект — от 1,5 месяцев. Точные сроки фиксируем в договоре.",
+    a: "Эскизный проект — в среднем 4–6 недель, полный рабочий проект — от 1,5 месяцев. Точные сроки фиксируем в договоре.",
   },
   {
     q: "Что я получаю на руки?",
@@ -90,6 +97,7 @@ export default async function LandingPage() {
 
   return (
     <>
+      <ContactTracker />
       <SiteHeader showDesktopBrand />
       <main className={`${styles.page} min-h-screen bg-white text-neutral-900 antialiased`}>
         {/* ПЕРВЫЙ ЭКРАН: HERO + ПРЕИМУЩЕСТВА (низ преимуществ = край экрана) */}
@@ -153,16 +161,16 @@ export default async function LandingPage() {
         {/* ПРЕИМУЩЕСТВА — закреплены внизу первого экрана */}
           <section className={styles.trust} aria-label="О мастерской">
             <div className={styles.trustItem}>
-              <span className={styles.num}>15+</span>
-              <span className={styles.trustLabel}>реализованных проектов в портфолио</span>
+              <span className={styles.num}>20+ лет</span>
+              <span className={styles.trustLabel}>практики архитектора Рината Гильмутдинова</span>
             </div>
             <div className={styles.trustItem}>
-              <span className={styles.num}>15 лет</span>
-              <span className={styles.trustLabel}>опыта архитектора Рината Гильмутдинова</span>
+              <span className={styles.num}>2 место</span>
+              <span className={styles.trustLabel}>премия «Красивые дома 2025», архитектурный объект</span>
             </div>
             <div className={styles.trustItem}>
-              <span className={styles.num}>Под ключ</span>
-              <span className={styles.trustLabel}>проект, документация и авторский надзор</span>
+              <span className={styles.num}>По договору</span>
+              <span className={styles.trustLabel}>фиксированная цена и сроки + авторский надзор</span>
             </div>
           </section>
         </div>
@@ -174,8 +182,7 @@ export default async function LandingPage() {
               <p className={styles.kickerDark}>Расчёт за 1 минуту</p>
               <h2 className={styles.h2}>Узнайте стоимость проекта вашего дома</h2>
               <p className={styles.sub}>
-                Ответьте на 4 вопроса — подберём решение под ваш участок и пришлём ориентир по цене
-                и примеры похожих проектов.
+                {`Проектирование — от ${formatRate(MIN_RATE)} ₽/м², чем больше дом, тем ниже цена за метр. Ответьте на 4 вопроса, и мы сразу покажем ориентир по стоимости для вашего дома.`}
               </p>
             </div>
           </Reveal>
@@ -264,13 +271,19 @@ export default async function LandingPage() {
           <section className={styles.finalCta} aria-label="Оставить заявку">
             <h2 className={styles.finalTitle}>Обсудим ваш будущий дом?</h2>
             <p className={styles.finalSub}>
-              Самый быстрый способ связаться — написать нам в MAX. Ответим, обсудим задачу
-              и назовём стоимость проекта.
+              Проект ведёт лично Ринат Гильмутдинов — более 20 лет практики, опыт в мастерских
+              С. Скуратова и Н. Белоусова. Работаем по договору: цена и сроки зафиксированы.
+              Оставьте заявку — обсудим задачу и рассчитаем стоимость, первая консультация бесплатно.
             </p>
             <div className={styles.finalActions}>
-              <a className={styles.maxBtnLg} href={MAX_HREF} target="_blank" rel="noopener noreferrer">
-                Написать в MAX
-              </a>
+              <LeadForm
+                source="Лендинг финальный CTA"
+                title="Оставить заявку"
+                subtitle="Оставьте имя и телефон — обсудим ваш дом и рассчитаем стоимость проекта."
+                placement="project"
+                openButtonClassName={styles.maxBtnLg}
+                preserveOpenButtonStyle
+              />
               <a className={styles.phoneDark} href={PHONE_HREF}>
                 {PHONE_LABEL}
               </a>

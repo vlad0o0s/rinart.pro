@@ -11,6 +11,8 @@ const CLOSE_DURATION = 600;
 const LINE_DURATION = 500;
 const OPEN_DURATION = 1400;
 const MAX_WAIT_DURATION = 8000;
+/** Предельное время, которое занавес вправе держать экран закрытым. */
+const FAIL_SAFE_DURATION = 6000;
 const NAVIGATION_DELAY = 650; // Delay before starting navigation to allow close animation
 type Phase = "idle" | "cover" | "close" | "line" | "wait" | "open";
 
@@ -29,6 +31,9 @@ export function PageTransition({ enabled = true, logoUrl }: PageTransitionProps 
 function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
   const router = useRouter();
   const pathname = usePathname();
+  // Не отдаём активный полноэкранный занавес в серверном HTML: до гидратации он может
+  // перехватывать пользовательский ввод. На первой загрузке включаем его из эффекта,
+  // а на повторных загрузках оставляем страницу свободной с первого кадра.
   const [isActive, setIsActive] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
   const [mode, setMode] = useState<"initial" | "route">("initial");
@@ -86,15 +91,48 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
         // Keep pendingHashRef for route changes with hash
         setPhase("idle");
         setIsActive(true);
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setPhase("close");
-          });
-        });
+        // Раньше переход в фазу close запускался через двойной requestAnimationFrame.
+        // Браузер замораживает rAF в неактивной вкладке: если посетитель кликал по ссылке
+        // и сразу переключался в другое окно, занавес оставался закрытым навсегда —
+        // фаза не сменялась, а страховочного таймера не было. Ставим таймер: он работает
+        // и в фоне, а кадр всё равно отрисуется при возвращении на вкладку.
+        setTimeout(() => setPhase("close"), 20);
       }
     },
     [clearNavigationTimer, clearWaitTimer],
   );
+
+  // Страховка: занавес перекрывает весь экран, поэтому он не должен «залипать» ни при каком
+  // сбое таймеров, заморозке вкладки или незавершённой навигации. Если за отведённое время
+  // анимация не дошла до конца — снимаем его принудительно.
+  useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+    const failSafe = setTimeout(() => {
+      setPhase("idle");
+      setIsActive(false);
+    }, FAIL_SAFE_DURATION);
+    return () => clearTimeout(failSafe);
+  }, [isActive]);
+
+  // Вкладку могли свернуть в момент перехода: таймеры в фоне идут неточно, а часть
+  // браузеров тормозит их сильнее. Вернувшись на страницу, добиваем застрявшую фазу.
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    const onVisible = () => {
+      if (document.visibilityState !== "visible" || !isActive) {
+        return;
+      }
+      if (phase === "idle") {
+        setPhase("close");
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [isActive, phase]);
 
   useEffect(() => {
     if (!isActive) {
@@ -302,12 +340,18 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
 
 
 
-    const hasShownPreload = sessionStorage.getItem(SESSION_KEY);
-    
-    if (!hasShownPreload) {
-      // Start immediately without delay
-      startTransition();
-      sessionStorage.setItem(SESSION_KEY, "true");
+    try {
+      const hasShownPreload = sessionStorage.getItem(SESSION_KEY);
+
+      if (!hasShownPreload) {
+        // Сначала фиксируем показ. Если хранилище запрещено, не включаем полноэкранный
+        // занавес: доступная прокрутка важнее декоративной заставки.
+        sessionStorage.setItem(SESSION_KEY, "true");
+        startTransition();
+      }
+    } catch {
+      // Safari в приватном режиме и браузеры с жёсткой политикой хранения могут бросать
+      // исключение при доступе к sessionStorage. Начальное состояние уже безопасно.
     }
 
     return () => {
@@ -442,7 +486,10 @@ function PageTransitionInner({ logoUrl }: { logoUrl?: string }) {
   }, [logoUrl]);
 
   return (
-    <div className={wrapperClassName} aria-hidden={!isActive} data-mode={mode}>
+    // data-preload-curtain — стабильная зацепка для стиля в <noscript>: имена классов
+    // из CSS-модуля хешируются, а занавес обязан исчезнуть даже без работающего JS,
+    // иначе он навсегда перекроет страницу.
+    <div className={wrapperClassName} aria-hidden={!isActive} data-mode={mode} data-preload-curtain="">
       <div className={`${styles.panel} ${styles.panelTop}`}>
         <div className={styles.logoLineWrapper} style={logoStyle} />
         <div className={styles.line} />

@@ -1,7 +1,7 @@
 "use client";
 
-import { SmartCaptcha } from "@yandex/smart-captcha";
-import { FormEvent, useEffect, useId, useMemo, useState } from "react";
+import { InvisibleSmartCaptcha } from "@yandex/smart-captcha";
+import { FormEvent, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./lead-form.module.css";
 
@@ -9,6 +9,8 @@ const CAPTCHA_SITE_KEY = "ysc1_kSspdc4CreezvRnhYrKOF8CfF79arnKlhequLaHL7fe55cea"
 const METRIKA_COUNTER_ID = 105099236;
 const GOAL_FORM_OPEN = "lead_form_open";
 const GOAL_FORM_SUBMIT = "lead_form_submit";
+const GOAL_FORM_ERROR = "lead_form_error";
+const CAPTCHA_FAILOPEN_TIMEOUT_MS = 3000;
 
 type LeadFormProps = {
   source: string;
@@ -91,13 +93,17 @@ export function LeadForm({
 }: LeadFormProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [captchaToken, setCaptchaToken] = useState("");
+  const [company, setCompany] = useState("");
+  const [captchaVisible, setCaptchaVisible] = useState(false);
   const [captchaNonce, setCaptchaNonce] = useState(0);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [message, setMessage] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const titleId = useId();
   const captchaKey = useMemo(() => `${source}-${captchaNonce}`, [source, captchaNonce]);
+  const captchaTokenRef = useRef("");
+  const captchaTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const submitOnceRef = useRef(false);
   const placementClass = {
     default: "",
     hero: styles.sectionHero,
@@ -117,6 +123,12 @@ export function LeadForm({
     reachMetrikaGoal(GOAL_FORM_OPEN, source);
   }
 
+  function closeModal() {
+    setIsOpen(false);
+    setSubmitState("idle");
+    setMessage("");
+  }
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -128,6 +140,8 @@ export function LeadForm({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setIsOpen(false);
+        setSubmitState("idle");
+        setMessage("");
       }
     }
 
@@ -139,23 +153,21 @@ export function LeadForm({
     };
   }, [isOpen]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  useEffect(() => {
+    return () => {
+      if (captchaTimeoutRef.current) {
+        clearTimeout(captchaTimeoutRef.current);
+        captchaTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
-    if (!name.trim() || !phone.trim()) {
-      setSubmitState("error");
-      setMessage("Заполните имя и телефон.");
+  async function sendLead(token: string) {
+    if (submitOnceRef.current) {
       return;
     }
 
-    if (!captchaToken) {
-      setSubmitState("error");
-      setMessage("Подтвердите, что вы не робот.");
-      return;
-    }
-
-    setSubmitState("submitting");
-    setMessage("");
+    submitOnceRef.current = true;
 
     try {
       const response = await fetch("/api/lead", {
@@ -167,7 +179,8 @@ export function LeadForm({
           name,
           phone,
           source,
-          captchaToken,
+          captchaToken: token,
+          company,
         }),
       });
 
@@ -179,17 +192,60 @@ export function LeadForm({
 
       setName("");
       setPhone("");
-      setCaptchaToken("");
+      setCaptchaVisible(false);
       setCaptchaNonce((value) => value + 1);
       setSubmitState("success");
-      setMessage("Заявка отправлена. Мы скоро свяжемся с вами.");
+      setMessage("");
       reachMetrikaGoal(GOAL_FORM_SUBMIT, source);
     } catch (error) {
-      setCaptchaToken("");
+      setCaptchaVisible(false);
       setCaptchaNonce((value) => value + 1);
       setSubmitState("error");
       setMessage(error instanceof Error ? error.message : "Не удалось отправить заявку.");
+      reachMetrikaGoal(GOAL_FORM_ERROR, source);
+    } finally {
+      submitOnceRef.current = false;
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!name.trim() || !phone.trim()) {
+      setSubmitState("error");
+      setMessage("Заполните имя и телефон.");
+      return;
+    }
+
+    if (getPhoneDigits(phone).length !== 10) {
+      setSubmitState("error");
+      setMessage("Укажите номер телефона полностью.");
+      return;
+    }
+
+    setSubmitState("submitting");
+    setMessage("");
+
+    // Токен уже получен заранее (виджет успел отработать в фоне) — отправляем сразу, без ожидания.
+    if (captchaTokenRef.current) {
+      const token = captchaTokenRef.current;
+      captchaTokenRef.current = "";
+      await sendLead(token);
+      return;
+    }
+
+    // Токена ещё нет: показываем (запускаем) невидимую капчу и ждём токен максимум 3 секунды.
+    setCaptchaVisible(true);
+
+    if (captchaTimeoutRef.current) {
+      clearTimeout(captchaTimeoutRef.current);
+    }
+
+    captchaTimeoutRef.current = setTimeout(() => {
+      captchaTimeoutRef.current = null;
+      // Fail-open: капча не успела ответить — отправляем без токена, сервер примет и пометит заявку.
+      void sendLead("");
+    }, CAPTCHA_FAILOPEN_TIMEOUT_MS);
   }
 
   function handlePhoneChange(value: string) {
@@ -210,13 +266,43 @@ export function LeadForm({
 
   const modal = isOpen ? (
     <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby={titleId}>
-          <button className={styles.backdrop} type="button" aria-label="Закрыть форму" onClick={() => setIsOpen(false)} />
+          <button className={styles.backdrop} type="button" aria-label="Закрыть форму" onClick={closeModal} />
 
           <div className={styles.panel}>
-            <button className={styles.close} type="button" aria-label="Закрыть форму" onClick={() => setIsOpen(false)}>
+            <button className={styles.close} type="button" aria-label="Закрыть форму" onClick={closeModal}>
               ×
             </button>
 
+            {submitState === "success" ? (
+              <div style={{ textAlign: "center", padding: "16px 4px 8px" }}>
+                <div
+                  style={{
+                    width: "56px",
+                    height: "56px",
+                    margin: "0 auto 18px",
+                    borderRadius: "50%",
+                    background: "#111",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5 12.5 10 17.5 19 7" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <h2 className={styles.title} id={titleId} style={{ marginBottom: "8px" }}>
+                  Заявка отправлена
+                </h2>
+                <p className={styles.subtitle} style={{ margin: "0 0 22px" }}>
+                  Спасибо! Мы свяжемся с вами в ближайшее время.
+                </p>
+                <button className={styles.submit} type="button" onClick={closeModal} style={{ width: "100%" }}>
+                  Закрыть
+                </button>
+              </div>
+            ) : (
+            <>
             <div className={styles.header}>
               <h2 className={styles.title} id={titleId}>
                 {title}
@@ -259,20 +345,66 @@ export function LeadForm({
                 </label>
               </div>
 
+              <input
+                type="text"
+                name="company"
+                value={company}
+                onChange={(event) => setCompany(event.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                style={{ position: "absolute", left: "-9999px", width: 0, height: 0, opacity: 0, pointerEvents: "none" }}
+              />
+
               <div className={styles.captcha}>
-                <SmartCaptcha key={captchaKey} sitekey={CAPTCHA_SITE_KEY} onSuccess={setCaptchaToken} />
+                <InvisibleSmartCaptcha
+                  key={captchaKey}
+                  sitekey={CAPTCHA_SITE_KEY}
+                  visible={captchaVisible}
+                  onSuccess={(token) => {
+                    captchaTokenRef.current = token;
+
+                    if (captchaTimeoutRef.current) {
+                      // Успели уложиться в таймаут ожидания — отправляем сразу этим токеном.
+                      clearTimeout(captchaTimeoutRef.current);
+                      captchaTimeoutRef.current = null;
+                      captchaTokenRef.current = "";
+                      void sendLead(token);
+                    }
+                    // Иначе таймаут уже сработал (fail-open отправка ушла) — токен просто
+                    // остаётся в captchaTokenRef на случай следующей попытки отправки.
+                  }}
+                  onChallengeHidden={() => {
+                    if (captchaTimeoutRef.current) {
+                      // Пользователь закрыл челлендж, не дождавшись успеха, — отправляем без токена.
+                      clearTimeout(captchaTimeoutRef.current);
+                      captchaTimeoutRef.current = null;
+                      void sendLead("");
+                    }
+                  }}
+                />
               </div>
 
               <button className={styles.submit} type="submit" disabled={submitState === "submitting"}>
                 {submitState === "submitting" ? "Отправляем" : "Отправить"}
               </button>
 
+              <p style={{ fontSize: "12px", lineHeight: 1.45, opacity: 0.65, margin: "10px 0 0" }}>
+                Нажимая «Отправить», вы соглашаетесь с{" "}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline" }}>
+                  политикой обработки персональных данных
+                </a>
+                .
+              </p>
+
               {message ? (
-                <p className={`${styles.message} ${submitState === "success" ? styles.messageSuccess : styles.messageError}`}>
+                <p className={`${styles.message} ${styles.messageError}`}>
                   {message}
                 </p>
               ) : null}
             </form>
+            </>
+            )}
           </div>
     </div>
   ) : null;

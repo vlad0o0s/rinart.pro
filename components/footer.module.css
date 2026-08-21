@@ -472,6 +472,14 @@
 
   .footerMobileSocials .socialLink,
   .footerMobileColumnRight .socialLink {
+    /* Сама иконка остаётся 18px, увеличена только область нажатия:
+       при 18x18 в неё трудно попасть пальцем. */
+    width: 26px;
+    height: 26px;
+  }
+
+  .footerMobileSocials .socialLink .icon,
+  .footerMobileColumnRight .socialLink .icon {
     width: 18px;
     height: 18px;
   }

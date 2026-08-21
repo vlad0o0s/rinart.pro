@@ -65,6 +65,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://rinart.pro",
   },
+  verification: {
+    other: {
+      "zen-verification": "81wapJfK78Sa5rJ98tOeBeMYIQHxazRrkULzKnpfAkw2PEpSuvhxlTZ1hsOLwKLR",
+    },
+  },
 };
 
 export default async function RootLayout({
@@ -80,6 +85,15 @@ export default async function RootLayout({
 
   return (
     <html lang="ru" data-scroll-behavior="auto">
+      <head>
+        <noscript>
+          {/* Без JavaScript анимацию заставки некому довести до конца, и занавес
+              остался бы поверх страницы навсегда. Скрываем его сразу. */}
+          <style>{`[data-preload-curtain]{display:none !important}`}</style>
+        </noscript>
+        <link rel="preconnect" href="https://smartcaptcha.yandexcloud.net" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://smartcaptcha.yandexcloud.net" />
+      </head>
       <body className={`${neueHaasUnica.variable} antialiased`} suppressHydrationWarning>
         <Script
           id="disable-scroll-restoration"

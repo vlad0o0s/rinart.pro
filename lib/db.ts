@@ -23,7 +23,6 @@ async function resetPool() {
     }
     pool = null;
   }
-  schemaReadyPromise = null;
 }
 
 function createPool(): Pool {
@@ -70,6 +69,26 @@ export function getPool(): Pool {
   return pool;
 }
 
+/**
+ * MySQL сообщает о нехватке соединений двумя разными кодами:
+ * 1203 (ER_TOO_MANY_USER_CONNECTIONS) — исчерпан лимит конкретного пользователя,
+ * 1040 (ER_CON_COUNT_ERROR) — исчерпан общий max_connections сервера.
+ * База проекта живёт на шаред-хостинге и отдаёт именно 1040, поэтому прежняя
+ * проверка только на 1203 не срабатывала и пул пересоздавался там, где нельзя.
+ */
+function isConnectionLimitError(error: MysqlError | undefined) {
+  if (!error) {
+    return false;
+  }
+  const errorNo = "errno" in error ? (error.errno as number | undefined) : undefined;
+  return (
+    errorNo === 1203 ||
+    errorNo === 1040 ||
+    error.code === "ER_TOO_MANY_USER_CONNECTIONS" ||
+    error.code === "ER_CON_COUNT_ERROR"
+  );
+}
+
 function isRecoverableError(error: MysqlError | undefined) {
   if (!error) {
     return false;
@@ -83,12 +102,11 @@ function isRecoverableError(error: MysqlError | undefined) {
     "ENOTFOUND",
     // Too many connections - can be retried after waiting
     "ER_TOO_MANY_USER_CONNECTIONS",
+    "ER_CON_COUNT_ERROR",
   ]);
   const errorMessage = error.message ?? "";
   const errorCode = error.code ?? "";
-  const errorNo = "errno" in error ? (error.errno as number | undefined) : undefined;
-  // Check errno 1203 for ER_TOO_MANY_USER_CONNECTIONS
-  const isTooManyConnections = errorNo === 1203 || errorCode === "ER_TOO_MANY_USER_CONNECTIONS";
+  const isTooManyConnections = isConnectionLimitError(error);
   return (
     recoverableCodes.has(errorCode) ||
     isTooManyConnections ||
@@ -100,7 +118,7 @@ function isRecoverableError(error: MysqlError | undefined) {
   );
 }
 
-async function getConnectionWithRetry(attempt = 0, maxAttempts = 1): Promise<PoolConnection> {
+async function getConnectionWithRetry(attempt = 0, maxAttempts = 2): Promise<PoolConnection> {
   try {
     const pool = getPool();
     // Add timeout to connection attempt
@@ -111,8 +129,7 @@ async function getConnectionWithRetry(attempt = 0, maxAttempts = 1): Promise<Poo
     return await Promise.race([connectionPromise, timeout]);
   } catch (rawError) {
     const error = rawError as MysqlError;
-    const errorNo = "errno" in error ? (error.errno as number | undefined) : undefined;
-    const isTooManyConnections = errorNo === 1203 || error.code === "ER_TOO_MANY_USER_CONNECTIONS";
+    const isTooManyConnections = isConnectionLimitError(error);
     if (attempt < maxAttempts && isRecoverableError(error)) {
       // Wait longer if too many connections (give time for connections to close)
       const waitTime = isTooManyConnections ? 2000 : 1000;
@@ -131,7 +148,7 @@ async function getConnectionWithRetry(attempt = 0, maxAttempts = 1): Promise<Poo
   }
 }
 
-async function runWithRetry<T>(operation: (pool: Pool) => Promise<T>, attempt = 0, maxAttempts = 1): Promise<T> {
+async function runWithRetry<T>(operation: (pool: Pool) => Promise<T>, attempt = 0, maxAttempts = 2): Promise<T> {
   let currentPool = getPool();
   try {
     // Add overall timeout to query execution (45 seconds)
@@ -144,8 +161,14 @@ async function runWithRetry<T>(operation: (pool: Pool) => Promise<T>, attempt = 
     const error = rawError as MysqlError;
     if (attempt < maxAttempts && isRecoverableError(error)) {
       console.warn(`[db] retrying query after connection error (attempt ${attempt + 1}/${maxAttempts + 1})`, error.code || error.message);
-      await resetPool();
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait before retry
+      if (isConnectionLimitError(error)) {
+        // Пул исправен — соединения кончились на стороне сервера БД. Пересоздание пула
+        // открыло бы ещё несколько соединений и только усугубило нехватку, поэтому ждём.
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      } else {
+        await resetPool();
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
       currentPool = getPool();
       return runWithRetry(operation, attempt + 1, maxAttempts);
     }
@@ -171,7 +194,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       } finally {
         connection.release();
       }
-    })();
+    })().catch((error) => {
+      // Неудачную попытку не кешируем: иначе один сбой на старте заблокировал бы
+      // работу со схемой до перезапуска процесса.
+      schemaReadyPromise = null;
+      throw error;
+    });
   }
   await schemaReadyPromise;
 }

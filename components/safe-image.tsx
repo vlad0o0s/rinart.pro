@@ -1,7 +1,9 @@
 "use client";
 
 import Image, { type ImageProps } from "next/image";
+import { buildResponsiveSrcSet } from "@/lib/image-srcset";
 import { useMemo, useState, useCallback, useEffect, useLayoutEffect, startTransition } from "react";
+
 
 // 1x1 white PNG
 const PLACEHOLDER_SRC =
@@ -19,23 +21,18 @@ export function SafeImage(props: SafeImageProps) {
 	}, [src]);
 	const [currentSrc, setCurrentSrc] = useState<ImageProps["src"]>(initialSrc);
 	const [hasError, setHasError] = useState(false);
-	// Генерируем timestamp только на клиенте после монтирования, чтобы избежать hydration mismatch
-	const [cacheBuster, setCacheBuster] = useState<string>("");
-	
-	useLayoutEffect(() => {
-		// Генерируем cache buster только на клиенте после монтирования
-		startTransition(() => {
-			setCacheBuster(`t=${Date.now()}`);
-		});
-	}, []);
 
-	// Обновляем currentSrc при изменении initialSrc и сбрасываем cache buster
+	// Раньше здесь на каждое монтирование дописывался ?t=<timestamp>. Из-за этого браузер
+	// скачивал каждое изображение дважды: сначала по обычному пути при первом рендере,
+	// затем повторно с уникальным query после гидратации — вес страницы удваивался.
+	// Имена загруженных файлов содержат uuid и меняются при замене фото в админке,
+	// поэтому обход кеша не нужен: новый файл — новый URL.
+
+	// Обновляем currentSrc при изменении initialSrc
 	useLayoutEffect(() => {
 		startTransition(() => {
 			setCurrentSrc(initialSrc);
 			setHasError(false);
-			// Обновляем cache buster при изменении src, чтобы загрузить новое изображение
-			setCacheBuster(`t=${Date.now()}`);
 		});
 	}, [initialSrc]);
 	
@@ -69,43 +66,43 @@ export function SafeImage(props: SafeImageProps) {
 	if (isLocal && typeof currentSrc === "string") {
 		// Извлекаем и игнорируем Next.js-специфичные пропсы, которые не нужны для нативного img
 		const {
-			width, 
-			height, 
+			width,
+			height,
 			className,
 			style,
 			fill: _fill,
-			priority: _priority,
-			loading: _loading,
-			fetchPriority: _fetchPriority,
-			sizes: _sizes,
+			priority,
+			loading,
+			fetchPriority,
+			sizes,
 			unoptimized: _unoptimized,
 			placeholder: _placeholder,
 			blurDataURL: _blurDataURL,
 			quality: _quality,
 			loader: _loader,
-			...imgProps 
+			...imgProps
 		} = rest;
-		// Добавляем timestamp для обхода кеша браузера, чтобы всегда загружать актуальные файлы
-		// Пути /uploads/ обрабатываются через API route /app/uploads/[...path]/route.ts
-		// Используем cache buster только после монтирования на клиенте
-		const srcWithCache = hasError || !cacheBuster 
-			? currentSrc 
-			: `${currentSrc}${currentSrc.includes("?") ? "&" : "?"}${cacheBuster}`;
+		// priority у next/image означает немедленную загрузку — переносим его на нативные атрибуты,
+		// иначе loading="lazy" из галерей терялся и все изображения грузились сразу.
+		const nativeLoading = priority ? "eager" : (loading ?? "lazy");
+		const nativeFetchPriority = fetchPriority ?? (priority ? "high" : undefined);
+		// Атрибут sizes без srcset ни на что не влияет: браузер скачивал оригинал (нередко ~1800px)
+		// даже в карточку 300x200. Прогоняем локальные файлы через оптимизатор Next и отдаём
+		// набор ширин — размер нужного варианта падает в десятки раз.
+		const srcSet =
+			!hasError && currentSrc !== placeholderSrc ? buildResponsiveSrcSet(currentSrc) : undefined;
 		return (
 			<img
-				src={srcWithCache}
+				src={currentSrc}
+				srcSet={srcSet}
 				alt={alt || ""}
-				onError={(e) => {
-					// Если файл не загрузился с timestamp, пробуем без него
-					if (!hasError && currentSrc !== placeholderSrc) {
-						setHasError(true);
-						setCurrentSrc(currentSrc);
-					} else {
-						handleError(e);
-					}
-				}}
+				onError={handleError}
 				width={width}
 				height={height}
+				loading={nativeLoading}
+				fetchPriority={nativeFetchPriority}
+				sizes={sizes ?? (srcSet ? "100vw" : undefined)}
+				decoding={priority ? "sync" : "async"}
 				className={className}
 				style={{ objectFit: "cover", width: "100%", height: "100%", ...style }}
 				{...imgProps}

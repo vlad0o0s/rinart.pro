@@ -8,12 +8,12 @@ type CacheEntry<T> = {
 
 const CACHE_TTL = 60 * 1000;
 
+// Кеши безопасны, потому что каждая функция save* обнуляет свой кеш сразу после записи,
+// а весь админский API пишет исключительно через них. Раньше кеши были объявлены, но не
+// читались — из-за чего каждый рендер страницы шёл в удалённую базу за настройками.
 let contactCache: CacheEntry<ContactSettings> | null = null;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let socialCache: CacheEntry<SocialLink[]> | null = null;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let appearanceCache: CacheEntry<AppearanceSettings> | null = null;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let publicationsCache: CacheEntry<string[]> | null = null;
 
 const DEFAULT_CONTACT_SETTINGS: ContactSettings = {
@@ -147,12 +147,17 @@ export async function getContactSettings(): Promise<ContactSettings> {
 }
 
 export async function getSocialLinks(): Promise<SocialLink[]> {
-  // Always read fresh to reflect admin changes immediately across the site
+  const cached = readCache(socialCache);
+  if (cached) {
+    return cached;
+  }
+
   const settings = await fetchAllSiteSettings();
   const record = settings.find((item) => item.key === "socialLinks");
   const links = normalizeSocialLinks(record?.value);
-  // Do not cache to avoid any delay in propagation
-  socialCache = null;
+  writeCache((entry) => {
+    socialCache = entry;
+  }, links);
   return links;
 }
 
@@ -171,11 +176,17 @@ export async function saveSocialLinks(payload: SocialLink[]): Promise<SocialLink
 }
 
 export async function getAppearanceSettings(): Promise<AppearanceSettings> {
+  const cached = readCache(appearanceCache);
+  if (cached) {
+    return cached;
+  }
+
   // Read the single key directly to avoid any stale merged reads
   const record = await findSiteSettingByKey("appearance");
   const appearance = normalizeAppearanceSettings(record?.value);
-  // Optionally cache for short time if needed in the future
-  appearanceCache = null;
+  writeCache((entry) => {
+    appearanceCache = entry;
+  }, appearance);
   return appearance;
 }
 
@@ -264,12 +275,17 @@ function isValidPlatform(value: unknown): value is SocialPlatform {
 }
 
 export async function getPublications(): Promise<string[]> {
-  // Always read fresh to reflect admin changes immediately across the site
+  const cached = readCache(publicationsCache);
+  if (cached) {
+    return cached;
+  }
+
   const settings = await fetchAllSiteSettings();
   const record = settings.find((item) => item.key === "publications");
   const publications = normalizePublications(record?.value);
-  // Do not cache to avoid any delay in propagation
-  publicationsCache = null;
+  writeCache((entry) => {
+    publicationsCache = entry;
+  }, publications);
   return publications;
 }
 

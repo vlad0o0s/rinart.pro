@@ -8,7 +8,9 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 10px 12px;
+  /* Снизу запас больше: у Neue Haas Unica реальная высота глифов заметно выше
+     строки, и нижняя строка крошек упиралась в границу шапки. */
+  padding: 10px 12px 14px;
   gap: 12px;
 }
 .root {
@@ -453,7 +455,9 @@
 .mobileBreadcrumbsCurrent {
   display: block;
   font-size: 12px;
-  line-height: 1.1;
+  /* 1.1 давало строку 13.2px при фактической высоте глифов 18px — текст вылезал
+     за свою строку, и низ надписи оказывался ниже границы шапки. */
+  line-height: 1.35;
   text-transform: uppercase;
   font-family: var(--font-neue-haas), "Neue Haas Unica", sans-serif;
   font-weight: 900;

@@ -15,8 +15,13 @@ export function Hero({ imageUrl }: { imageUrl?: string }) {
 
   useEffect(() => {
     const updateLeadButtonTop = () => {
-      const header = document.querySelector("header");
-      const top = header?.getBoundingClientRect().bottom ?? 0;
+      const header = document.querySelector<HTMLElement>("header");
+      // Не getBoundingClientRect(): шапка появляется анимацией headerReveal из
+      // translateY(-16px), и прямоугольник в момент замера был на 16px выше
+      // реального места. ResizeObserver на трансформации не срабатывает, поэтому
+      // заниженное значение так и оставалось, а полоса кнопки залезала на логотип.
+      // Шапка — position: fixed; top: 0, значит её низ равен собственной высоте.
+      const top = header?.offsetHeight ?? 0;
       document.documentElement.style.setProperty("--lead-button-top", `${Math.round(top)}px`);
     };
 
@@ -58,6 +63,9 @@ export function Hero({ imageUrl }: { imageUrl?: string }) {
       </div>
       <div className={styles.overlay}></div>
       <div className={styles.content} aria-label="Заявка">
+        {/* Единственный H1 главной: до этого фраза была декоративным span с aria-hidden,
+            из-за чего страница уходила в индекс вообще без заголовка. */}
+        <h1 className={styles.heroTagline}>Проектирование загородных домов</h1>
         <LeadForm source="Главная страница" placement="hero" />
       </div>
     </section>

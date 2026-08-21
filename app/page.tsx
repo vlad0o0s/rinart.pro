@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import ReactDOM from "react-dom";
 import { SiteHeader } from "@/components/site-header";
 import { Hero } from "@/components/hero";
+import { buildResponsiveSrcSet } from "@/lib/image-srcset";
 import { PrimaryNav } from "@/components/primary-nav";
 import { Footer } from "@/components/footer";
 import { HomeProjectsSection } from "./_components/home-page-content";
@@ -40,6 +42,17 @@ export default async function Home() {
     heroImageUrl: project.heroImageUrl ?? undefined,
     categories: project.categories,
   }));
+
+  // Первый экран — самый крупный элемент страницы и её LCP. Мы рендерим его нативным <img>
+  // (в обход next/image), поэтому автоматической предзагрузки нет: браузер узнавал о картинке
+  // только после разбора HTML и CSS. Объявляем её заранее.
+  const heroImageUrl = blocks["home-hero"]?.imageUrl ?? "/img/01-ilichevka.jpg";
+  ReactDOM.preload(heroImageUrl, {
+    as: "image",
+    imageSrcSet: buildResponsiveSrcSet(heroImageUrl),
+    imageSizes: "100vw",
+    fetchPriority: "high",
+  });
 
   return (
     <>

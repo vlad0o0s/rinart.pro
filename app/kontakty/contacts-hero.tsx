@@ -24,9 +24,10 @@ export default function ContactsHero({ contact, socials }: ContactsHeroProps) {
     <section ref={heroRef} className={styles.hero} data-visible="false">
       <div className={styles.heroContent}>
         {contact.heroTitle ? (
-          <p className={styles.contactTitle} style={{ "--reveal-index": 0 } as CSSProperties}>
+          // Заголовок страницы контактов: был <p>, из-за чего страница шла без H1
+          <h1 className={styles.contactTitle} style={{ "--reveal-index": 0 } as CSSProperties}>
             {contact.heroTitle}
-          </p>
+          </h1>
         ) : null}
 
         <div className={styles.contactPrimary} style={{ "--reveal-index": 1 } as CSSProperties}>
