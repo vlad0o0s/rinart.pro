@@ -110,7 +110,10 @@ export async function optimizeImage(
   }
 
   if (NON_CONVERTIBLE_MIME.has(mimeType)) {
-    return { buffer, extension: defaultExtension, mimeType };
+    // Расширение берём строго из MIME-таблицы, а не из имени файла. Иначе загрузка
+    // с типом image/svg+xml и именем вида "payload.html" сохраняла исходный буфер
+    // под расширением .html — и nginx отдавал его как text/html с того же домена.
+    return { buffer, extension: MIME_EXTENSION_MAP[mimeType] ?? ".bin", mimeType };
   }
 
   const candidate = sharp(buffer, { failOnError: false }).rotate();

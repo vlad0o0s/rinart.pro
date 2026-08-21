@@ -11,7 +11,10 @@ const next = require("next");
 
 const projectDir = __dirname;
 const dev = process.env.NODE_ENV !== "production";
-const hostname = process.env.HOSTNAME || "0.0.0.0";
+// Слушаем только петлю: снаружи приложение должно быть доступно исключительно через nginx.
+// Раньше здесь было "0.0.0.0", и http://<ip>:3000 отвечал напрямую в обход TLS,
+// редиректа на https, канонизации домена и правил отдачи /uploads.
+const hostname = process.env.HOSTNAME || "127.0.0.1";
 const port = parseInt(process.env.PORT || "3000", 10);
 const staticRoot = path.join(projectDir, ".next", "static");
 
