@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { formatLeadLines } from "./lead-message";
 import type { LeadRequest } from "./lead-storage";
 
 const RECIPIENT = process.env.CONTACT_FORM_RECIPIENT_EMAIL || "rinartburo@mail.ru";
@@ -34,10 +35,8 @@ export async function sendLeadEmail(lead: LeadRequest) {
   const text = [
     "Новая заявка с сайта RINART",
     "",
-    `Имя: ${lead.name}`,
-    `Телефон: ${lead.phone}`,
-    `Источник: ${lead.source}`,
-    lead.ip ? `IP: ${lead.ip}` : null,
+    ...formatLeadLines(lead),
+    lead.ip ? `\nIP: ${lead.ip}` : "",
   ]
     .filter(Boolean)
     .join("\n");

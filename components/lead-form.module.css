@@ -100,10 +100,14 @@
   inset: 0;
   z-index: 2000;
   display: flex;
-  align-items: center;
+  /* Не center: когда экранная клавиатура сжимает видимую область, отцентрированная
+     панель обрезается сверху и до полей уже не долистать. С flex-start + margin:auto
+     панель по-прежнему по центру, пока помещается, и прокручивается, когда нет. */
+  align-items: flex-start;
   justify-content: center;
   padding: clamp(18px, 4vw, 48px);
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
 }
 
@@ -119,8 +123,8 @@
 .panel {
   position: relative;
   z-index: 1;
+  margin: auto;
   width: min(100%, 920px);
-  max-height: min(90vh, 760px);
   overflow: visible !important;
   box-sizing: border-box;
   padding: clamp(30px, 4vw, 54px);
@@ -137,8 +141,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  /* Не меньше 44px: рекомендованный минимум для попадания пальцем. */
+  width: 44px;
+  height: 44px;
   border: 0;
   background: transparent;
   color: #252525;
@@ -262,18 +267,177 @@
   opacity: 0.62;
 }
 
-.message {
+/* Honeypot: поле должно быть недоступно человеку, но остаться в форме для ботов.
+   display:none такие поля часть ботов пропускает, поэтому убираем его из потока. */
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.consent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Строка целиком — область нажатия: подпись связана с чекбоксом через htmlFor,
+     поэтому попасть пальцем можно в любое место строки, а не только в квадратик. */
+  min-height: 44px;
+}
+
+.consentBox {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: #252525;
+  cursor: pointer;
+}
+
+.consentText {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(37, 37, 37, 0.72);
+  cursor: pointer;
+}
+
+.consentText a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* Область объявлений держит высоту заранее: без этого появление ошибки сдвигало
+   кнопку под пальцем в момент нажатия. */
+.status {
+  min-height: 0;
+}
+
+.error {
+  border-left: 2px solid #252525;
+  padding: 2px 0 2px 14px;
+}
+
+.errorText {
   margin: 0;
   font-size: 14px;
-  line-height: 1.4;
-}
-
-.messageSuccess {
+  line-height: 1.45;
   color: #252525;
 }
 
-.messageError {
+.errorActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.retry {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #252525;
+  border-radius: 0;
+  background: transparent;
   color: #252525;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.retry:hover,
+.retry:focus-visible {
+  background: #252525;
+  color: #ffffff;
+}
+
+.errorLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #252525;
+  font-size: 14px;
+  text-decoration: underline;
+}
+
+.success {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 6px 0;
+}
+
+.successMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #111111;
+  color: #ffffff;
+}
+
+.successTitle {
+  margin: 0;
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.3;
+  color: #252525;
+}
+
+.successNote {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(37, 37, 37, 0.7);
+}
+
+.successNote a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* Встроенная форма под расчётом квиза: тот же набор полей, но в потоке страницы. */
+.inline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+}
+
+.inlineNote {
+  margin: 0;
+  font-size: clamp(15px, 1.3vw, 17px);
+  line-height: 1.5;
+  color: #252525;
+}
+
+.alternatives {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(37, 37, 37, 0.7);
+}
+
+.alternativeLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #252525;
+  text-decoration: underline;
+}
+
+.alternativeSep {
+  margin: 0 8px;
 }
 
 @media (max-width: 720px) {
@@ -307,10 +471,10 @@
   }
 
   .close {
-    top: 8px;
-    right: 8px;
-    width: 38px;
-    height: 38px;
+    top: 6px;
+    right: 6px;
+    width: 44px;
+    height: 44px;
     font-size: 30px;
   }
 

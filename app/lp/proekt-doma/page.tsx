@@ -5,6 +5,7 @@ import { LeadForm } from "@/components/lead-form";
 import { SafeImage } from "@/components/safe-image";
 import { getAllProjects } from "@/lib/projects";
 import { PRICING_TIERS, MIN_RATE, formatMoney, formatRate } from "@/lib/pricing-tiers";
+import { MAX_HREF, PHONE_HREF, PHONE_LABEL, TELEGRAM_HREF } from "@/lib/contacts";
 import { HomeProjectsSection } from "@/app/_components/home-page-content";
 import { LandingQuiz } from "./quiz";
 import { Reveal } from "./reveal";
@@ -15,10 +16,6 @@ import styles from "./landing.module.css";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const PHONE_LABEL = "+7 903 147-44-30";
-const PHONE_HREF = "tel:+79031474430";
-const MAX_HREF = "https://max.ru/u/f9LHodD0cOJh_cKr5v3ZlDYwFYqPyrvQAHu9h_-XdifygXGo0tdja8HwEuk";
-const TELEGRAM_HREF = "https://t.me/rinart_buro";
 const HERO_IMAGE = "/img/01-ilichevka.jpg";
 
 export const metadata: Metadata = {

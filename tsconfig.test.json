@@ -1,0 +1,24 @@
+{
+  "//": "Отдельная конфигурация для тестов: основной tsconfig собран под Next и ничего не эмитит. Здесь чистые модули компилируются в CommonJS, и их запускает встроенный в Node тест-раннер — без дополнительных зависимостей.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": false,
+    "incremental": false,
+    "rootDir": ".",
+    "outDir": ".test-build",
+    "types": ["node"]
+  },
+  "include": [
+    "lib/lead-validation.ts",
+    "lib/lead-message.ts",
+    "lib/pricing-tiers.ts",
+    "app/lp/proekt-doma/quiz-steps.ts",
+    "tests/**/*.ts"
+  ]
+}

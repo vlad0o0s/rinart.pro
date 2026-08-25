@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Каталоги деплоя без простоя и сборка тестов — это артефакты, а не исходники.
+    ".next-build/**",
+    ".next-prev/**",
+    ".test-build/**",
   ]),
 ]);
 

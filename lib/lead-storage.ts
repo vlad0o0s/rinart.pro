@@ -1,11 +1,21 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import type { Attribution, QuizContext } from "./lead-validation";
+
 export type LeadRequest = {
   name: string;
   phone: string;
   source: string;
   ip?: string | null;
+  /** Ответы квиза: с ними звонок начинается не с «расскажите, что вы хотели». */
+  quiz?: QuizContext | null;
+  /** Метки рекламы — по ним видно, какая кампания привела заявку. */
+  attribution?: Attribution;
+  /** Капчу подтвердить не удалось: заявку приняли, но она требует внимания. */
+  unverified?: boolean;
+  /** Время создания на сервере: часам на клиенте доверять нельзя. */
+  createdAt?: string;
 };
 
 type StoredLead = LeadRequest & {
@@ -32,7 +42,7 @@ export async function saveLead(lead: LeadRequest) {
 async function appendLead(lead: LeadRequest) {
   const storedLead: StoredLead = {
     ...lead,
-    createdAt: new Date().toISOString(),
+    createdAt: lead.createdAt ?? new Date().toISOString(),
   };
 
   await mkdir(path.dirname(LEADS_FILE), { recursive: true });

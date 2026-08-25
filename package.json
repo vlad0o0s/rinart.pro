@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "NODE_ENV=production node server.cjs",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "tsc -p tsconfig.test.json && node --test .test-build/tests",
     "seed": "node scripts/seed.mjs",
     "create-admin": "node scripts/create-admin-user.mjs",
     "optimize-media": "node scripts/optimize-existing-media.mjs",

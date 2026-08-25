@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { LeadForm } from "@/components/lead-form";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { InlineLeadForm } from "@/components/inline-lead-form";
 import {
-  PRICING_TIERS,
+  GOAL_QUIZ_COMPLETE,
+  GOAL_QUIZ_QUALIFIED,
+  GOAL_QUIZ_START,
+  reachGoal,
+} from "@/lib/analytics";
+import type { QuizContext } from "@/lib/lead-validation";
+import {
   RECONSTRUCTION_FACTOR,
   RECONSTRUCTION_LABEL,
   calculateEstimate,
@@ -11,45 +17,16 @@ import {
   formatRate,
   findTier,
 } from "@/lib/pricing-tiers";
+import {
+  STEPS,
+  STEP_AREA,
+  STEP_FLOORS,
+  STEP_TIMING,
+  STEP_TYPE,
+  isQualified,
+  type QuizOption,
+} from "./quiz-steps";
 import styles from "./landing.module.css";
-
-const METRIKA_COUNTER_ID = 105099236;
-
-
-type Step = {
-  id: string;
-  question: string;
-  options: string[];
-};
-
-const STEPS: Step[] = [
-  {
-    id: "Тип работ",
-    question: "Что планируете?",
-    options: [
-      "Каменный дом (газобетон, кирпич)",
-      "Деревянный дом (брус, клееный брус)",
-      RECONSTRUCTION_LABEL,
-      "Ещё не решил",
-    ],
-  },
-  {
-    id: "Этажность",
-    question: "Сколько этажей?",
-    options: ["Одноэтажный", "Двухэтажный", "С мансардой", "Пока не определился"],
-  },
-  {
-    id: "Площадь",
-    question: "Ориентировочная площадь дома",
-    // Варианты берём из шкалы цен, чтобы список и расчёт не разошлись.
-    options: PRICING_TIERS.map((tier) => tier.label),
-  },
-  {
-    id: "Сроки",
-    question: "Когда планируете начать?",
-    options: ["В ближайшие 3 месяца", "В течение полугода", "В этом году", "Пока изучаю"],
-  },
-];
 
 export function LandingQuiz() {
   const [step, setStep] = useState(0);
@@ -59,43 +36,72 @@ export function LandingQuiz() {
   const isFinished = step >= total;
   const progress = Math.round((Math.min(step, total) / total) * 100);
 
-  const isReconstruction = answers["Тип работ"] === RECONSTRUCTION_LABEL;
-  const tier = findTier(answers["Площадь"]);
+  const isReconstruction = answers[STEP_TYPE] === RECONSTRUCTION_LABEL;
+  const tier = findTier(answers[STEP_AREA]);
 
   const estimate = useMemo(
-    () => calculateEstimate(answers["Площадь"], isReconstruction),
+    () => calculateEstimate(answers[STEP_AREA], isReconstruction),
     [answers, isReconstruction],
   );
 
-  // Дошедший до расчёта человек увидел цену — это ключевая точка воронки: до неё
-  // видно, сколько посетителей вообще доходят до цифр, а после — сколько из них
-  // оставляют контакт. Отдельная цель нужна и для сегмента ретаргетинга:
-  // «посмотрел стоимость, но не написал».
-  const quizGoalSent = useRef(false);
-  useEffect(() => {
-    if (!isFinished || quizGoalSent.current) {
+  /** Цели за один проход квиза отправляются по одному разу. «Пройти заново» открывает новый проход. */
+  const sentGoalsRef = useRef<Set<string>>(new Set());
+
+  const sendGoalOnce = useCallback((goal: string, params?: Record<string, string>) => {
+    if (sentGoalsRef.current.has(goal)) {
       return;
     }
-    quizGoalSent.current = true;
-    window.ym?.(METRIKA_COUNTER_ID, "reachGoal", "quiz_complete", {
-      площадь: answers["Площадь"] ?? "не указана",
-      тип: answers["Тип работ"] ?? "не указан",
-      сроки: answers["Сроки"] ?? "не указаны",
-    });
-  }, [isFinished, answers]);
+    sentGoalsRef.current.add(goal);
+    reachGoal(goal, params);
+  }, []);
 
-  const summary = useMemo(() => {
-    const answered = STEPS.map((s) => `${s.id}: ${answers[s.id] ?? "—"}`).join("; ");
-    if (!estimate) return answered;
-    const price = estimate.to
-      ? `${formatMoney(estimate.from)}–${formatMoney(estimate.to)}`
+  const priceText = useMemo(() => {
+    if (!estimate) {
+      return "";
+    }
+    return estimate.to
+      ? `${formatMoney(estimate.from)} — ${formatMoney(estimate.to)}`
       : `от ${formatMoney(estimate.from)}`;
-    return `${answered}; Расчёт: ${price}`;
-  }, [answers, estimate]);
+  }, [estimate]);
 
-  function choose(stepId: string, value: string) {
-    setAnswers((prev) => ({ ...prev, [stepId]: value }));
+  /** Контекст квиза уходит в заявку отдельными полями, а не строкой: так его видно в письме. */
+  const quizContext: QuizContext = useMemo(
+    () => ({
+      houseType: answers[STEP_TYPE] ?? "",
+      floors: answers[STEP_FLOORS] ?? "",
+      area: answers[STEP_AREA] ?? "",
+      timing: answers[STEP_TIMING] ?? "",
+      estimate: priceText || "не рассчитан",
+    }),
+    [answers, priceText],
+  );
+
+  function choose(stepId: string, option: QuizOption) {
+    const nextAnswers = { ...answers, [stepId]: option.value };
+    setAnswers(nextAnswers);
     setStep((prev) => prev + 1);
+
+    // Первый ответ — точка входа в воронку квиза.
+    sendGoalOnce(GOAL_QUIZ_START);
+
+    if (option.goal) {
+      sendGoalOnce(option.goal);
+    }
+
+    // Результат показывается сразу после последнего ответа, поэтому цель показа расчёта
+    // отправляем здесь же: отдельный эффект на смену шага делал это на один рендер позже
+    // и путался при возврате «Назад».
+    if (Object.keys(nextAnswers).length === total) {
+      sendGoalOnce(GOAL_QUIZ_COMPLETE, {
+        площадь: nextAnswers[STEP_AREA] ?? "не указана",
+        тип: nextAnswers[STEP_TYPE] ?? "не указан",
+        сроки: nextAnswers[STEP_TIMING] ?? "не указаны",
+      });
+
+      if (isQualified(nextAnswers)) {
+        sendGoalOnce(GOAL_QUIZ_QUALIFIED);
+      }
+    }
   }
 
   function goBack() {
@@ -103,6 +109,7 @@ export function LandingQuiz() {
   }
 
   function restart() {
+    sentGoalsRef.current = new Set();
     setAnswers({});
     setStep(0);
   }
@@ -125,12 +132,12 @@ export function LandingQuiz() {
           <div className={styles.options}>
             {STEPS[step].options.map((opt) => (
               <button
-                key={opt}
+                key={opt.value}
                 type="button"
-                className={`${styles.option} ${answers[STEPS[step].id] === opt ? styles.optionActive : ""}`}
+                className={`${styles.option} ${answers[STEPS[step].id] === opt.value ? styles.optionActive : ""}`}
                 onClick={() => choose(STEPS[step].id, opt)}
               >
-                {opt}
+                {opt.label}
               </button>
             ))}
           </div>
@@ -147,11 +154,7 @@ export function LandingQuiz() {
           {estimate && tier ? (
             <div className={styles.estimate}>
               <span className={styles.estimateLabel}>Ориентировочная стоимость проекта</span>
-              <span className={styles.estimateValue}>
-                {estimate.to
-                  ? `${formatMoney(estimate.from)} — ${formatMoney(estimate.to)}`
-                  : `от ${formatMoney(estimate.from)}`}
-              </span>
+              <span className={styles.estimateValue}>{priceText}</span>
               <span className={styles.estimateNote}>
                 Для домов {tier.label.toLowerCase()}: {formatRate(tier.base)} ₽/м² за базовый комплект
                 (эскизный проект, архитектурные и конструктивные решения) и {formatRate(tier.full)} ₽/м²
@@ -162,7 +165,16 @@ export function LandingQuiz() {
                 Точную цену фиксируем в договоре после разговора.
               </span>
             </div>
-          ) : null}
+          ) : (
+            <div className={styles.estimate}>
+              <span className={styles.estimateLabel}>Стоимость проекта</span>
+              <span className={styles.estimateValue}>Считаем по площади</span>
+              <span className={styles.estimateNote}>
+                Площадь пока не определена — ориентир по стоимости зависит именно от неё.
+                Оставьте телефон: Ринат уточнит задачу и посчитает точную стоимость под ваш участок.
+              </span>
+            </div>
+          )}
 
           <ul className={styles.summaryList}>
             {STEPS.map((s) => (
@@ -172,16 +184,11 @@ export function LandingQuiz() {
               </li>
             ))}
           </ul>
-          <p className={styles.summaryNote}>
-            Оставьте контакты — обсудим ваш участок, пришлём точный расчёт и примеры похожих проектов.
-          </p>
+
+          {/* Форма стоит прямо здесь: раньше на этом месте была кнопка, открывавшая модалку,
+              и почти вся воронка обрывалась именно на этом лишнем шаге. */}
           <div className={styles.summaryCta}>
-            <LeadForm
-              source={`Лендинг квиз · ${summary}`}
-              title="Обсудить проект"
-              subtitle="Оставьте имя и телефон — обсудим задачу и посчитаем точную стоимость."
-              placement="default"
-            />
+            <InlineLeadForm source="Лендинг квиз" quiz={quizContext} />
             <button type="button" className={styles.navBtn} onClick={restart}>
               Пройти заново
             </button>

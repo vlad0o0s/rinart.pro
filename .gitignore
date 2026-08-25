@@ -55,3 +55,6 @@ data/leads.json
 
 # резервные копии файлов
 *.orig
+
+# сборка тестов встроенным раннером Node (npm test)
+.test-build/

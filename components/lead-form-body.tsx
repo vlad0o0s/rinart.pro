@@ -1,0 +1,191 @@
+"use client";
+
+import { InvisibleSmartCaptcha } from "@yandex/smart-captcha";
+import { useEffect, useId, useRef } from "react";
+import { PHONE_HREF, PHONE_LABEL, TELEGRAM_HREF } from "@/lib/contacts";
+import type { useLeadForm } from "./use-lead-form";
+import styles from "./lead-form.module.css";
+
+/**
+ * Поля заявки без обёртки. Модалка показывает их внутри диалога, встроенная форма —
+ * прямо под расчётом квиза. Разметка, состояния и тексты при этом одни и те же.
+ */
+
+const CAPTCHA_SITE_KEY =
+  process.env.NEXT_PUBLIC_YANDEX_SMARTCAPTCHA_CLIENT_KEY ||
+  "ysc1_kSspdc4CreezvRnhYrKOF8CfF79arnKlhequLaHL7fe55cea";
+
+type LeadFormBodyProps = {
+  form: ReturnType<typeof useLeadForm>;
+  /** Текст основной кнопки: на лендинге он продаёт результат, а не действие. */
+  submitLabel: string;
+  /** Что показать после успешной отправки вместо формы. */
+  successSlot?: React.ReactNode;
+};
+
+export function LeadFormBody({ form, submitLabel, successSlot }: LeadFormBodyProps) {
+  const nameId = useId();
+  const phoneId = useId();
+  const consentId = useId();
+  const successRef = useRef<HTMLDivElement | null>(null);
+
+  const isSending = form.status === "sending";
+
+  // На телефоне форма часто длиннее экрана, и после отправки подтверждение оказывалось
+  // выше или ниже видимой области — человек не понимал, ушла заявка или нет.
+  useEffect(() => {
+    if (form.status === "success") {
+      successRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [form.status]);
+
+  if (form.status === "success") {
+    return (
+      <div className={styles.success} role="status" aria-live="polite" ref={successRef}>
+        <span className={styles.successMark} aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M5 12.5 10 17.5 19 7"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+        <p className={styles.successTitle}>
+          Спасибо! Ринат свяжется с вами в течение рабочего дня
+        </p>
+        {successSlot}
+      </div>
+    );
+  }
+
+  return (
+    <form className={styles.form} onSubmit={form.submit} noValidate>
+      <div className={styles.fields}>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor={nameId}>
+            Имя
+          </label>
+          <input
+            id={nameId}
+            className={styles.input}
+            type="text"
+            name="name"
+            autoComplete="name"
+            value={form.name}
+            onChange={(event) => form.setName(event.target.value)}
+            onFocus={form.armCaptcha}
+            placeholder="Как к вам обращаться"
+            maxLength={80}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor={phoneId}>
+            Телефон *
+          </label>
+          <input
+            id={phoneId}
+            className={styles.input}
+            type="tel"
+            name="phone"
+            autoComplete="tel"
+            inputMode="tel"
+            value={form.phone}
+            onChange={(event) => form.handlePhoneChange(event.target.value)}
+            onFocus={form.handlePhoneFocus}
+            onBlur={form.handlePhoneBlur}
+            placeholder="+7 (___) ___-__-__"
+            maxLength={18}
+            required
+            aria-required="true"
+          />
+        </div>
+      </div>
+
+      {/* Honeypot: настоящие люди этого поля не видят и не заполняют. */}
+      <input
+        type="text"
+        name="company"
+        value={form.company}
+        onChange={(event) => form.setCompany(event.target.value)}
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className={styles.honeypot}
+      />
+
+      <div className={styles.consent}>
+        <input
+          id={consentId}
+          className={styles.consentBox}
+          type="checkbox"
+          checked={form.consent}
+          onChange={(event) => form.setConsent(event.target.checked)}
+          onFocus={form.armCaptcha}
+          required
+          aria-required="true"
+        />
+        <label className={styles.consentText} htmlFor={consentId}>
+          Согласен на{" "}
+          <a href="/privacy" target="_blank" rel="noopener noreferrer">
+            обработку персональных данных
+          </a>
+        </label>
+      </div>
+
+      {/* Скрипт капчи подключается только после первого касания формы, чтобы не
+          замедлять страницу тем, кто до формы не дошёл. */}
+      {form.captcha.armed ? (
+        <div className={styles.captcha}>
+          <InvisibleSmartCaptcha
+            key={form.captcha.nonce}
+            sitekey={CAPTCHA_SITE_KEY}
+            visible={form.captcha.visible}
+            onSuccess={form.captcha.onSuccess}
+            onTokenExpired={form.captcha.onTokenExpired}
+            onChallengeHidden={() => form.captcha.onUnavailable("challenge_hidden")}
+            onNetworkError={() => form.captcha.onUnavailable("network")}
+            onJavascriptError={() => form.captcha.onUnavailable("script")}
+          />
+        </div>
+      ) : null}
+
+      <button className={styles.submit} type="submit" disabled={isSending}>
+        {isSending ? "Отправляем…" : submitLabel}
+      </button>
+
+      {/* Область объявлений для скринридера: сюда попадает и ошибка, и успех. */}
+      <div className={styles.status} role="status" aria-live="polite">
+        {form.status === "error" && form.errorMessage ? (
+          <div className={styles.error}>
+            <p className={styles.errorText}>{form.errorMessage}</p>
+            <div className={styles.errorActions}>
+              <button
+                type="button"
+                className={styles.retry}
+                onClick={() => form.submit()}
+                disabled={isSending}
+              >
+                Попробовать ещё раз
+              </button>
+              <a className={styles.errorLink} href={PHONE_HREF}>
+                {PHONE_LABEL}
+              </a>
+              <a
+                className={styles.errorLink}
+                href={TELEGRAM_HREF}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Telegram
+              </a>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </form>
+  );
+}
