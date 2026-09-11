@@ -24,8 +24,8 @@ type InlineLeadFormProps = {
 export function InlineLeadForm({
   source,
   quiz = null,
-  submitLabel = "Получить точный расчёт и 3 похожих проекта",
-  note = "Оставьте телефон — Ринат уточнит задачу, подготовит точный расчёт и пришлёт 3 похожих проекта.",
+  submitLabel = "Получить точный расчёт и бесплатную консультацию",
+  note = "Оставьте телефон — Ринат уточнит задачу, подготовит точный расчёт и проведёт бесплатную консультацию.",
 }: InlineLeadFormProps) {
   const form = useLeadForm({ source, quiz });
 
