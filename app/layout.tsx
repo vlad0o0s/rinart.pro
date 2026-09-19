@@ -8,6 +8,7 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { PageTransition } from "@/components/page-transition";
 import { YandexMetrika } from "@/components/yandex-metrika";
+import { AttributionCapture } from "@/components/attribution-capture";
 import { JsonLd } from "@/components/json-ld";
 import { isBotUserAgent } from "@/lib/is-bot";
 import { organizationSchema, webSiteSchema } from "@/lib/seo/schema";
@@ -108,6 +109,7 @@ export default async function RootLayout({
           }}
         />
         <YandexMetrika />
+        <AttributionCapture />
         <noscript>
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}

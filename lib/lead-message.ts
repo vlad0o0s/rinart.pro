@@ -74,9 +74,10 @@ export function formatLeadLines(lead: LeadRequest): string[] {
       lines.push(...marks);
     }
 
-    if (attribution.pageUrl || attribution.referrer) {
+    if (attribution.pageUrl || attribution.referrer || attribution.landingPage) {
       lines.push("");
       if (attribution.pageUrl) lines.push(`Страница: ${attribution.pageUrl}`);
+      if (attribution.landingPage) lines.push(`Страница входа: ${attribution.landingPage}`);
       if (attribution.referrer) lines.push(`Переход с: ${attribution.referrer}`);
     }
   }

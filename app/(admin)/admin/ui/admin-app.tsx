@@ -27,6 +27,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import styles from "./admin.module.css";
+import { LeadsPanel } from "./leads-panel";
 
 const CATEGORY_OPTIONS = [
   { id: "houses", label: "Частные дома" },
@@ -1178,7 +1179,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     setLibraryAssets((prev) => prev.filter((item) => item.id !== asset.id));
   };
   // Инициализируем с дефолтным значением для избежания проблем с гидратацией
-  const [activeView, setActiveView] = useState<"projects" | "settings">("projects");
+  const [activeView, setActiveView] = useState<"projects" | "settings" | "leads">("projects");
 
   // Восстанавливаем активную вкладку из localStorage после гидратации
   useEffect(() => {
@@ -1187,7 +1188,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     }
     try {
       const savedView = localStorage.getItem(STORAGE_KEY_ACTIVE_VIEW);
-      if (savedView === "projects" || savedView === "settings") {
+      if (savedView === "projects" || savedView === "settings" || savedView === "leads") {
         setActiveView(savedView);
       }
     } catch {
@@ -2687,7 +2688,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         <div className={styles.branding}>
           <span className={styles.brandTitle}>RINART Admin</span>
           <span className={styles.brandSubtitle}>
-            {activeView === "projects" ? "Управление портфолио" : "Настройки"}
+            {activeView === "projects" ? "Управление портфолио" : activeView === "leads" ? "Заявки" : "Настройки"}
           </span>
           <nav className={styles.viewTabs} aria-label="Разделы админки">
             <button
@@ -2707,6 +2708,15 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               disabled={activeView === "settings"}
             >
               Настройки
+            </button>
+            <button
+              type="button"
+              className={styles.viewTabButton}
+              data-active={activeView === "leads"}
+              onClick={() => setActiveView("leads")}
+              disabled={activeView === "leads"}
+            >
+              Заявки
             </button>
           </nav>
         </div>
@@ -2910,6 +2920,8 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
             activeTeamMember={activeTeamMember}
             onOpenMediaLibrary={(mode, options) => openMediaLibrary(mode, options)}
           />
+        ) : activeView === "leads" ? (
+          <LeadsPanel />
         ) : null}
       </div>
 

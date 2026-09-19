@@ -18,6 +18,9 @@
   "include": [
     "lib/lead-validation.ts",
     "lib/lead-message.ts",
+    "lib/lead-source.ts",
+    "lib/lead-stats.ts",
+    "lib/lead-storage.ts",
     "lib/pricing-tiers.ts",
     "app/lp/proekt-doma/quiz-steps.ts",
     "legacy-redirects.cjs",

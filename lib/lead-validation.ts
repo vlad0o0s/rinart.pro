@@ -98,6 +98,8 @@ export type Attribution = Partial<Record<UtmKey, string>> & {
   yclid?: string;
   pageUrl?: string;
   referrer?: string;
+  /** Страница входа — путь первой страницы визита, без домена и query. */
+  landingPage?: string;
 };
 
 /** Метки рекламы тоже клиентские данные: доверять им как есть нельзя. */
@@ -129,6 +131,12 @@ export function normalizeAttribution(raw: unknown): Attribution {
   const referrer = clampText(source.referrer, LEAD_LIMITS.referrer);
   if (referrer) {
     attribution.referrer = referrer;
+  }
+
+  // Страница входа — только путь внутри сайта: чужой адрес сюда попасть не должен.
+  const landingPage = clampText(source.landingPage, LEAD_LIMITS.url);
+  if (landingPage.startsWith("/") && !landingPage.startsWith("//")) {
+    attribution.landingPage = landingPage;
   }
 
   return attribution;

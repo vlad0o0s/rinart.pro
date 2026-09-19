@@ -78,7 +78,13 @@ export function captureAttribution() {
     }
   }
 
-  if (hasFreshMarks || next.referrer !== stored.referrer) {
+  // Страница входа — первая страница вкладки. Переходы по сайту её не меняют,
+  // а новый рекламный клик начинает визит заново — вместе с метками обновляем и её.
+  if (!next.landingPage || hasFreshMarks) {
+    next.landingPage = window.location.pathname;
+  }
+
+  if (hasFreshMarks || next.referrer !== stored.referrer || next.landingPage !== stored.landingPage) {
     writeStore(next);
   }
 }

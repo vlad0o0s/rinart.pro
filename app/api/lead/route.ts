@@ -187,10 +187,10 @@ export async function POST(request: NextRequest) {
   const telegramDelivered = telegramResult.status === "fulfilled" && telegramResult.value === true;
   const emailDelivered = emailResult.status === "fulfilled";
 
-  if (!telegramDelivered) {
-    logLead("telegram_not_delivered", {
-      reason: isLeadTelegramConfigured() ? "send_failed" : "not_configured",
-    });
+  // Telegram решено не использовать: пока канал не настроен, он выключен, и писать об этом
+  // в журнал на каждую заявку незачем — шум прятал бы настоящие сбои доставки.
+  if (!telegramDelivered && isLeadTelegramConfigured()) {
+    logLead("telegram_not_delivered", { reason: "send_failed" });
   }
 
   if (!emailDelivered) {
