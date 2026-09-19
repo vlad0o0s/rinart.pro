@@ -9,6 +9,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": false,
+    "allowJs": true,
     "incremental": false,
     "rootDir": ".",
     "outDir": ".test-build",
@@ -19,6 +20,7 @@
     "lib/lead-message.ts",
     "lib/pricing-tiers.ts",
     "app/lp/proekt-doma/quiz-steps.ts",
+    "legacy-redirects.cjs",
     "tests/**/*.ts"
   ]
 }

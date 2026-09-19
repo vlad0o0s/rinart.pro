@@ -8,6 +8,7 @@ const path = require("path");
 const fs = require("fs");
 const { parse: parseUrl } = require("url");
 const next = require("next");
+const { resolveLegacyRedirect } = require("./legacy-redirects.cjs");
 
 const projectDir = __dirname;
 const dev = process.env.NODE_ENV !== "production";
@@ -45,6 +46,22 @@ app.prepare().then(() => {
     .createServer(async (req, res) => {
       try {
         const pathname = (req.url || "/").split("?")[0] || "/";
+        // Старые адреса отвечаем сами, до Next: иначе адрес со слешем на конце получил бы
+        // сначала 308 от Next и только потом наш редирект — два перехода вместо одного.
+        if (req.method === "GET" || req.method === "HEAD") {
+          const legacyTarget = resolveLegacyRedirect(req.url || "/");
+          if (legacyTarget) {
+            res.writeHead(301, {
+              Location: legacyTarget,
+              "Content-Type": "text/plain; charset=utf-8",
+              // Постоянный редирект браузеры кешируют бессрочно; час оставляет возможность
+              // поправить соответствие, если оно окажется неверным.
+              "Cache-Control": "public, max-age=3600",
+            });
+            res.end(req.method === "HEAD" ? undefined : `Moved Permanently: ${legacyTarget}\n`);
+            return;
+          }
+        }
         if (pathname.startsWith("/_next/static/")) {
           const abs = resolveUnderStatic(pathname);
           let ok = false;
