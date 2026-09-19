@@ -7,6 +7,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { PageTransition } from "@/components/page-transition";
+import { YandexMetrika } from "@/components/yandex-metrika";
 import { JsonLd } from "@/components/json-ld";
 import { isBotUserAgent } from "@/lib/is-bot";
 import { organizationSchema, webSiteSchema } from "@/lib/seo/schema";
@@ -106,31 +107,7 @@ export default async function RootLayout({
             `,
           }}
         />
-        <Script id="yandex-metrika" strategy="afterInteractive">
-          {`
-            (function(m,e,t,r,i,k,a){
-              m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-              m[i].l=1*new Date();
-              for (var j = 0; j < document.scripts.length; j++) {
-                if (document.scripts[j].src === r) {
-                  return;
-                }
-              }
-              k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-            })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105099236', 'ym');
-
-            ym(105099236, 'init', {
-              ssr: true,
-              webvisor: true,
-              clickmap: true,
-              ecommerce: "dataLayer",
-              referrer: document.referrer,
-              url: location.href,
-              accurateTrackBounce: true,
-              trackLinks: true,
-            });
-          `}
-        </Script>
+        <YandexMetrika />
         <noscript>
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}

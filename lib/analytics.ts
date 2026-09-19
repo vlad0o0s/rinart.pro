@@ -39,6 +39,24 @@ export const GOAL_CAPTCHA_UNAVAILABLE = "captcha_unavailable";
  * лишнего пробела или другого тире в подписи, и сбой был бы молчаливым.
  */
 
+/**
+ * Просмотр страницы при переходе внутри сайта. Первый просмотр вкладки отправляет `init`
+ * в `components/yandex-metrika.tsx` — отсюда его слать нельзя, получится дубль.
+ */
+export function trackPageview(url: string, options: { referer?: string; title?: string }) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const { ym } = window;
+
+  if (typeof ym !== "function") {
+    return;
+  }
+
+  ym(METRIKA_COUNTER_ID, "hit", url, options);
+}
+
 export function reachGoal(goal: string, params?: Record<string, string>) {
   if (typeof window === "undefined") {
     return;
