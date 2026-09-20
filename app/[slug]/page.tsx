@@ -7,6 +7,7 @@ import styles from "./page.module.css";
 import { JsonLd } from "@/components/json-ld";
 import { projectPageSchema, SITE_URL } from "@/lib/seo/schema";
 import { filledOrUndefined, metaDescriptionFrom } from "@/lib/seo/text";
+import { PROJECT_DESCRIPTION_SIZES, prepareRichHtml } from "@/lib/rich-html";
 import ProjectBody from "./project-body";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 import { RelatedProjectsSlider } from "./related-projects";
@@ -88,13 +89,18 @@ async function ProjectPageComponent({ params }: { params: Promise<{ slug: string
     (paragraph): paragraph is string => typeof paragraph === "string" && paragraph.trim().length > 0,
   );
 
+  // Готовим сохранённый в базе HTML: убираем следы редактора и даём картинкам srcset.
+  const descriptionForPage = descriptionHtml
+    ? prepareRichHtml(descriptionHtml, { sizes: PROJECT_DESCRIPTION_SIZES })
+    : descriptionHtml;
+
   return (
     <>
       <SiteHeader showDesktopNav breadcrumbLabel="Портфолио" socialLinks={socialLinks} navLinks={navLinks} />
       <div className={styles.page}>
         <ProjectBody
           title={title}
-          descriptionHtml={descriptionHtml}
+          descriptionHtml={descriptionForPage}
           descriptionParagraphs={descriptionParagraphs}
           featureImage={heroImageUrl}
           schemes={schemes.map((scheme) => ({ title: scheme.title, image: scheme.url }))}

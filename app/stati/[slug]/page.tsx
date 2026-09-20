@@ -16,6 +16,7 @@ import { metaDescriptionFrom } from "@/lib/seo/text";
 import { SERVICE_PAGES } from "@/lib/services";
 import { getSocialLinks } from "@/lib/site-settings";
 import styles from "../stati.module.css";
+import { ARTICLE_BODY_SIZES, prepareRichHtml } from "@/lib/rich-html";
 
 export const dynamic = "force-dynamic";
 
@@ -140,7 +141,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
           {article.excerpt ? <p className={styles.lead}>{article.excerpt}</p> : null}
 
-          <div className={styles.body} dangerouslySetInnerHTML={{ __html: article.bodyHtml }} />
+          <div className={styles.body} dangerouslySetInnerHTML={{ __html: prepareRichHtml(article.bodyHtml, { sizes: ARTICLE_BODY_SIZES }) }} />
 
           {service || relatedProjects.length ? (
             <aside className={styles.related} aria-label="По теме">

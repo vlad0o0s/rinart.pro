@@ -386,6 +386,10 @@ type EditorState = {
   heroImageUrl: string;
   gallery: GalleryItem[];
   schemes: SchemeItem[];
+  // Заголовок и описание страницы в поиске. Поля были убраны из карточки «в отдельный
+  // SEO-раздел», которого в админке нет: у проекта «Баня Эд» их не получалось задать вовсе.
+  seoTitle: string;
+  seoDescription: string;
 };
 
 type EditorFieldChangeHandler = <K extends keyof EditorState>(field: K, value: EditorState[K]) => void;
@@ -444,6 +448,8 @@ function mapProjectToEditor(project: ProjectDetailResponse["project"]): EditorSt
     slug: project.slug,
     title: project.title,
     descriptionHtml: html,
+    seoTitle: project.content?.seo?.title ?? "",
+    seoDescription: project.content?.seo?.description ?? "",
     categories: (project.categories ?? []) as string[],
     heroImageUrl:
       (project.heroImageUrl && isOptimizedImageUrl(project.heroImageUrl)
@@ -2401,6 +2407,8 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
           descriptionBody: paragraphs,
           descriptionHtml,
           facts: [],
+          seoTitle: editorState.seoTitle.trim() || null,
+          seoDescription: editorState.seoDescription.trim() || null,
         }),
       });
 
@@ -3539,6 +3547,44 @@ function ProjectEditor({
               className={styles.textInput}
               value={state.title}
               onChange={(event) => onFieldChange("title", event.target.value)}
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className={styles.formSection}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.sectionTitleRow}>
+            <h3 className={styles.sectionTitle}>Страница в поиске</h3>
+            <FieldHint text="Так страница проекта выглядит в выдаче Яндекса. Пусто — возьмём название проекта и начало описания." />
+          </div>
+          <p className={styles.sectionSubtitle}>Заголовок и описание для поисковых систем</p>
+        </div>
+        <div className={styles.formGrid}>
+          <label className={styles.inputGroup}>
+            <LabelWithHint
+              label={`Заголовок (title) — ${state.seoTitle.length} знаков`}
+              hint="До 70 знаков: что за объект, где он и что делало бюро."
+            />
+            <input
+              className={styles.textInput}
+              value={state.seoTitle}
+              maxLength={200}
+              placeholder={state.title ? `${state.title} — RINART` : ""}
+              onChange={(event) => onFieldChange("seoTitle", event.target.value)}
+            />
+          </label>
+          <label className={styles.inputGroup}>
+            <LabelWithHint
+              label={`Описание (description) — ${state.seoDescription.length} знаков`}
+              hint="120–160 знаков: площадь, место, материалы — то, что человек узнаёт ещё до перехода."
+            />
+            <textarea
+              className={`${styles.textInput} ${styles.seoTextarea}`}
+              value={state.seoDescription}
+              maxLength={400}
+              rows={3}
+              onChange={(event) => onFieldChange("seoDescription", event.target.value)}
             />
           </label>
         </div>
