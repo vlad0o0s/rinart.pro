@@ -1,0 +1,271 @@
+.page {
+  padding: 140px 10px 80px;
+  background-color: #ffffff;
+  color: #252525;
+  font-family: "Neue Haas Unica", "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+}
+
+/* ---------- Список статей ---------- */
+
+.listHeader {
+  margin: 0 0 40px;
+}
+
+.listTitle {
+  margin: 0;
+  font-size: clamp(28px, 3.2vw, 48px);
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+  gap: 48px 24px;
+}
+
+.cardLink {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.cardImage {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #f2f2f2;
+}
+
+.cardDate {
+  font-size: 14px;
+  color: rgba(37, 37, 37, 0.6);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: clamp(20px, 1.6vw, 26px);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.cardLink:hover .cardTitle,
+.cardLink:focus-visible .cardTitle {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.cardExcerpt {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.45;
+  color: rgba(37, 37, 37, 0.8);
+}
+
+/* ---------- Статья ---------- */
+
+.article {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.previewBanner {
+  margin: 0 0 24px;
+  padding: 12px 16px;
+  background: #fff4d6;
+  border: 1px solid #f0c24b;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.crumbs {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: rgba(37, 37, 37, 0.6);
+}
+
+.crumbs a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.title {
+  margin: 0 0 16px;
+  font-size: clamp(28px, 3.4vw, 46px);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.meta {
+  margin: 0 0 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 15px;
+  color: rgba(37, 37, 37, 0.65);
+}
+
+.cover {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 0 32px;
+  background: #f2f2f2;
+}
+
+.lead {
+  margin: 0 0 28px;
+  font-size: clamp(19px, 1.6vw, 22px);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.body {
+  font-size: 18px;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+.body > :first-child {
+  margin-top: 0;
+}
+
+.body p,
+.body ul,
+.body ol,
+.body blockquote {
+  margin: 0 0 1em;
+}
+
+.body h2 {
+  margin: 1.8em 0 0.6em;
+  font-size: clamp(22px, 2vw, 28px);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.body h3 {
+  margin: 1.5em 0 0.5em;
+  font-size: clamp(19px, 1.6vw, 22px);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+/* Общие стили сайта снимают маркеры у списков — в тексте статьи они нужны. */
+.body ul,
+.body ol {
+  padding-left: 1.4em;
+}
+
+.body ul {
+  list-style: disc;
+}
+
+.body ol {
+  list-style: decimal;
+}
+
+.body li + li {
+  margin-top: 0.35em;
+}
+
+.body a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5em auto;
+}
+
+.body blockquote {
+  padding-left: 1em;
+  border-left: 3px solid #252525;
+  font-style: italic;
+}
+
+.related {
+  margin: 56px 0 0;
+  padding: 28px 0 0;
+  border-top: 1px solid rgba(37, 37, 37, 0.15);
+}
+
+.relatedTitle {
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.serviceLink {
+  display: inline-block;
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 800;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.relatedProjects {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 20px;
+}
+
+.relatedProject {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.relatedProject img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #f2f2f2;
+}
+
+.relatedProject:hover span,
+.relatedProject:focus-visible span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.leadForm {
+  max-width: 760px;
+  margin: 64px auto 0;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding-top: 110px;
+  }
+
+  .body {
+    font-size: 17px;
+  }
+}

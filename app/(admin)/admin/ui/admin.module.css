@@ -416,6 +416,7 @@
 
 .adminContent[data-view="seo"],
 .adminContent[data-view="leads"],
+.adminContent[data-view="articles"],
 .adminContent[data-view="settings"] {
   grid-template-columns: minmax(0, 1fr);
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SiteHeader, PROEKTIR_SUBLINKS } from "@/components/site-header";
+import { getMainNavLinks } from "@/lib/navigation";
 import { Footer } from "@/components/footer";
 import { PricingTimeline } from "@/components/pricing-timeline";
 import { HeroSection } from "./hero-section";
@@ -21,10 +22,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProektirovaniePage() {
-  const [socialLinks, blocks] = await Promise.all([getSocialLinks(), getGlobalBlocks()]);
+  const [socialLinks, blocks, navLinks] = await Promise.all([getSocialLinks(), getGlobalBlocks(), getMainNavLinks()]);
   return (
     <>
-      <SiteHeader showDesktopNav subLinks={PROEKTIR_SUBLINKS} socialLinks={socialLinks} />
+      <SiteHeader showDesktopNav subLinks={PROEKTIR_SUBLINKS} socialLinks={socialLinks} navLinks={navLinks} />
       <main className="min-h-screen bg-white text-neutral-900 antialiased site-shell">
         <HeroSection />
         <IntroSection />

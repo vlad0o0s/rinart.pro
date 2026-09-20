@@ -26,6 +26,8 @@
     "legacy-redirects.cjs",
     "lib/inline-images.cjs",
     "lib/seo/text.ts",
+    "lib/articles.ts",
+    "lib/services.ts",
     "lib/seo/robots.ts",
     "lib/seo/schema.ts",
     "lib/seo/static-pages.ts",

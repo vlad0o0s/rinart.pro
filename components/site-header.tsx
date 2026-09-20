@@ -5,15 +5,8 @@ import type { MutableRefObject, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { SocialLink, SocialPlatform } from "@/types/site";
+import { MAIN_NAV_LINKS, type NavLink } from "@/lib/nav-links";
 import styles from "./site-header.module.css";
-
-const NAV_LINKS = [
-  { href: "/", label: "RINART" },
-  { href: "/#portfolio", label: "Портфолио" },
-  { href: "/proektirovanie", label: "Проектирование" },
-  { href: "/masterskaja", label: "Мастерская" },
-  { href: "/kontakty", label: "Контакты" },
-];
 
 const ARCHITECT_WORD = "Архитектор";
 
@@ -57,6 +50,8 @@ export type SiteHeaderProps = {
   subLinks?: { href: string; label: string }[];
   breadcrumbLabel?: string;
   socialLinks?: SocialLink[];
+  /** Меню с учётом наполнения сайта (lib/navigation.ts); без него — основные разделы. */
+  navLinks?: NavLink[];
 };
 
 type Breadcrumb = { href: string; label: string; className?: string };
@@ -67,6 +62,7 @@ export function SiteHeader({
   subLinks,
   breadcrumbLabel,
   socialLinks,
+  navLinks = MAIN_NAV_LINKS,
 }: SiteHeaderProps) {
   // Debug log removed
   const [menuOpen, setMenuOpen] = useState(false);
@@ -86,6 +82,7 @@ export function SiteHeader({
       "/proektirovanie": "Проектирование",
       "/masterskaja": "Мастерская",
       "/kontakty": "Контакты",
+      "/stati": "Статьи",
     };
 
     const segments = pathname.split("/").filter(Boolean);
@@ -152,7 +149,7 @@ export function SiteHeader({
 
   return (
     <header className={`w-full bg-white ${styles.header}`}>
-      <DesktopHeaderSection showDesktopBrand={showDesktopBrand} showDesktopNav={showDesktopNav} />
+      <DesktopHeaderSection showDesktopBrand={showDesktopBrand} showDesktopNav={showDesktopNav} navLinks={navLinks} />
 
       <MobileHeaderSection
         menuOpen={menuOpen}
@@ -175,7 +172,7 @@ export function SiteHeader({
           </ul>
         </nav>
       ) : null}
-      <MobileMenu menuOpen={menuOpen} menuRef={menuRef} closeMenu={closeMenu} socials={resolvedSocialLinks} />
+      <MobileMenu menuOpen={menuOpen} menuRef={menuRef} closeMenu={closeMenu} socials={resolvedSocialLinks} navLinks={navLinks} />
       {menuOpen ? (
         <button
           type="button"
@@ -193,9 +190,11 @@ export { PROEKTIR_SUBLINKS, MASTERSKAJA_SUBLINKS };
 function DesktopHeaderSection({
   showDesktopBrand,
   showDesktopNav,
+  navLinks,
 }: {
   showDesktopBrand: boolean;
   showDesktopNav: boolean;
+  navLinks: NavLink[];
 }) {
   if (!showDesktopBrand && !showDesktopNav) {
     return null;
@@ -204,7 +203,7 @@ function DesktopHeaderSection({
   return (
     <div className={`${styles.wrapper} hidden md:flex`}>
       {showDesktopBrand ? <DesktopBrand /> : null}
-      {showDesktopNav ? <DesktopNavigation /> : null}
+      {showDesktopNav ? <DesktopNavigation navLinks={navLinks} /> : null}
     </div>
   );
 }
@@ -222,11 +221,11 @@ function DesktopBrand() {
   );
 }
 
-function DesktopNavigation() {
+function DesktopNavigation({ navLinks }: { navLinks: NavLink[] }) {
   return (
     <nav className={styles.desktopNav} aria-label="Основное меню">
       <ul className={styles.desktopNavList}>
-        {NAV_LINKS.map((link) => (
+        {navLinks.map((link) => (
           <li key={link.href} className={styles.desktopNavItem}>
             <Link href={link.href}>{link.label}</Link>
           </li>
@@ -335,11 +334,13 @@ function MobileMenu({
   menuRef,
   closeMenu,
   socials,
+  navLinks,
 }: {
   menuOpen: boolean;
   menuRef: MutableRefObject<HTMLElement | null>;
   closeMenu: () => void;
   socials: SocialLink[];
+  navLinks: NavLink[];
 }) {
   return (
     <nav
@@ -350,7 +351,7 @@ function MobileMenu({
       <div className={styles.menuPanel}>
         <div className={styles.menuContent}>
           <ul className={styles.menuList}>
-            {NAV_LINKS.map((link, index) => {
+            {navLinks.map((link, index) => {
               // Use regular <a> for anchor links (href contains #) to allow proper anchor navigation
               const isAnchorLink = link.href.includes("#");
               return (

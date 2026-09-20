@@ -14,6 +14,7 @@ import { homePageSchema } from "@/lib/seo/schema";
 import { buildPageMetadata } from "@/lib/page-seo";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 import { getGlobalBlocks } from "@/lib/global-blocks";
+import { getMainNavLinks } from "@/lib/navigation";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -24,10 +25,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const [projects, socialLinks, blocks] = await Promise.all([
+  const [projects, socialLinks, blocks, navLinks] = await Promise.all([
     getAllProjects(),
     getSocialLinks(),
     getGlobalBlocks(),
+    getMainNavLinks(),
   ]);
   const summaries = (projects as Array<{
     slug: string;
@@ -56,14 +58,14 @@ export default async function Home() {
 
   return (
     <>
-      <SiteHeader showDesktopBrand socialLinks={socialLinks} />
+      <SiteHeader showDesktopBrand socialLinks={socialLinks} navLinks={navLinks} />
       <main className={`${styles.pageShell} min-h-screen bg-white text-neutral-900 antialiased`}>
         <div className={styles.stage}>
           <div className={styles.stageLayer} data-stage="hero">
         <Hero imageUrl={blocks["home-hero"]?.imageUrl ?? undefined} />
           </div>
           <div className={styles.stageLayer} data-stage="nav">
-          <PrimaryNav />
+          <PrimaryNav links={navLinks} />
           </div>
           <div className={styles.stageLayer} data-stage="portfolio">
             <HomeProjectsSection projects={summaries} />

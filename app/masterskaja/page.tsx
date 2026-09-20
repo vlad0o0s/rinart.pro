@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SiteHeader, MASTERSKAJA_SUBLINKS } from "@/components/site-header";
+import { getMainNavLinks } from "@/lib/navigation";
 import { Footer } from "@/components/footer";
 import { MasterskajaHero } from "./hero-section";
 import { FounderSection } from "./founder-section";
@@ -21,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function MasterskajaPage() {
-  const [socialLinks, rawTeamMembers, founderBiography, founderLeadText] = await Promise.all([getSocialLinks(), getTeamMembers(), getFounderBiography(), getFounderLeadText()]);
+  const [socialLinks, rawTeamMembers, founderBiography, founderLeadText, navLinks] = await Promise.all([getSocialLinks(), getTeamMembers(), getFounderBiography(), getFounderLeadText(), getMainNavLinks()]);
   const teamMembers: TeamMember[] = rawTeamMembers.map((member) => {
     const { createdAt: _createdAt, updatedAt: _updatedAt, ...rest } = member;
     void _createdAt;
@@ -30,7 +31,7 @@ export default async function MasterskajaPage() {
   });
   return (
     <>
-      <SiteHeader showDesktopNav subLinks={MASTERSKAJA_SUBLINKS} socialLinks={socialLinks} />
+      <SiteHeader showDesktopNav subLinks={MASTERSKAJA_SUBLINKS} socialLinks={socialLinks} navLinks={navLinks} />
       <main className="min-h-screen bg-white text-neutral-900 antialiased">
         <section id="founder">
           <MasterskajaHero />

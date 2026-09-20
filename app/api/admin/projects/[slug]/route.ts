@@ -10,6 +10,7 @@ import {
 import { buildContent, buildSeoPayload, ensureFacts, ensureStringArray, normaliseNullable } from "@/lib/project-admin-utils";
 import { invalidateAllProjectsCache, invalidateProjectCache } from "@/lib/projects";
 import { moveInlineImagesToUploads } from "@/lib/inline-images-server";
+import { RESERVED_TOP_LEVEL_SLUGS } from "@/lib/articles";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
   await assertAdmin(request);
@@ -37,6 +38,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
 
   if ("title" in body) updates.title = typeof body.title === "string" ? body.title : existing.title;
   if ("slug" in body && typeof body.slug === "string" && body.slug !== slug) {
+    if (RESERVED_TOP_LEVEL_SLUGS.has(body.slug)) {
+      return NextResponse.json({ error: "Этот адрес занят разделом сайта — выберите другой" }, { status: 409 });
+    }
     const slugExists = await fetchProjectIdBySlug(body.slug);
     if (slugExists) {
       return NextResponse.json({ error: "Slug already in use" }, { status: 409 });

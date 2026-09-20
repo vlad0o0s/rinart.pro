@@ -1,6 +1,18 @@
 import type { MetadataRoute } from "next";
+import { getPublishedArticles } from "@/lib/article-repository";
+import { ARTICLES_PATH, articleModifiedAt, type Article } from "@/lib/articles";
 import { fetchAllProjects } from "@/lib/project-repository";
 import { SITE_URL } from "@/lib/seo/schema";
+
+/** Сбой чтения статей не должен лишать робота всей карты сайта. */
+async function safePublishedArticles(): Promise<Article[]> {
+  try {
+    return await getPublishedArticles();
+  } catch (error) {
+    console.error("[sitemap] failed to read articles", error);
+    return [];
+  }
+}
 
 // Список проектов читается из базы на каждый запрос. Прежний revalidate рядом с
 // force-dynamic не действовал и только путал.
@@ -12,7 +24,28 @@ function latest(dates: Date[]): Date | undefined {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const projects = await fetchAllProjects();
+  const [projects, articles] = await Promise.all([fetchAllProjects(), safePublishedArticles()]);
+
+  // Черновики сюда не попадают: getPublishedArticles отдаёт только опубликованные.
+  const articleRoutes: MetadataRoute.Sitemap = articles.length
+    ? [
+        {
+          url: `${SITE_URL}${ARTICLES_PATH}`,
+          lastModified: latest(articles.map((article) => new Date(articleModifiedAt(article) ?? article.updatedAt))),
+          changeFrequency: "weekly",
+          priority: 0.7,
+        },
+        ...articles.map((article) => {
+          const modified = articleModifiedAt(article);
+          return {
+            url: `${SITE_URL}${ARTICLES_PATH}/${article.slug}`,
+            lastModified: modified ? new Date(modified) : undefined,
+            changeFrequency: "monthly" as const,
+            priority: 0.6,
+          };
+        }),
+      ]
+    : [];
 
   const projectRoutes: MetadataRoute.Sitemap = projects.map((project) => ({
     url: `${SITE_URL}/${project.slug}`,
@@ -36,5 +69,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/kontakty`, changeFrequency: "monthly", priority: 0.6 },
   ];
 
-  return [...baseRoutes, ...projectRoutes];
+  return [...baseRoutes, ...articleRoutes, ...projectRoutes];
 }

@@ -194,6 +194,85 @@ export function masterskajaPageSchema() {
   };
 }
 
+type ArticleForSchema = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  seoDescription: string;
+  coverImageUrl: string | null;
+  authorName: string;
+  authorRole: string;
+  publishedAt: string | null;
+  contentUpdatedAt: string | null;
+};
+
+const ARTICLES_URL = `${SITE_URL}/stati`;
+
+export function articleSchema(article: ArticleForSchema) {
+  const url = `${ARTICLES_URL}/${article.slug}`;
+  const image = absoluteUrl(article.coverImageUrl);
+  const modified =
+    article.contentUpdatedAt && (!article.publishedAt || article.contentUpdatedAt > article.publishedAt)
+      ? article.contentUpdatedAt
+      : article.publishedAt;
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: article.title,
+      description: filledOrUndefined(article.seoDescription) ?? filledOrUndefined(article.excerpt),
+      url,
+      mainEntityOfPage: url,
+      image: image ? [image] : undefined,
+      datePublished: article.publishedAt ?? undefined,
+      dateModified: modified ?? undefined,
+      inLanguage: "ru-RU",
+      author: article.authorName
+        ? { "@type": "Person", name: article.authorName, jobTitle: filledOrUndefined(article.authorRole) }
+        : ORGANIZATION_REF,
+      publisher: ORGANIZATION_REF,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Главная", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Статьи", item: ARTICLES_URL },
+        { "@type": "ListItem", position: 3, name: article.title, item: url },
+      ],
+    },
+  ];
+}
+
+export function articlesListSchema(articles: Array<{ slug: string; title: string }>) {
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "Статьи",
+      url: ARTICLES_URL,
+      about: ORGANIZATION_REF,
+      mainEntity: {
+        "@type": "ItemList",
+        itemListElement: articles.map((article, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          url: `${ARTICLES_URL}/${article.slug}`,
+          name: article.title,
+        })),
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Главная", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Статьи", item: ARTICLES_URL },
+      ],
+    },
+  ];
+}
+
 /** Разметка страницы услуги: одна функция на все будущие страницы услуг. */
 export function servicePageSchema(service: { name: string; path: string; description?: string; serviceType?: string }) {
   return {

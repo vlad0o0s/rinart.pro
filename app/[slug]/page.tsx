@@ -11,6 +11,7 @@ import ProjectBody from "./project-body";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 import { RelatedProjectsSlider } from "./related-projects";
 import { getSocialLinks } from "@/lib/site-settings";
+import { getMainNavLinks } from "@/lib/navigation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -69,10 +70,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 async function ProjectPageComponent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [project, allProjects, socialLinks] = await Promise.all([
+  const [project, allProjects, socialLinks, navLinks] = await Promise.all([
     getProjectBySlug(slug),
     getAllProjects(),
     getSocialLinks(),
+    getMainNavLinks(),
   ]);
 
   if (!project) {
@@ -88,7 +90,7 @@ async function ProjectPageComponent({ params }: { params: Promise<{ slug: string
 
   return (
     <>
-      <SiteHeader showDesktopNav breadcrumbLabel="Портфолио" socialLinks={socialLinks} />
+      <SiteHeader showDesktopNav breadcrumbLabel="Портфолио" socialLinks={socialLinks} navLinks={navLinks} />
       <div className={styles.page}>
         <ProjectBody
           title={title}

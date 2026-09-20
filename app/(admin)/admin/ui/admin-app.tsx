@@ -28,6 +28,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import styles from "./admin.module.css";
 import { LeadsPanel } from "./leads-panel";
+import { ArticlesPanel } from "./articles-panel";
+import { AdminAuthError, askImageAlt, inlineImageHtml, uploadInlineImage } from "./admin-media";
 
 const CATEGORY_OPTIONS = [
   { id: "houses", label: "Частные дома" },
@@ -686,51 +688,6 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   return response.json();
 }
 
-type InlineImageUpload = { url: string; width?: number; height?: number };
-
-/**
- * Картинка для описания проекта уходит файлом в uploads, в HTML — только ссылка.
- * Раньше редактор вставлял её в HTML целиком (base64), и страница проекта весила мегабайты.
- */
-async function uploadInlineImage(file: File): Promise<InlineImageUpload> {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("mode", "inline");
-  const response = await fetch("/api/admin/media/upload", { method: "POST", body: formData, credentials: "include" });
-  if (response.status === 401) {
-    throw new UnauthorizedError();
-  }
-  const data = (await response.json().catch(() => null)) as (InlineImageUpload & { error?: string }) | null;
-  if (!response.ok || !data?.url) {
-    throw new Error(data?.error || `Не удалось загрузить изображение (${response.status})`);
-  }
-  return data;
-}
-
-function escapeHtmlAttr(value: string): string {
-  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-/**
- * Подпись (alt) обязательна: по ней поиск понимает, что на картинке. null — вставку отменили.
- */
-function askImageAlt(currentValue: string): string | null {
-  let value = currentValue;
-  for (;;) {
-    const answer = window.prompt(
-      "Что на изображении? Например: «План первого этажа», «Фасад со стороны сада». Подпись видят поиск и незрячие посетители.",
-      value,
-    );
-    if (answer === null) {
-      return null;
-    }
-    if (answer.trim()) {
-      return answer.trim();
-    }
-    value = "";
-  }
-}
-
 function SortableProjectItem({
   project,
   index,
@@ -1224,7 +1181,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     setLibraryAssets((prev) => prev.filter((item) => item.id !== asset.id));
   };
   // Инициализируем с дефолтным значением для избежания проблем с гидратацией
-  const [activeView, setActiveView] = useState<"projects" | "settings" | "leads">("projects");
+  const [activeView, setActiveView] = useState<"projects" | "settings" | "leads" | "articles">("projects");
 
   // Восстанавливаем активную вкладку из localStorage после гидратации
   useEffect(() => {
@@ -1233,7 +1190,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
     }
     try {
       const savedView = localStorage.getItem(STORAGE_KEY_ACTIVE_VIEW);
-      if (savedView === "projects" || savedView === "settings" || savedView === "leads") {
+      if (savedView === "projects" || savedView === "settings" || savedView === "leads" || savedView === "articles") {
         setActiveView(savedView);
       }
     } catch {
@@ -2733,7 +2690,13 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         <div className={styles.branding}>
           <span className={styles.brandTitle}>RINART Admin</span>
           <span className={styles.brandSubtitle}>
-            {activeView === "projects" ? "Управление портфолио" : activeView === "leads" ? "Заявки" : "Настройки"}
+            {activeView === "projects"
+              ? "Управление портфолио"
+              : activeView === "leads"
+                ? "Заявки"
+                : activeView === "articles"
+                  ? "Статьи"
+                  : "Настройки"}
           </span>
           <nav className={styles.viewTabs} aria-label="Разделы админки">
             <button
@@ -2762,6 +2725,15 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               disabled={activeView === "leads"}
             >
               Заявки
+            </button>
+            <button
+              type="button"
+              className={styles.viewTabButton}
+              data-active={activeView === "articles"}
+              onClick={() => setActiveView("articles")}
+              disabled={activeView === "articles"}
+            >
+              Статьи
             </button>
           </nav>
         </div>
@@ -2967,6 +2939,8 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
           />
         ) : activeView === "leads" ? (
           <LeadsPanel />
+        ) : activeView === "articles" ? (
+          <ArticlesPanel />
         ) : null}
       </div>
 
@@ -3234,13 +3208,8 @@ function ProjectEditor({
       if (!trimmed) {
         return;
       }
-      const size = width && height ? ` width="${width}" height="${height}"` : "";
       focusEditor();
-      document.execCommand(
-        "insertHTML",
-        false,
-        `<img src="${escapeHtmlAttr(trimmed)}" alt="${escapeHtmlAttr(alt)}"${size} loading="lazy" decoding="async">`,
-      );
+      document.execCommand("insertHTML", false, inlineImageHtml({ src: trimmed, alt, width, height }));
       syncEditorHtml();
     };
   }, [syncEditorHtml, focusEditor]);
@@ -3273,7 +3242,7 @@ function ProjectEditor({
         restoreEditorSelection(range);
         insertImageRef.current({ src: uploaded.url, alt, width: uploaded.width, height: uploaded.height });
       } catch (error) {
-        if (error instanceof UnauthorizedError) {
+        if (error instanceof AdminAuthError) {
           window.location.href = "/admin/login";
           return;
         }

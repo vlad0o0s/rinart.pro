@@ -6,6 +6,7 @@ import { fetchMediaAssets } from "@/lib/media-library-repository";
 import { buildContent, buildSeoPayload, ensureFacts, ensureStringArray, normaliseNullable } from "@/lib/project-admin-utils";
 import { invalidateAllProjectsCache, invalidateProjectCache } from "@/lib/projects";
 import { moveInlineImagesToUploads } from "@/lib/inline-images-server";
+import { RESERVED_TOP_LEVEL_SLUGS } from "@/lib/articles";
 
 export async function GET(request: NextRequest) {
   await assertAdmin(request);
@@ -34,6 +35,10 @@ export async function POST(request: NextRequest) {
 
   if (!slug || !title) {
     return NextResponse.json({ error: "Slug and title are required" }, { status: 400 });
+  }
+
+  if (RESERVED_TOP_LEVEL_SLUGS.has(String(slug))) {
+    return NextResponse.json({ error: "Этот адрес занят разделом сайта — выберите другой" }, { status: 409 });
   }
 
   const existingId = await fetchProjectIdBySlug(slug);

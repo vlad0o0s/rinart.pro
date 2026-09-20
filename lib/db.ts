@@ -361,6 +361,32 @@ async function ensureSchema(connection: PoolConnection) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   );
 
+  // Раздел статей: статьи пишет бюро в админке, на сайте публикуются только со статусом published.
+  await connection.query(
+    `CREATE TABLE IF NOT EXISTS Article (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      slug VARCHAR(191) NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      excerpt TEXT NULL,
+      bodyHtml MEDIUMTEXT NULL,
+      coverImageUrl TEXT NULL,
+      authorName VARCHAR(255) NULL,
+      authorRole VARCHAR(255) NULL,
+      status ENUM('draft','published') NOT NULL DEFAULT 'draft',
+      publishedAt DATETIME NULL,
+      contentUpdatedAt DATETIME NULL,
+      seoTitle VARCHAR(255) NULL,
+      seoDescription TEXT NULL,
+      servicePath VARCHAR(191) NULL,
+      relatedProjects JSON NULL,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY Article_slug_key (slug),
+      KEY Article_status_published_idx (status, publishedAt)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  );
+
   await connection.query(
     `CREATE TABLE IF NOT EXISTS GlobalBlock (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT,

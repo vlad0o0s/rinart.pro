@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import ContactsHero from "./contacts-hero";
 import { Footer } from "@/components/footer";
 import { SiteHeader } from "@/components/site-header";
+import { getMainNavLinks } from "@/lib/navigation";
 import styles from "./page.module.css";
 import { JsonLd } from "@/components/json-ld";
 import { contactPageSchema } from "@/lib/seo/schema";
@@ -18,11 +19,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function KontaktyPage() {
-  const [contactSettings, socialLinks] = await Promise.all([getContactSettings(), getSocialLinks()]);
+  const [contactSettings, socialLinks, navLinks] = await Promise.all([getContactSettings(), getSocialLinks(), getMainNavLinks()]);
 
   return (
     <>
-      <SiteHeader showDesktopNav socialLinks={socialLinks} />
+      <SiteHeader showDesktopNav socialLinks={socialLinks} navLinks={navLinks} />
       <main className={styles.page}>
         <ContactsHero contact={contactSettings} socials={socialLinks} />
         <LeadForm source="Контакты" placement="contact" />

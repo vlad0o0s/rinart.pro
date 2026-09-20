@@ -1,19 +1,12 @@
 import Link from "next/link";
+import { MAIN_NAV_LINKS, type NavLink } from "@/lib/nav-links";
 import styles from "./primary-nav.module.css";
 
-const LINKS = [
-  { href: "/", label: "RINART" },
-  { href: "/#portfolio", label: "Портфолио" },
-  { href: "/proektirovanie", label: "Проектирование" },
-  { href: "/masterskaja", label: "Мастерская" },
-  { href: "/kontakty", label: "Контакты" },
-];
-
-export function PrimaryNav() {
+export function PrimaryNav({ links = MAIN_NAV_LINKS }: { links?: NavLink[] }) {
   return (
     <nav className={styles.primaryNav} aria-label="Навигация по основным разделам">
       <ul className={styles.list}>
-        {LINKS.map((link) => {
+        {links.map((link) => {
           // Use regular <a> for anchor links (href contains #) to allow proper anchor navigation
           const isAnchorLink = link.href.includes("#");
           return (
