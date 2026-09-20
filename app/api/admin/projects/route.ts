@@ -5,6 +5,7 @@ import { createProject, fetchAllProjectsWithRelations, fetchProjectIdBySlug } fr
 import { fetchMediaAssets } from "@/lib/media-library-repository";
 import { buildContent, buildSeoPayload, ensureFacts, ensureStringArray, normaliseNullable } from "@/lib/project-admin-utils";
 import { invalidateAllProjectsCache, invalidateProjectCache } from "@/lib/projects";
+import { moveInlineImagesToUploads } from "@/lib/inline-images-server";
 
 export async function GET(request: NextRequest) {
   await assertAdmin(request);
@@ -42,7 +43,18 @@ export async function POST(request: NextRequest) {
 
   const categories = ensureStringArray(body?.categories);
   const descriptionBody = ensureStringArray(body?.descriptionBody);
-  const descriptionHtml = typeof body?.descriptionHtml === "string" ? body.descriptionHtml : "";
+  let descriptionHtml = typeof body?.descriptionHtml === "string" ? body.descriptionHtml : "";
+
+  // Картинки base64 в базу не пускаем — переносим в файлы, как при правке проекта.
+  try {
+    descriptionHtml = await moveInlineImagesToUploads(descriptionHtml, String(title));
+  } catch (error) {
+    console.error("[admin-projects] inline images failed", error);
+    return NextResponse.json(
+      { error: "Не удалось сохранить картинку из описания. Удалите её и вставьте заново кнопкой IMG." },
+      { status: 422 },
+    );
+  }
   const facts = ensureFacts(body?.facts);
   const seoKeywords = ensureStringArray(body?.seoKeywords);
   const seo = buildSeoPayload({

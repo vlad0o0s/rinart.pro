@@ -686,6 +686,51 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   return response.json();
 }
 
+type InlineImageUpload = { url: string; width?: number; height?: number };
+
+/**
+ * Картинка для описания проекта уходит файлом в uploads, в HTML — только ссылка.
+ * Раньше редактор вставлял её в HTML целиком (base64), и страница проекта весила мегабайты.
+ */
+async function uploadInlineImage(file: File): Promise<InlineImageUpload> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("mode", "inline");
+  const response = await fetch("/api/admin/media/upload", { method: "POST", body: formData, credentials: "include" });
+  if (response.status === 401) {
+    throw new UnauthorizedError();
+  }
+  const data = (await response.json().catch(() => null)) as (InlineImageUpload & { error?: string }) | null;
+  if (!response.ok || !data?.url) {
+    throw new Error(data?.error || `Не удалось загрузить изображение (${response.status})`);
+  }
+  return data;
+}
+
+function escapeHtmlAttr(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/**
+ * Подпись (alt) обязательна: по ней поиск понимает, что на картинке. null — вставку отменили.
+ */
+function askImageAlt(currentValue: string): string | null {
+  let value = currentValue;
+  for (;;) {
+    const answer = window.prompt(
+      "Что на изображении? Например: «План первого этажа», «Фасад со стороны сада». Подпись видят поиск и незрячие посетители.",
+      value,
+    );
+    if (answer === null) {
+      return null;
+    }
+    if (answer.trim()) {
+      return answer.trim();
+    }
+    value = "";
+  }
+}
+
 function SortableProjectItem({
   project,
   index,
@@ -3159,46 +3204,119 @@ function ProjectEditor({
     syncEditorHtml();
   };
 
-  const insertImageRef = useRef<(url: string) => void>(() => {});
+  const [imageUploading, setImageUploading] = useState(false);
+
+  /** Место вставки запоминаем заранее: пока идёт загрузка и открыт вопрос о подписи, фокус уходит. */
+  const saveEditorSelection = useCallback((): Range | null => {
+    const selection = window.getSelection();
+    const editor = editorRef.current;
+    if (!selection || !selection.rangeCount || !editor) {
+      return null;
+    }
+    const range = selection.getRangeAt(0);
+    return editor.contains(range.commonAncestorContainer) ? range.cloneRange() : null;
+  }, []);
+
+  const restoreEditorSelection = useCallback((range: Range | null) => {
+    if (!range) {
+      return;
+    }
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }, []);
+
+  const insertImageRef = useRef<(image: { src: string; alt: string; width?: number; height?: number }) => void>(() => {});
 
   useEffect(() => {
-    insertImageRef.current = (url: string) => {
-      const trimmed = url.trim();
+    insertImageRef.current = ({ src, alt, width, height }) => {
+      const trimmed = src.trim();
       if (!trimmed) {
         return;
       }
+      const size = width && height ? ` width="${width}" height="${height}"` : "";
       focusEditor();
-      document.execCommand("insertImage", false, trimmed);
+      document.execCommand(
+        "insertHTML",
+        false,
+        `<img src="${escapeHtmlAttr(trimmed)}" alt="${escapeHtmlAttr(alt)}"${size} loading="lazy" decoding="async">`,
+      );
       syncEditorHtml();
     };
   }, [syncEditorHtml, focusEditor]);
 
-  const insertImage = useCallback((url: string) => {
-    insertImageRef.current(url);
-  }, []);
+  /** Картинка по ссылке (перетащили из другого окна): спрашиваем подпись и вставляем. */
+  const insertImage = useCallback(
+    (url: string) => {
+      const range = saveEditorSelection();
+      const alt = askImageAlt(state.title);
+      if (!alt) {
+        return;
+      }
+      focusEditor();
+      restoreEditorSelection(range);
+      insertImageRef.current({ src: url, alt });
+    },
+    [focusEditor, restoreEditorSelection, saveEditorSelection, state.title],
+  );
+
+  const insertUploadedImage = useCallback(
+    async (file: File, range: Range | null) => {
+      const alt = askImageAlt(state.title);
+      if (!alt) {
+        return;
+      }
+      setImageUploading(true);
+      try {
+        const uploaded = await uploadInlineImage(file);
+        focusEditor();
+        restoreEditorSelection(range);
+        insertImageRef.current({ src: uploaded.url, alt, width: uploaded.width, height: uploaded.height });
+      } catch (error) {
+        if (error instanceof UnauthorizedError) {
+          window.location.href = "/admin/login";
+          return;
+        }
+        window.alert(error instanceof Error ? error.message : "Не удалось загрузить изображение");
+      } finally {
+        setImageUploading(false);
+      }
+    },
+    [focusEditor, restoreEditorSelection, state.title],
+  );
 
   const handleImageButtonClick = () => {
-    fileInputRef.current?.click();
+    if (!imageUploading) {
+      fileInputRef.current?.click();
+    }
   };
 
   const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
+    const range = saveEditorSelection();
+    event.target.value = "";
+    if (!file || !file.type.startsWith("image/")) {
       return;
     }
-    if (!file.type.startsWith("image/")) {
-      event.target.value = "";
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        insertImage(reader.result);
-      }
-      event.target.value = "";
-    };
-    reader.readAsDataURL(file);
+    void insertUploadedImage(file, range);
   };
+
+  /** Двойной щелчок по картинке — поправить подпись. */
+  const handleEditorDoubleClick = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLElement | null;
+      if (!target || target.tagName !== "IMG") {
+        return;
+      }
+      const img = target as HTMLImageElement;
+      const alt = askImageAlt(img.getAttribute("alt") ?? "");
+      if (alt) {
+        img.setAttribute("alt", alt);
+        syncEditorHtml();
+      }
+    },
+    [syncEditorHtml],
+  );
 
   const handleEditorDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -3356,13 +3474,12 @@ function ProjectEditor({
       if (files && files.length > 0) {
         const file = files[0];
         if (file.type.startsWith("image/")) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            if (typeof reader.result === "string") {
-              insertImage(reader.result);
-            }
-          };
-          reader.readAsDataURL(file);
+          // Вставляем туда, куда бросили файл, а не туда, где был курсор.
+          const dropRange = document.caretRangeFromPoint?.(event.clientX, event.clientY) ?? null;
+          const editor = editorRef.current;
+          const range =
+            dropRange && editor && editor.contains(dropRange.startContainer) ? dropRange : saveEditorSelection();
+          void insertUploadedImage(file, range);
           return;
         }
       }
@@ -3392,7 +3509,7 @@ function ProjectEditor({
         syncEditorHtml();
       }
     },
-    [insertImage, syncEditorHtml, setupImageDragHandlers],
+    [insertImage, insertUploadedImage, saveEditorSelection, syncEditorHtml, setupImageDragHandlers],
   );
 
   const handleEditorPaste = useCallback(
@@ -3559,11 +3676,13 @@ function ProjectEditor({
                 className={styles.toolbarButton}
                 type="button"
                 onClick={handleInsertImage}
-                title="Загрузить изображение"
+                title={imageUploading ? "Загружаем изображение…" : "Загрузить изображение. Подпись потом меняется двойным щелчком по картинке"}
                 aria-label="Загрузить изображение"
                 onMouseDown={handleToolbarMouseDown}
+                disabled={imageUploading}
+                aria-busy={imageUploading}
               >
-                IMG
+                {imageUploading ? "…" : "IMG"}
               </button>
               <button
                 className={styles.toolbarButton}
@@ -3589,6 +3708,7 @@ function ProjectEditor({
             onDragOver={handleEditorDragOver}
             onDrop={handleEditorDrop}
             onPaste={handleEditorPaste}
+            onDoubleClick={handleEditorDoubleClick}
             spellCheck
           />
           <input

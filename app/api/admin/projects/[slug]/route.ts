@@ -9,6 +9,7 @@ import {
 } from "@/lib/project-repository";
 import { buildContent, buildSeoPayload, ensureFacts, ensureStringArray, normaliseNullable } from "@/lib/project-admin-utils";
 import { invalidateAllProjectsCache, invalidateProjectCache } from "@/lib/projects";
+import { moveInlineImagesToUploads } from "@/lib/inline-images-server";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
   await assertAdmin(request);
@@ -76,10 +77,23 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
       keywords: seoKeywords,
       ogImage: seoOgImage,
     });
-    const descriptionHtml =
+    let descriptionHtml =
       shouldUpdateHtml && typeof body.descriptionHtml === "string"
         ? body.descriptionHtml
         : existing.content?.bodyHtml ?? "";
+
+    // Картинки base64 в базу не пускаем: присланное из редактора описание переносит их в файлы.
+    if (shouldUpdateHtml) {
+      try {
+        descriptionHtml = await moveInlineImagesToUploads(descriptionHtml, updates.title ?? existing.title);
+      } catch (error) {
+        console.error("[admin-projects] inline images failed", error);
+        return NextResponse.json(
+          { error: "Не удалось сохранить картинку из описания. Удалите её и вставьте заново кнопкой IMG." },
+          { status: 422 },
+        );
+      }
+    }
 
     updates.content = buildContent(descriptionBody, facts, seo, descriptionHtml);
   }

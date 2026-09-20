@@ -4,6 +4,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
 import { getMimeExtension, optimizeImage } from "@/lib/image-optimization";
+import { saveInlineImage } from "@/lib/inline-images-server";
 
 export const runtime = "nodejs";
 
@@ -31,6 +32,21 @@ export async function POST(request: NextRequest) {
   const MAX_SIZE_BYTES = 15 * 1024 * 1024;
   if (buffer.length > MAX_SIZE_BYTES) {
     return NextResponse.json({ error: "Файл слишком большой (максимум 15 МБ)" }, { status: 413 });
+  }
+
+  // Картинка для описания проекта: файл по хешу содержимого, чертёж — без потерь,
+  // фото — с потерями. В ответе размеры, чтобы редактор проставил width и height.
+  if (formData.get("mode") === "inline") {
+    try {
+      const saved = await saveInlineImage(buffer);
+      if (!saved) {
+        return NextResponse.json({ error: "Этот формат нельзя вставить в описание — загрузите JPEG, PNG или WebP" }, { status: 400 });
+      }
+      return NextResponse.json({ url: saved.url, width: saved.width, height: saved.height, size: saved.bytes, originalName: file.name });
+    } catch (error) {
+      console.error("Inline image upload failed:", error);
+      return NextResponse.json({ error: "Не удалось обработать изображение" }, { status: 500 });
+    }
   }
 
   const uploadDir = path.join(process.cwd(), "public", "uploads");
