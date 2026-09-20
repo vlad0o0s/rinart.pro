@@ -24,6 +24,25 @@ const CATEGORY_LABELS: Record<CategoryId, string> = {
   other: "Иные строения",
 };
 
+/** Тип объекта в единственном числе — для подписи картинки в карточке портфолио. */
+const CATEGORY_ALT_LABELS: Record<CategoryId, string> = {
+  houses: "проект частного дома",
+  interior: "дизайн-проект интерьера",
+  art: "арт-объект",
+  other: "проект строения",
+};
+
+/**
+ * Подпись к картинке карточки: название проекта и тип объекта. По ней поиск по картинкам
+ * понимает, что на фотографии; видимая подпись рядом скрыта от скринридера, чтобы название
+ * не читалось дважды.
+ */
+function portfolioImageAlt(title: string, categories: string[]): string {
+  const [first] = normalizeCategories(categories);
+  const type = first ? CATEGORY_ALT_LABELS[first] : null;
+  return type ? `${title} — ${type}, бюро RINART` : `${title} — проект бюро RINART`;
+}
+
 function normalizeCategories(list: string[]): CategoryId[] {
   const mapping: Record<string, CategoryId> = {
     houses: "houses",
@@ -207,9 +226,7 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
                     {project.heroImageUrl ? (
                       <Image
                         src={project.heroImageUrl}
-                        // Название проекта идёт рядом отдельной подписью, поэтому картинка
-                        // помечена как декоративная: иначе скринридер читает одно и то же дважды.
-                        alt=""
+                        alt={portfolioImageAlt(project.title, project.categories)}
                         className={styles.portfolioImage}
                         loading={index === 0 ? "eager" : "lazy"}
                         fetchPriority={index === 0 ? "high" : undefined}
@@ -224,7 +241,10 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
                       <span className={styles.portfolioImageFallback} aria-hidden />
                     )}
                   </div>
-                  <span className={styles.portfolioTitle}>{project.title}</span>
+                  {/* Название дублирует подпись картинки: скринридеру достаточно одного. */}
+                  <span className={styles.portfolioTitle} aria-hidden="true">
+                    {project.title}
+                  </span>
                 </div>
               </article>
             );

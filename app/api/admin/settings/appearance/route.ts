@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
   const appearance = {
     homeHeroImageUrl: blocks["home-hero"]?.imageUrl || "/img/01-ilichevka.jpg",
     transitionImageUrl: blocks["page-transition"]?.imageUrl || "https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png",
+    mobileHeroVariant: blocks["home-hero"]?.mobileVariant ?? "caption",
   };
   const response = NextResponse.json({ appearance });
   response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -22,20 +23,30 @@ export async function PUT(request: NextRequest) {
   await assertAdmin(request);
   const body = await request.json().catch(() => ({}));
   const { appearance } = body ?? {};
+  const blocks = await getGlobalBlocks();
 
   try {
     // Use global blocks API instead of legacy appearance settings
     const { saveGlobalBlock } = await import("@/lib/global-blocks");
-    if (appearance?.homeHeroImageUrl !== undefined) {
-      await saveGlobalBlock("home-hero", { imageUrl: appearance.homeHeroImageUrl || null });
+    // Картинка и вариант первого экрана лежат в одном блоке: сохраняем их вместе,
+    // иначе запись одного поля стирала бы другое.
+    if (appearance?.homeHeroImageUrl !== undefined || appearance?.mobileHeroVariant !== undefined) {
+      await saveGlobalBlock("home-hero", {
+        imageUrl:
+          appearance?.homeHeroImageUrl !== undefined
+            ? appearance.homeHeroImageUrl || null
+            : blocks["home-hero"]?.imageUrl ?? null,
+        mobileVariant: appearance?.mobileHeroVariant === "overlay" ? "overlay" : "caption",
+      });
     }
     if (appearance?.transitionImageUrl !== undefined) {
       await saveGlobalBlock("page-transition", { imageUrl: appearance.transitionImageUrl || null });
     }
-    const blocks = await getGlobalBlocks();
+    const saved = await getGlobalBlocks();
     const updated = {
-      homeHeroImageUrl: blocks["home-hero"]?.imageUrl || "/img/01-ilichevka.jpg",
-      transitionImageUrl: blocks["page-transition"]?.imageUrl || "https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png",
+      homeHeroImageUrl: saved["home-hero"]?.imageUrl || "/img/01-ilichevka.jpg",
+      transitionImageUrl: saved["page-transition"]?.imageUrl || "https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png",
+      mobileHeroVariant: saved["home-hero"]?.mobileVariant ?? "caption",
     };
     revalidatePath("/", "layout");
     revalidatePath("/masterskaja");

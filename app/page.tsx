@@ -62,7 +62,7 @@ export default async function Home() {
       <main className={`${styles.pageShell} min-h-screen bg-white text-neutral-900 antialiased`}>
         <div className={styles.stage}>
           <div className={styles.stageLayer} data-stage="hero">
-        <Hero imageUrl={blocks["home-hero"]?.imageUrl ?? undefined} />
+        <Hero imageUrl={blocks["home-hero"]?.imageUrl ?? undefined} mobileVariant={blocks["home-hero"]?.mobileVariant} />
           </div>
           <div className={styles.stageLayer} data-stage="nav">
           <PrimaryNav links={navLinks} />

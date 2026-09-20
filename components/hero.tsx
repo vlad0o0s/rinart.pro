@@ -3,11 +3,12 @@
 import { SafeImage as Image } from "@/components/safe-image";
 import { LeadForm } from "@/components/lead-form";
 import { useEffect, useMemo } from "react";
+import type { MobileHeroVariant } from "@/lib/global-blocks";
 import styles from "./hero.module.css";
 
 const HERO_IMAGE = "/img/01-ilichevka.jpg";
 
-export function Hero({ imageUrl }: { imageUrl?: string }) {
+export function Hero({ imageUrl, mobileVariant = "caption" }: { imageUrl?: string; mobileVariant?: MobileHeroVariant }) {
   const heroImage = useMemo(() => {
     const value = imageUrl?.trim();
     return value && value.length ? value : HERO_IMAGE;
@@ -46,7 +47,7 @@ export function Hero({ imageUrl }: { imageUrl?: string }) {
   // const isRemoteHero = /^https?:\/\//i.test(heroImage);
 
   return (
-    <section className={styles.hero} aria-label="Визуализация проекта Ильичевка">
+    <section className={styles.hero} aria-label="Визуализация проекта Ильичевка" data-mobile-hero={mobileVariant}>
       <div className={styles.imageWrapper}>
         <Image
           src={heroImage}
@@ -66,7 +67,12 @@ export function Hero({ imageUrl }: { imageUrl?: string }) {
         {/* Единственный H1 главной: до этого фраза была декоративным span с aria-hidden,
             из-за чего страница уходила в индекс вообще без заголовка. */}
         <h1 className={styles.heroTagline}>Проектирование загородных домов</h1>
-        <LeadForm source="Главная страница" placement="hero" />
+        {/* Гео и короткое объяснение видны только на экранах уже 1024px: на широких
+            первый экран остаётся прежним, а на телефоне посетитель наконец видит,
+            что за услуга и где она оказывается. */}
+        <p className={styles.heroGeo}>Москва и Московская область</p>
+        <p className={styles.heroLead}>Индивидуальные проекты частных домов — от эскиза до рабочей документации.</p>
+        <LeadForm source="Главная страница" placement="hero" openButtonClassName={styles.heroCta} />
       </div>
     </section>
   );

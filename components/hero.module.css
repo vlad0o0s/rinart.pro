@@ -91,21 +91,150 @@
   z-index: 1;
 }
 
+/* Гео и короткое объяснение — только для узких экранов; на десктопе первый экран прежний. */
+.heroGeo,
+.heroLead {
+  display: none;
+  margin: 0;
+}
+
 @media (max-width: 1023px) {
-  /* На узких экранах подпись не помещается в макет, но это H1 страницы.
-     display: none убрал бы его из мобильной версии, по которой индексирует Google,
-     поэтому прячем визуально, оставляя заголовок в потоке для поиска и скринридеров. */
+  /* Раньше H1 здесь прятался визуально: он не помещался в макет, и посетитель с телефона
+     видел только фотографию и кнопку — ни услуги, ни города. Теперь заголовок, география,
+     короткое объяснение и кнопка видны. Два варианта выбираются в админке:
+     caption — подпись под фотографией, overlay — текст поверх затемнённого края. */
   .heroTagline {
-    top: auto;
-    bottom: auto;
-    right: auto;
-    width: 1px;
-    height: 1px;
+    position: static;
+    display: block;
+    width: auto;
+    height: auto;
     padding: 0;
-    margin: -1px;
+    margin: 0;
     border: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
+    border-right: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    pointer-events: auto;
+    font-size: clamp(22px, 6.4vw, 30px);
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: 0.02em;
+  }
+
+  .heroGeo,
+  .heroLead {
+    display: block;
+    font-family: "Neue Haas Unica", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  .heroGeo {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .heroLead {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .content {
+    align-items: stretch;
+    text-align: left;
+    gap: 10px;
+  }
+
+  /* Кнопка заявки: в первом экране она — узкая полоса поверх фото. В мобильных вариантах
+     это основная кнопка под текстом, поэтому специфичность выше, чем у стиля полосы. */
+  .hero[data-mobile-hero] .content .heroCta {
+    justify-content: center;
+    min-height: 52px;
+    margin-top: 6px;
+    padding: 0 20px;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  /* Вариант 1: подпись под фотографией. Фото занимает верх экрана, текст — на белом. */
+  .hero[data-mobile-hero="caption"] {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding-bottom: 0;
+  }
+
+  .hero[data-mobile-hero="caption"] .imageWrapper {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: min(52vh, 420px);
+    min-height: 240px;
+    flex: none;
+  }
+
+  .hero[data-mobile-hero="caption"] .overlay {
+    display: none;
+  }
+
+  .hero[data-mobile-hero="caption"] .content {
+    position: static;
+    top: auto;
+    width: 100%;
+    padding: 20px 16px 26px;
+    background: #ffffff;
+    color: #252525;
+  }
+
+  .hero[data-mobile-hero="caption"] .heroGeo {
+    color: rgba(37, 37, 37, 0.6);
+  }
+
+  .hero[data-mobile-hero="caption"] .heroLead {
+    color: rgba(37, 37, 37, 0.85);
+  }
+
+  .hero[data-mobile-hero="caption"] .content .heroCta {
+    background: #252525;
+    color: #ffffff;
+    border-color: #252525;
+  }
+
+  /* Вариант 2: текст поверх затемнённого низа фотографии. */
+  .hero[data-mobile-hero="overlay"] .content {
+    position: absolute;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 64px 16px 24px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.55) 45%, rgba(0, 0, 0, 0.8) 100%);
+    color: #ffffff;
+  }
+
+  .hero[data-mobile-hero="overlay"] .heroTagline {
+    color: #ffffff;
+  }
+
+  .hero[data-mobile-hero="overlay"] .heroGeo {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .hero[data-mobile-hero="overlay"] .heroLead {
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .hero[data-mobile-hero="overlay"] .content .heroCta {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.85);
   }
 }
 
@@ -115,8 +244,6 @@
   }
 
   .content {
-    position: absolute;
-    top: var(--lead-button-top, 48px);
     width: 100%;
     /* Ниже шапки (z-index: 100). Полоса кнопки непрозрачная, и при малейшем
        выходе текста шапки за её нижнюю границу она срезала логотип: рисовалась

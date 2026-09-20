@@ -259,12 +259,15 @@ const CONTACT_DEFAULTS: ContactSettingsState = {
 type AppearanceSettingsState = {
   homeHeroImageUrl: string;
   transitionImageUrl: string;
+  /** Вид первого экрана на телефоне: подпись под фото или текст поверх затемнённого края. */
+  mobileHeroVariant: "caption" | "overlay";
 };
 
 const APPEARANCE_DEFAULTS: AppearanceSettingsState = {
   homeHeroImageUrl: "/img/01-ilichevka.jpg",
   transitionImageUrl:
     "https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png",
+  mobileHeroVariant: "caption",
 };
 
 type SettingsTab = "contacts" | "social" | "media" | "pricing" | "publications" | "biography" | "team";
@@ -1586,20 +1589,28 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
   }, [contactSettings, reportError, socialLinks]);
 
   const handleAppearanceFieldChange = useCallback((field: keyof AppearanceSettingsState, value: string) => {
-    setAppearanceSettings((prev) => ({ ...prev, [field]: value }));
+    setAppearanceSettings((prev) => ({
+      ...prev,
+      [field]: field === "mobileHeroVariant" ? (value === "overlay" ? "overlay" : "caption") : value,
+    }));
   }, []);
 
   const persistAppearance = useCallback(
     async (next: AppearanceSettingsState) => {
       try {
         setAppearanceSaving(true);
-        const payload = await fetchJson<{ blocks: { ["home-hero"]?: { imageUrl?: string }; ["page-transition"]?: { imageUrl?: string } } }>(
+        const payload = await fetchJson<{
+          blocks: {
+            ["home-hero"]?: { imageUrl?: string; mobileVariant?: "caption" | "overlay" };
+            ["page-transition"]?: { imageUrl?: string };
+          };
+        }>(
           "/api/admin/settings/global-blocks",
           {
             method: "PUT",
             body: JSON.stringify({
               blocks: {
-                "home-hero": { imageUrl: next.homeHeroImageUrl ?? null },
+                "home-hero": { imageUrl: next.homeHeroImageUrl ?? null, mobileVariant: next.mobileHeroVariant },
                 "page-transition": { imageUrl: next.transitionImageUrl ?? null },
               },
             }),
@@ -1608,6 +1619,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
         setAppearanceSettings({
           homeHeroImageUrl: payload.blocks?.["home-hero"]?.imageUrl ?? APPEARANCE_DEFAULTS.homeHeroImageUrl,
           transitionImageUrl: payload.blocks?.["page-transition"]?.imageUrl ?? APPEARANCE_DEFAULTS.transitionImageUrl,
+          mobileHeroVariant: payload.blocks?.["home-hero"]?.mobileVariant ?? APPEARANCE_DEFAULTS.mobileHeroVariant,
         });
         setSuccessStatus("Медиа обновлены");
       } catch (error) {
@@ -2669,6 +2681,7 @@ export function AdminApp({ initialProjects }: { initialProjects: ProjectSummary[
               setAppearanceSettings({
                 homeHeroImageUrl: data.appearance.homeHeroImageUrl || APPEARANCE_DEFAULTS.homeHeroImageUrl,
                 transitionImageUrl: data.appearance.transitionImageUrl || APPEARANCE_DEFAULTS.transitionImageUrl,
+                mobileHeroVariant: data.appearance.mobileHeroVariant === "overlay" ? "overlay" : "caption",
               });
             }
           })
@@ -3974,7 +3987,7 @@ function SettingsView({
   appearanceSettings,
   appearanceLoading,
   appearanceSaving,
-  onAppearanceChange: _onAppearanceChange,
+  onAppearanceChange,
   onSaveAppearance,
   pricingData,
   pricingLoading,
@@ -4624,6 +4637,20 @@ function SettingsView({
                 <span className={styles.appearancePlaceholder}>Предпросмотр недоступен</span>
               )}
             </div>
+          </div>
+          <div className={styles.appearanceItem}>
+            <LabelWithHint
+              label="Первый экран на телефоне"
+              hint="Как показывать заголовок, город, описание услуги и кнопку на экранах уже 1024 пикселей. На компьютере первый экран не меняется."
+            />
+            <select
+              className={styles.textInput}
+              value={appearanceSettings.mobileHeroVariant}
+              onChange={(event) => onAppearanceChange("mobileHeroVariant", event.target.value)}
+            >
+              <option value="caption">Подпись под фотографией</option>
+              <option value="overlay">Текст поверх затемнённого края фотографии</option>
+            </select>
           </div>
           <div className={styles.appearanceItem}>
               <LabelWithHint

@@ -13,8 +13,11 @@ export type PricingData = {
   bottomItems: PricingItem[];
 };
 
+/** Вид первого экрана на телефоне: подпись под фото или текст поверх затемнённого края. */
+export type MobileHeroVariant = "caption" | "overlay";
+
 export type GlobalBlocks = {
-  "home-hero": { imageUrl: string | null };
+  "home-hero": { imageUrl: string | null; mobileVariant: MobileHeroVariant };
   "page-transition": { imageUrl: string | null };
   "pricing": PricingData;
 };
@@ -140,8 +143,11 @@ export async function getGlobalBlocks(): Promise<GlobalBlocks> {
     };
   };
 
+  const heroRecord = all.find((r) => r.slug === "home-hero");
+  const heroValue = (heroRecord?.data ?? {}) as Record<string, unknown>;
+
   const result: GlobalBlocks = {
-    "home-hero": home,
+    "home-hero": { ...home, mobileVariant: heroValue.mobileVariant === "overlay" ? "overlay" : "caption" },
     "page-transition": transition,
     "pricing": pickPricing(),
   };
@@ -210,14 +216,26 @@ export async function saveGlobalBlock(slug: keyof GlobalBlocks, data: GlobalBloc
     }
   }
   
-  const sanitized: GlobalBlocks[typeof slug] = {
-    imageUrl: sanitizedImageUrl,
-  };
+  // У блока первого экрана рядом с картинкой лежит выбранный мобильный вариант.
+  // Если его не передали, остаётся прежний: запись картинки не должна его сбрасывать.
+  const variantValue = (data as { mobileVariant?: string }).mobileVariant;
+  const current = slug === "home-hero" ? await findGlobalBlockBySlug(slug) : null;
+  const currentVariant = ((current?.data ?? {}) as Record<string, unknown>).mobileVariant;
+  const mobileVariant: MobileHeroVariant =
+    variantValue === "overlay" || variantValue === "caption"
+      ? variantValue
+      : currentVariant === "overlay"
+        ? "overlay"
+        : "caption";
+
+  const sanitized: GlobalBlocks[typeof slug] =
+    slug === "home-hero" ? { imageUrl: sanitizedImageUrl, mobileVariant } : ({ imageUrl: sanitizedImageUrl } as GlobalBlocks[typeof slug]);
   const saved = await upsertGlobalBlock(slug, sanitized);
   invalidateGlobalBlocksCache();
   const value = (saved?.data ?? {}) as Record<string, unknown>;
   return {
     imageUrl: typeof value.imageUrl === "string" && value.imageUrl.trim().length ? value.imageUrl.trim() : null,
+    mobileVariant: value.mobileVariant === "overlay" ? "overlay" : "caption",
   };
 }
 
