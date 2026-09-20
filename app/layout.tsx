@@ -55,17 +55,16 @@ export const metadata: Metadata = {
   description:
     "Архитектурное бюро RINART: частные дома, арт-объекты, дизайн интерьеров и мастерская архитектора Рината Гильмутдинова в Москве.",
   metadataBase: new URL("https://rinart.pro"),
+  // Ни canonical, ни og:url здесь не задаются: их наследовали страницы без своих значений —
+  // политика конфиденциальности и все 404 указывали на главную как на свой основной адрес.
+  // Каждая индексируемая страница задаёт их сама.
   openGraph: {
     title: "Архитектор Ринат Гильмутдинов — RINART",
     description:
       "Проектирование частных домов и интерьеров, арт-объекты и мастерская архитектора Рината Гильмутдинова в Москве.",
-    url: "https://rinart.pro",
     siteName: "RINART",
     locale: "ru_RU",
     type: "website",
-  },
-  alternates: {
-    canonical: "https://rinart.pro",
   },
   verification: {
     other: {

@@ -24,6 +24,11 @@
     "lib/pricing-tiers.ts",
     "app/lp/proekt-doma/quiz-steps.ts",
     "legacy-redirects.cjs",
+    "lib/seo/text.ts",
+    "lib/seo/robots.ts",
+    "lib/seo/schema.ts",
+    "lib/seo/static-pages.ts",
+    "types/project.ts",
     "tests/**/*.ts"
   ]
 }

@@ -6,6 +6,7 @@ import { getAllProjects, getProjectBySlug } from "@/lib/projects";
 import styles from "./page.module.css";
 import { JsonLd } from "@/components/json-ld";
 import { projectPageSchema, SITE_URL } from "@/lib/seo/schema";
+import { filledOrUndefined, metaDescriptionFrom } from "@/lib/seo/text";
 import ProjectBody from "./project-body";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 import { RelatedProjectsSlider } from "./related-projects";
@@ -25,8 +26,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const seo = project.seo ?? {};
-  const firstParagraph = project.descriptionBody?.[0];
-  const description = seo.description ?? firstParagraph ?? undefined;
+  // Пустое поле в карточке проекта считается незаданным. Запасное описание — первый
+  // непустой абзац без разметки и сущностей, обрезанный по слову: раньше в сниппет
+  // уходил сырой абзац с &nbsp; целиком.
+  const title = filledOrUndefined(seo.title);
+  const description = filledOrUndefined(seo.description) ?? metaDescriptionFrom(project.descriptionBody);
   const canonical = `${SITE_URL}/${project.slug}`;
 
   // Если картинка для соцсетей не задана вручную, берём главное изображение проекта:
@@ -39,22 +43,23 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     : null;
 
   return {
-    title: seo.title ?? `${project.title} — RINART`,
+    title: title ?? `${project.title} — RINART`,
     description,
     keywords: seo.keywords,
     alternates: { canonical },
     openGraph: {
-      title: seo.title ?? project.title,
+      title: title ?? project.title,
       description,
       url: canonical,
       siteName: "RINART",
+      locale: "ru_RU",
       type: "article",
       images: ogImage ? [{ url: ogImage }] : undefined,
     },
     twitter: ogImage
       ? {
           card: "summary_large_image",
-          title: seo.title ?? project.title,
+          title: title ?? project.title,
           description,
           images: [ogImage],
         }

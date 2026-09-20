@@ -62,11 +62,14 @@ export async function buildPageMetadata(slug: string): Promise<Metadata> {
     alternates: {
       canonical,
     },
+    // openGraph страницы целиком заменяет корневой, поэтому язык и тип указываются и здесь.
     openGraph: {
       title: seo.title || undefined,
       description: seo.description || undefined,
       url: canonical,
       siteName: "RINART",
+      locale: "ru_RU",
+      type: "website",
       images: absoluteOgImage ? [{ url: absoluteOgImage }] : undefined,
     },
     twitter: absoluteOgImage
