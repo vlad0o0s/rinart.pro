@@ -4,6 +4,7 @@ import { assertAdmin } from "@/lib/admin-auth";
 import { deleteArticle, fetchArticleById, isArticleSlugTaken, updateArticle } from "@/lib/article-repository";
 import { ARTICLES_PATH, validateArticleInput } from "@/lib/articles";
 import { moveInlineImagesToUploads } from "@/lib/inline-images-server";
+import { notifyIndexNow } from "@/lib/indexnow";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,17 @@ export async function PATCH(request: NextRequest, context: Context) {
   if (article && article.slug !== existing.slug) {
     revalidatePath(`${ARTICLES_PATH}/${article.slug}`);
   }
+
+  // Сообщаем и о снятой с публикации статье, и о смене адреса: роботу нужно увидеть,
+  // что по старому адресу страницы больше нет.
+  if (article?.status === "published" || existing.status === "published") {
+    const changed = [`${ARTICLES_PATH}/${existing.slug}`, ARTICLES_PATH];
+    if (article && article.slug !== existing.slug) {
+      changed.push(`${ARTICLES_PATH}/${article.slug}`);
+    }
+    void notifyIndexNow(changed);
+  }
+
   return NextResponse.json({ article });
 }
 
@@ -83,5 +95,8 @@ export async function DELETE(request: NextRequest, context: Context) {
   await deleteArticle(id);
   revalidatePath(ARTICLES_PATH);
   revalidatePath(`${ARTICLES_PATH}/${existing.slug}`);
+  if (existing.status === "published") {
+    void notifyIndexNow([`${ARTICLES_PATH}/${existing.slug}`, ARTICLES_PATH]);
+  }
   return NextResponse.json({ ok: true });
 }

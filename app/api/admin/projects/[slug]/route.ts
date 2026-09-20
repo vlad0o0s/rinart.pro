@@ -10,6 +10,7 @@ import {
 import { buildContent, buildSeoPayload, ensureFacts, ensureStringArray, normaliseNullable } from "@/lib/project-admin-utils";
 import { invalidateAllProjectsCache, invalidateProjectCache } from "@/lib/projects";
 import { moveInlineImagesToUploads } from "@/lib/inline-images-server";
+import { notifyIndexNow } from "@/lib/indexnow";
 import { RESERVED_TOP_LEVEL_SLUGS } from "@/lib/articles";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ slug: string }> }) {
@@ -115,6 +116,10 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
   invalidateProjectCache(slug);
   invalidateProjectCache(newSlug);
   invalidateAllProjectsCache();
+
+  // Страница кейса изменилась — зовём робота, а при смене адреса ещё и на старый,
+  // чтобы он увидел редирект.
+  void notifyIndexNow(newSlug !== slug ? [`/${newSlug}`, `/${slug}`] : [`/${newSlug}`]);
 
   return NextResponse.json({ project: updated });
 }

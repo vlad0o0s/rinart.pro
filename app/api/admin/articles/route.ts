@@ -4,6 +4,7 @@ import { assertAdmin } from "@/lib/admin-auth";
 import { createArticle, fetchAllArticles, isArticleSlugTaken } from "@/lib/article-repository";
 import { ARTICLES_PATH, validateArticleInput } from "@/lib/articles";
 import { moveInlineImagesToUploads } from "@/lib/inline-images-server";
+import { notifyIndexNow } from "@/lib/indexnow";
 import { getAllProjects } from "@/lib/projects";
 import { SERVICE_PAGES } from "@/lib/services";
 
@@ -65,5 +66,9 @@ export async function POST(request: NextRequest) {
 
   const article = await createArticle(validation.value);
   revalidatePath(ARTICLES_PATH);
+  // О черновиках не сообщаем: роботу нечего смотреть, пока статья не опубликована.
+  if (article.status === "published") {
+    void notifyIndexNow([`${ARTICLES_PATH}/${article.slug}`, ARTICLES_PATH]);
+  }
   return NextResponse.json({ article }, { status: 201 });
 }
