@@ -4,8 +4,7 @@ import { SafeImage as Image } from "@/components/safe-image";
 import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import styles from "../page.module.css";
-
-type CategoryId = "houses" | "interior" | "art" | "other";
+import { normalizeCategories, portfolioImageAlt, type CategoryId } from "@/lib/portfolio-categories";
 
 type ActiveCategory = "all" | CategoryId;
 
@@ -25,40 +24,6 @@ const CATEGORY_LABELS: Record<CategoryId, string> = {
 };
 
 /** Тип объекта в единственном числе — для подписи картинки в карточке портфолио. */
-const CATEGORY_ALT_LABELS: Record<CategoryId, string> = {
-  houses: "проект частного дома",
-  interior: "дизайн-проект интерьера",
-  art: "арт-объект",
-  other: "проект строения",
-};
-
-/**
- * Подпись к картинке карточки: название проекта и тип объекта. По ней поиск по картинкам
- * понимает, что на фотографии; видимая подпись рядом скрыта от скринридера, чтобы название
- * не читалось дважды.
- */
-function portfolioImageAlt(title: string, categories: string[]): string {
-  const [first] = normalizeCategories(categories);
-  const type = first ? CATEGORY_ALT_LABELS[first] : null;
-  return type ? `${title} — ${type}, бюро RINART` : `${title} — проект бюро RINART`;
-}
-
-function normalizeCategories(list: string[]): CategoryId[] {
-  const mapping: Record<string, CategoryId> = {
-    houses: "houses",
-    house: "houses",
-    interior: "interior",
-    interiors: "interior",
-    art: "art",
-    other: "other",
-    misc: "other",
-  };
-
-  return list
-    .map((item) => mapping[item as keyof typeof mapping] ?? null)
-    .filter(Boolean) as CategoryId[];
-}
-
 type HomeProjectsSectionProps = {
   projects: ProjectSummary[];
 };
