@@ -409,6 +409,50 @@
   font-size: 13px;
 }
 
+/* Настройки окна заявки — общие для всех статей, поэтому стоят над списком. */
+.settings {
+  border-radius: 28px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+  padding: clamp(16px, 3vw, 28px);
+  min-width: 0;
+}
+
+.settings > summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.settings > summary .muted {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.settingsBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 760px;
+  margin-top: 20px;
+}
+
+.settingsBody p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.settingsBody code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.06);
+  font-size: 13px;
+}
+
 @media (max-width: 1024px) {
   .layout {
     grid-template-columns: 1fr;

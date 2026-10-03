@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArticleInlineCta } from "@/components/article-inline-cta";
+import { ArticleLeadModal } from "@/components/article-lead-modal";
 import { Footer } from "@/components/footer";
 import { JsonLd } from "@/components/json-ld";
 import { LeadForm } from "@/components/lead-form";
 import { RouteReadyAnnouncer } from "@/components/route-ready-announcer";
 import { SiteHeader } from "@/components/site-header";
 import { getAdminSessionFromCookies } from "@/lib/admin-auth";
+import { splitArticleHtml } from "@/lib/article-lead-modal";
+import { getArticleLeadModalSettings } from "@/lib/article-lead-modal-repository";
 import { fetchArticleBySlug, getPublishedArticleBySlug } from "@/lib/article-repository";
 import { ARTICLES_LABEL, ARTICLES_PATH, articleModifiedAt, formatArticleDate, type Article } from "@/lib/articles";
 import { getMainNavLinks } from "@/lib/navigation";
@@ -78,11 +82,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
-  const [{ article, preview }, socialLinks, navLinks, projects] = await Promise.all([
+  const [{ article, preview }, socialLinks, navLinks, projects, leadModal] = await Promise.all([
     loadArticle(slug),
     getSocialLinks(),
     getMainNavLinks(),
     getAllProjects(),
+    getArticleLeadModalSettings(),
   ]);
 
   if (!article) {
@@ -95,6 +100,9 @@ export default async function ArticlePage({ params }: PageProps) {
     .filter((project): project is (typeof projects)[number] => Boolean(project));
   const modifiedAt = articleModifiedAt(article);
   const showUpdated = Boolean(modifiedAt && article.publishedAt && modifiedAt !== article.publishedAt);
+  const bodyHtml = prepareRichHtml(article.bodyHtml, { sizes: ARTICLE_BODY_SIZES });
+  // В длинной статье текст делится по подзаголовку у середины — между частями встаёт блок с кнопкой.
+  const bodyParts = leadModal.inlineCta ? splitArticleHtml(bodyHtml) : null;
 
   return (
     <>
@@ -141,7 +149,18 @@ export default async function ArticlePage({ params }: PageProps) {
 
           {article.excerpt ? <p className={styles.lead}>{article.excerpt}</p> : null}
 
-          <div className={styles.body} dangerouslySetInnerHTML={{ __html: prepareRichHtml(article.bodyHtml, { sizes: ARTICLE_BODY_SIZES }) }} />
+          {/* По этой обёртке окно заявки понимает, какую часть текста человек уже прочитал. */}
+          <div data-article-body>
+            {bodyParts ? (
+              <>
+                <div className={styles.body} dangerouslySetInnerHTML={{ __html: bodyParts.before }} />
+                <ArticleInlineCta text={leadModal.inlineText} buttonLabel={leadModal.inlineButton} />
+                <div className={styles.body} dangerouslySetInnerHTML={{ __html: bodyParts.after }} />
+              </>
+            ) : (
+              <div className={styles.body} dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+            )}
+          </div>
 
           {service || relatedProjects.length ? (
             <aside className={styles.related} aria-label="По теме">
@@ -180,6 +199,14 @@ export default async function ArticlePage({ params }: PageProps) {
         </div>
       </main>
       <Footer />
+      {/* Черновик читает сам автор: ему окно само не открывается, но по ссылке «#zayavka» его можно посмотреть. */}
+      <ArticleLeadModal
+        articleTitle={article.title}
+        title={leadModal.title}
+        text={leadModal.text}
+        submitLabel={leadModal.submitLabel}
+        autoOpen={leadModal.autoOpen && !preview}
+      />
       {preview ? null : <JsonLd schema={articleSchema(article)} />}
       <RouteReadyAnnouncer />
     </>

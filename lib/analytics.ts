@@ -32,6 +32,8 @@ export const GOAL_PHONE_CLICK = "phone_click";
 export const GOAL_QUIZ_START = "quiz_start";
 export const GOAL_QUIZ_QUALIFIED = "quiz_qualified_200plus";
 export const GOAL_CAPTCHA_UNAVAILABLE = "captcha_unavailable";
+/** Окно заявки в статье открылось само; параметр trigger — scroll (дочитал) или exit (уходит). */
+export const GOAL_ARTICLE_MODAL_SHOW = "article_modal_show";
 
 /**
  * Цели ответов квиза (`quiz_area_*`, `quiz_timing_*`) заданы рядом с самими вариантами

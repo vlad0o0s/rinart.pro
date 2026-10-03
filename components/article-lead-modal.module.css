@@ -1,0 +1,199 @@
+/* Окно заявки в статье. Поля и кнопка отправки берут стили из lead-form.module.css. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  /* flex-start + margin:auto у панели, а не center: когда экранная клавиатура сжимает
+     видимую область, отцентрированная панель обрезается сверху и до полей не долистать. */
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(18px, 4vw, 48px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  font-family: "Neue Haas Unica", "Helvetica Neue", Arial, sans-serif;
+  animation: overlayIn 0.24s ease both;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+
+.panel {
+  position: relative;
+  z-index: 1;
+  margin: auto;
+  width: min(100%, 620px);
+  box-sizing: border-box;
+  padding: clamp(28px, 3vw, 44px);
+  border: 1px solid #252525;
+  background: #ffffff;
+  color: #252525;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.12);
+  outline: none;
+  animation: panelIn 0.28s ease both;
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Не меньше 44px: рекомендованный минимум для попадания пальцем. */
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: #252525;
+  cursor: pointer;
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.header {
+  margin-bottom: clamp(20px, 2.4vw, 28px);
+  padding-right: 44px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(24px, 2.2vw, 34px);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: 0;
+  color: #252525;
+}
+
+.text {
+  margin: 12px 0 0;
+  font-size: clamp(15px, 1.1vw, 17px);
+  line-height: 1.45;
+  color: rgba(37, 37, 37, 0.66);
+}
+
+/* ---------- Блок с кнопкой в середине статьи ---------- */
+
+.inline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  margin: 2.2em 0;
+  padding: clamp(20px, 2.4vw, 28px);
+  border: 1px solid #252525;
+  background: #ffffff;
+  color: #252525;
+}
+
+.inlineText {
+  margin: 0;
+  font-size: clamp(18px, 1.5vw, 21px);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.inlineButton {
+  min-height: 56px;
+  padding: 0 26px;
+  border: 1px solid #252525;
+  border-radius: 0;
+  background: #252525;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition:
+    background 0.24s ease,
+    color 0.24s ease;
+}
+
+.inlineButton:hover,
+.inlineButton:focus-visible {
+  background: #ffffff;
+  color: #252525;
+}
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes panelIn {
+  from {
+    transform: translateY(16px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes sheetIn {
+  from {
+    transform: translateY(40px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* На телефоне окно выезжает снизу и занимает только нужную высоту: текст статьи
+   остаётся виден над ним, и понятно, что страница никуда не делась. */
+@media (max-width: 720px) {
+  .overlay {
+    align-items: flex-end;
+    padding: calc(env(safe-area-inset-top, 0px) + 18px) 0 0;
+  }
+
+  .backdrop {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(6px);
+  }
+
+  .panel {
+    margin: auto 0 0;
+    width: 100%;
+    padding: 26px 16px calc(env(safe-area-inset-bottom, 0px) + 18px);
+    border-width: 1px 0 0;
+    box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.14);
+    animation-name: sheetIn;
+  }
+
+  .close {
+    top: 4px;
+    right: 4px;
+  }
+
+  .inline {
+    margin: 1.8em 0;
+  }
+
+  .inlineButton {
+    width: 100%;
+    padding: 0 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .panel {
+    animation: none;
+  }
+}

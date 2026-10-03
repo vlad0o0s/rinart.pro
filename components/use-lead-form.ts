@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { markLeadSent } from "@/lib/article-lead-memory";
 import { captureAttribution, readAttribution } from "@/lib/lead-attribution";
 import { LEAD_LIMITS, isValidPhone, normalizePhone, type QuizContext } from "@/lib/lead-validation";
 import {
@@ -191,6 +192,8 @@ export function useLeadForm({ source, quiz = null }: UseLeadFormOptions) {
         setPhone("");
         setConsent(false);
         reachGoal(GOAL_FORM_SUBMIT, { source });
+        // Тому, кто уже оставил заявку, окно в статьях больше не открывается само.
+        markLeadSent();
       } catch (error) {
         const aborted = error instanceof DOMException && error.name === "AbortError";
         fail(

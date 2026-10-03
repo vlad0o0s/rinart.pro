@@ -27,6 +27,7 @@
     "lib/inline-images.cjs",
     "lib/seo/text.ts",
     "lib/articles.ts",
+    "lib/article-lead-modal.ts",
     "lib/services.ts",
     "lib/seo/robots.ts",
     "lib/seo/schema.ts",

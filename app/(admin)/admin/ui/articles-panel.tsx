@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, ClipboardEvent, DragEvent, MouseEvent as ReactMouseEvent } from "react";
 import { ARTICLES_PATH, slugifyTitle, type Article } from "@/lib/articles";
 import { AdminAuthError, askImageAlt, escapeHtmlText, inlineImageHtml, uploadInlineImage } from "./admin-media";
+import { ArticleLeadSettings } from "./article-lead-settings";
 import styles from "./articles-panel.module.css";
 
 /**
@@ -330,6 +331,8 @@ export function ArticlesPanel() {
           Новая статья
         </button>
       </header>
+
+      <ArticleLeadSettings />
 
       <div className={styles.layout}>
         <nav className={styles.list} aria-label="Список статей">
