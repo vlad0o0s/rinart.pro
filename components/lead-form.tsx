@@ -75,6 +75,12 @@ export function LeadForm({
     form.reset();
   }, [form]);
 
+  /**
+   * Прокрутка страницы и фокус — один раз на каждое открытие, отдельно от клавиатуры.
+   * Раньше всё жило в одном эффекте с зависимостью от closeModal, а тот меняется при каждом
+   * вводе в поле: после первой же цифры телефона эффект запускался заново и уводил фокус
+   * в поле имени — номер приходилось набирать, возвращаясь в поле после каждой цифры.
+   */
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -83,15 +89,7 @@ export function LeadForm({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        closeModal();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    // Фокус в первое пустое поле: на мобильных это сразу открывает клавиатуру
+    // Фокус в первое поле: на мобильных это сразу открывает клавиатуру
     // и убирает лишний тап.
     const focusTimer = setTimeout(() => {
       const target = panelRef.current?.querySelector<HTMLInputElement>(
@@ -103,8 +101,22 @@ export function LeadForm({
     return () => {
       clearTimeout(focusTimer);
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
     };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeModal();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [closeModal, isOpen]);
 
   // Возврат фокуса на кнопку, с которой всё началось: иначе после закрытия

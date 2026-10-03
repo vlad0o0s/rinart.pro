@@ -129,10 +129,14 @@ export function LeadFormBody({ form, submitLabel, successSlot }: LeadFormBodyPro
           aria-required="true"
         />
         <label className={styles.consentText} htmlFor={consentId}>
-          Согласен на{" "}
-          <a href="/privacy" target="_blank" rel="noopener noreferrer">
-            обработку персональных данных
-          </a>
+          {/* Подпись — флекс-контейнер: без общей обёртки текст и ссылка становятся
+              отдельными элементами, и пробел между ними пропадает. */}
+          <span>
+            Согласен на{" "}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer">
+              обработку персональных данных
+            </a>
+          </span>
         </label>
       </div>
 
