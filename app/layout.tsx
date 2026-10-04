@@ -83,11 +83,17 @@ export default async function RootLayout({
   const headersList = await headers();
   const userAgent = headersList.get("user-agent") ?? "";
   const isBot = isBotUserAgent(userAgent);
-  // Выбор посетителя о файлах куки. Сервер читает его сам, чтобы тем, кто уже согласился,
-  // код счётчика уходил сразу со страницей, а остальным не уходил вовсе.
+  // Выбор посетителя о файлах куки. Сервер читает его из запроса и передаёт счётчику и баннеру:
+  // у согласившихся счётчик запускается сразу после загрузки страницы, а разметка сервера
+  // и браузера совпадает. Сам код счётчика в HTML не попадает — его вставляет браузер.
   const cookieConsent = parseConsent((await cookies()).get(CONSENT_COOKIE_NAME)?.value);
   const blocks = await getGlobalBlocks();
-  const transitionImageUrl = blocks["page-transition"]?.imageUrl || "https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png";
+  // Логотип заставки — только файл с самого сайта. Запасной адрес в старых настройках ведёт
+  // на зарубежный сервер: браузер каждого посетителя обращался бы к нему с любой страницы,
+  // а политика обработки данных обещает, что за границу данные не передаются.
+  const transitionImage = blocks["page-transition"]?.imageUrl;
+  const transitionImageUrl =
+    transitionImage && transitionImage.startsWith("/") && !transitionImage.startsWith("//") ? transitionImage : undefined;
 
   return (
     <html lang="ru" data-scroll-behavior="auto">
