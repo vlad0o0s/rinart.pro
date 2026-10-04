@@ -7,6 +7,7 @@ import {
   LEAD_LIMITS,
   clampText,
   normalizeAttribution,
+  normalizeConsentEdition,
   normalizePhone,
   normalizeQuiz,
 } from "@/lib/lead-validation";
@@ -18,6 +19,7 @@ type LeadPayload = {
   captchaToken?: unknown;
   company?: unknown;
   consent?: unknown;
+  consentEdition?: unknown;
   quiz?: unknown;
   attribution?: unknown;
 };
@@ -162,6 +164,13 @@ export async function POST(request: NextRequest) {
     ip: remoteIp,
     quiz: normalizeQuiz(payload.quiz),
     attribution: normalizeAttribution(payload.attribution),
+    // Доказательство согласия: редакция текста, с которым согласился человек, и его браузер.
+    // Время, адрес страницы и IP уже есть в заявке — вместе они показывают, кто, когда
+    // и на что дал согласие.
+    consent: {
+      edition: normalizeConsentEdition(payload.consentEdition),
+      userAgent: clampText(request.headers.get("user-agent"), LEAD_LIMITS.userAgent) || undefined,
+    },
     unverified,
     createdAt: new Date().toISOString(),
   };

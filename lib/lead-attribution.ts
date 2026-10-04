@@ -12,13 +12,14 @@
 
 import { UTM_KEYS, type Attribution } from "./lead-validation";
 
-const STORAGE_KEY = "rinart-lead-attribution";
+/** Ключ хранилища вкладки. Его же читает код счётчика, когда согласие на cookie дано не на первой странице. */
+export const ATTRIBUTION_STORAGE_KEY = "rinart-lead-attribution";
 
 type StoredAttribution = Attribution;
 
 function readStore(): StoredAttribution {
   try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    const raw = window.sessionStorage.getItem(ATTRIBUTION_STORAGE_KEY);
     if (!raw) {
       return {};
     }
@@ -32,7 +33,7 @@ function readStore(): StoredAttribution {
 
 function writeStore(value: StoredAttribution) {
   try {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+    window.sessionStorage.setItem(ATTRIBUTION_STORAGE_KEY, JSON.stringify(value));
   } catch {
     // Тот же случай: без хранилища заявка просто уйдёт без меток.
   }

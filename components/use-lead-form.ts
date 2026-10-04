@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { markLeadSent } from "@/lib/article-lead-memory";
 import { captureAttribution, readAttribution } from "@/lib/lead-attribution";
+import { CONSENT_EDITION } from "@/lib/legal";
 import { LEAD_LIMITS, isValidPhone, normalizePhone, type QuizContext } from "@/lib/lead-validation";
 import {
   GOAL_CAPTCHA_UNAVAILABLE,
@@ -163,6 +164,8 @@ export function useLeadForm({ source, quiz = null }: UseLeadFormOptions) {
             phone: normalizePhone(phone) ?? phone,
             source,
             consent,
+            // Редакция согласия, которую видел человек: сохраняется вместе с заявкой.
+            consentEdition: CONSENT_EDITION,
             company,
             captchaToken: token,
             quiz,

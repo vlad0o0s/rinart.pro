@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
@@ -8,11 +8,13 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { PageTransition } from "@/components/page-transition";
 import { YandexMetrika } from "@/components/yandex-metrika";
+import { CookieBanner } from "@/components/cookie-banner";
 import { AttributionCapture } from "@/components/attribution-capture";
 import { JsonLd } from "@/components/json-ld";
 import { isBotUserAgent } from "@/lib/is-bot";
 import { organizationSchema, webSiteSchema } from "@/lib/seo/schema";
 import { getGlobalBlocks } from "@/lib/global-blocks";
+import { CONSENT_COOKIE_NAME, isAnalyticsAllowed, parseConsent } from "@/lib/cookie-consent";
 
 /** Явно: без статического кеша оболочки на CDN — иначе после деплоя остаются старые ссылки на чанки (.js/.css). */
 export const dynamic = "force-dynamic";
@@ -81,6 +83,9 @@ export default async function RootLayout({
   const headersList = await headers();
   const userAgent = headersList.get("user-agent") ?? "";
   const isBot = isBotUserAgent(userAgent);
+  // Выбор посетителя о файлах куки. Сервер читает его сам, чтобы тем, кто уже согласился,
+  // код счётчика уходил сразу со страницей, а остальным не уходил вовсе.
+  const cookieConsent = parseConsent((await cookies()).get(CONSENT_COOKIE_NAME)?.value);
   const blocks = await getGlobalBlocks();
   const transitionImageUrl = blocks["page-transition"]?.imageUrl || "https://cdn.prod.website-files.com/66bb7b4fa99c404bd3587d90/66bb7c2f116c8e6c95b73391_Logo_Preloader.png";
 
@@ -92,8 +97,6 @@ export default async function RootLayout({
               остался бы поверх страницы навсегда. Скрываем его сразу. */}
           <style>{`[data-preload-curtain]{display:none !important}`}</style>
         </noscript>
-        <link rel="preconnect" href="https://smartcaptcha.yandexcloud.net" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://smartcaptcha.yandexcloud.net" />
       </head>
       <body className={`${neueHaasUnica.variable} antialiased`} suppressHydrationWarning>
         <Script
@@ -107,18 +110,21 @@ export default async function RootLayout({
             `,
           }}
         />
-        <YandexMetrika />
+        <YandexMetrika initialConsent={cookieConsent} />
         <AttributionCapture />
-        <noscript>
-          <div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://mc.yandex.ru/watch/105099236"
-              style={{ position: "absolute", left: "-9999px" }}
-              alt=""
-            />
-          </div>
-        </noscript>
+        {/* Пиксель для браузеров без JavaScript — только тем, кто согласился на аналитику. */}
+        {isAnalyticsAllowed(cookieConsent) ? (
+          <noscript>
+            <div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://mc.yandex.ru/watch/105099236"
+                style={{ position: "absolute", left: "-9999px" }}
+                alt=""
+              />
+            </div>
+          </noscript>
+        ) : null}
         <div className="site-shell">
           <PageTransition
             enabled={!isBot}
@@ -127,6 +133,9 @@ export default async function RootLayout({
           <JsonLd schema={[organizationSchema(), webSiteSchema()]} />
           {children}
         </div>
+        {/* Баннер показывается всем: от него зависит запуск счётчика, а определение робота
+            по названию браузера ошибается и на людях. В HTML от сервера баннера нет. */}
+        <CookieBanner initialConsent={cookieConsent} />
       </body>
     </html>
   );

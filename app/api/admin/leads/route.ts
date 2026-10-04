@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assertAdmin } from "@/lib/admin-auth";
-import { leadKey, readLeads, setLeadTestFlag } from "@/lib/lead-storage";
+import { deleteLead, leadKey, readLeadDeletions, readLeads, setLeadTestFlag } from "@/lib/lead-storage";
 import { LEAD_SOURCES, classifyLeadSource } from "@/lib/lead-source";
 import { summarizeLeads } from "@/lib/lead-stats";
 
@@ -32,12 +32,14 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const leads = await readLeads();
+    const [leads, deletions] = await Promise.all([readLeads(), readLeadDeletions()]);
 
     return NextResponse.json(
       {
         sources: LEAD_SOURCES,
         summary: summarizeLeads(leads),
+        // Журнал удалений: без имён и телефонов, только даты и причина.
+        deletions: deletions.slice(0, 100),
         leads: leads.map((lead) => ({
           key: leadKey(lead),
           createdAt: lead.createdAt,
@@ -50,6 +52,7 @@ export async function GET(request: NextRequest) {
           referrer: lead.attribution?.referrer ?? null,
           campaign: lead.attribution?.utm_campaign ?? null,
           hasQuiz: Boolean(lead.quiz),
+          consentEdition: lead.consent?.edition ?? null,
           unverified: Boolean(lead.unverified),
           isTest: Boolean(lead.isTest),
         })),
@@ -83,5 +86,33 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     console.error("[admin-leads] update failed", error);
     return NextResponse.json({ message: "Не удалось сохранить отметку." }, { status: 500, headers: NO_STORE });
+  }
+}
+
+/**
+ * Удаление заявки: человек вправе отозвать согласие и потребовать уничтожить свои данные.
+ * Удаляется запись в файле сайта; письмо с этой заявкой в почтовом ящике удаляют отдельно.
+ */
+export async function DELETE(request: NextRequest) {
+  const denied = await guard(request);
+  if (denied) {
+    return denied;
+  }
+
+  const body = (await request.json().catch(() => null)) as { key?: unknown } | null;
+
+  if (!body || typeof body.key !== "string") {
+    return NextResponse.json({ message: "Нужно поле key." }, { status: 400, headers: NO_STORE });
+  }
+
+  try {
+    const found = await deleteLead(body.key);
+    if (!found) {
+      return NextResponse.json({ message: "Заявка не найдена." }, { status: 404, headers: NO_STORE });
+    }
+    return NextResponse.json({ ok: true }, { headers: NO_STORE });
+  } catch (error) {
+    console.error("[admin-leads] delete failed", error);
+    return NextResponse.json({ message: "Не удалось удалить заявку." }, { status: 500, headers: NO_STORE });
   }
 }

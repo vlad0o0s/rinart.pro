@@ -8,6 +8,8 @@
  * и из тестов.
  */
 
+import { CONSENT_EDITION } from "./legal";
+
 /** Верхние границы длины. Всё, что приходит извне, обрезается — не только ради базы,
  *  но и чтобы в Telegram не улетало сообщение на мегабайт. */
 export const LEAD_LIMITS = {
@@ -19,6 +21,7 @@ export const LEAD_LIMITS = {
   utm: 200,
   url: 500,
   referrer: 500,
+  userAgent: 300,
 } as const;
 
 /** Схлопывает переводы строк и пробелы, режет по длине. Нестроки превращает в "". */
@@ -56,6 +59,15 @@ export function normalizePhone(value: unknown): string | null {
 
 export function isValidPhone(value: unknown): boolean {
   return normalizePhone(value) !== null;
+}
+
+/**
+ * Редакция согласия, которую показала форма. Приходит с клиента: страница могла быть
+ * открыта до выхода новой редакции, и человек соглашался именно с прежним текстом.
+ * Всё, что не похоже на дату редакции, заменяется текущей.
+ */
+export function normalizeConsentEdition(value: unknown): string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : CONSENT_EDITION;
 }
 
 export type QuizContext = {

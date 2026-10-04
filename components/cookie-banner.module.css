@@ -1,0 +1,207 @@
+/* Баннер согласия на cookie: полоса у нижнего края, в том же языке, что формы сайта —
+   белый фон, тонкая чёрная линия, прямые углы, кнопки прописными с разрядкой. */
+
+.banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Выше шапки (до 201), ниже окон заявки (2000) и заставки (9999). */
+  z-index: 1500;
+  background: #ffffff;
+  color: #252525;
+  border-top: 1px solid #252525;
+  box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.1);
+  font-family: var(--font-neue-haas), "Neue Haas Unica", "Helvetica Neue", Arial, sans-serif;
+  animation: bannerIn 0.32s ease both;
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 3vw, 56px);
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+  padding: 18px clamp(10px, 2vw, 40px) calc(18px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+.copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(37, 37, 37, 0.48);
+}
+
+.text {
+  max-width: 980px;
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(37, 37, 37, 0.78);
+}
+
+.text a {
+  color: #252525;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.state {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(37, 37, 37, 0.6);
+}
+
+.actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 10px;
+}
+
+.button {
+  min-height: 52px;
+  padding: 0 26px;
+  border: 1px solid #252525;
+  border-radius: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: visible;
+  transition:
+    background 0.24s ease,
+    color 0.24s ease;
+}
+
+.accept {
+  background: #252525;
+  color: #ffffff;
+}
+
+.accept:hover,
+.accept:focus-visible {
+  background: #ffffff;
+  color: #252525;
+}
+
+.decline {
+  background: #ffffff;
+  color: #252525;
+}
+
+.decline:hover,
+.decline:focus-visible {
+  background: #252525;
+  color: #ffffff;
+}
+
+.button:focus-visible,
+.text a:focus-visible {
+  outline: 2px solid #252525;
+  outline-offset: 3px;
+}
+
+@keyframes bannerIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .text {
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .button {
+    min-height: 48px;
+    padding: 0 8px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    white-space: normal;
+  }
+}
+
+/* На очень широких экранах сайт масштабирует размеры — баннер масштабируется вместе с ним. */
+@media (min-width: 1921px) {
+  .inner {
+    max-width: none;
+    gap: 2.9vw;
+    padding: 0.94vw 2.08vw;
+  }
+
+  .eyebrow {
+    font-size: 0.573vw;
+  }
+
+  .text {
+    max-width: 51vw;
+    margin-top: 0.42vw;
+    font-size: 0.73vw;
+  }
+
+  .state {
+    margin-top: 0.42vw;
+    font-size: 0.677vw;
+  }
+
+  .actions {
+    gap: 0.52vw;
+  }
+
+  .button {
+    min-height: 2.7vw;
+    padding: 0 1.35vw;
+    font-size: 0.625vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    animation: none;
+  }
+
+  .button {
+    transition: none;
+  }
+}
+
+@media print {
+  .banner {
+    display: none;
+  }
+}

@@ -3,6 +3,7 @@
 import { InvisibleSmartCaptcha } from "@yandex/smart-captcha";
 import { useEffect, useId, useRef } from "react";
 import { PHONE_HREF, PHONE_LABEL, TELEGRAM_HREF } from "@/lib/contacts";
+import { LEGAL_PATHS } from "@/lib/legal";
 import type { useLeadForm } from "./use-lead-form";
 import styles from "./lead-form.module.css";
 
@@ -10,6 +11,12 @@ import styles from "./lead-form.module.css";
  * Поля заявки без обёртки. Модалка показывает их внутри диалога, встроенная форма —
  * прямо под расчётом квиза. Разметка, состояния и тексты при этом одни и те же.
  */
+
+/**
+ * Класс Метрики: Вебвизор не записывает, что набрано в поле. Имя и телефон в записи
+ * посещений попадать не должны — этого требуют и условия сервиса.
+ */
+const NO_KEYSTROKE_RECORDING = "ym-disable-keys";
 
 const CAPTCHA_SITE_KEY =
   process.env.NEXT_PUBLIC_YANDEX_SMARTCAPTCHA_CLIENT_KEY ||
@@ -70,7 +77,7 @@ export function LeadFormBody({ form, submitLabel, successSlot }: LeadFormBodyPro
           </label>
           <input
             id={nameId}
-            className={styles.input}
+            className={`${styles.input} ${NO_KEYSTROKE_RECORDING}`}
             type="text"
             name="name"
             autoComplete="name"
@@ -88,7 +95,7 @@ export function LeadFormBody({ form, submitLabel, successSlot }: LeadFormBodyPro
           </label>
           <input
             id={phoneId}
-            className={styles.input}
+            className={`${styles.input} ${NO_KEYSTROKE_RECORDING}`}
             type="tel"
             name="phone"
             autoComplete="tel"
@@ -132,13 +139,23 @@ export function LeadFormBody({ form, submitLabel, successSlot }: LeadFormBodyPro
           {/* Подпись — флекс-контейнер: без общей обёртки текст и ссылка становятся
               отдельными элементами, и пробел между ними пропадает. */}
           <span>
-            Согласен на{" "}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer">
-              обработку персональных данных
+            Даю{" "}
+            <a href={LEGAL_PATHS.consent} target="_blank" rel="noopener noreferrer">
+              согласие на обработку персональных данных
             </a>
           </span>
         </label>
       </div>
+
+      {/* Ссылка на политику — отдельной строкой: галочка подтверждает только согласие,
+          а не «согласие и ознакомление» разом. */}
+      <p className={styles.policyNote}>
+        Как мы обрабатываем и защищаем данные — в{" "}
+        <a href={LEGAL_PATHS.privacy} target="_blank" rel="noopener noreferrer">
+          политике конфиденциальности
+        </a>
+        .
+      </p>
 
       {/* Скрипт капчи подключается только после первого касания формы, чтобы не
           замедлять страницу тем, кто до формы не дошёл. */}

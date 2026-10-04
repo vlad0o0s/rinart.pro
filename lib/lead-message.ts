@@ -1,3 +1,4 @@
+import { formatEdition } from "./legal";
 import type { LeadRequest } from "./lead-storage";
 import { UTM_KEYS } from "./lead-validation";
 
@@ -40,6 +41,10 @@ export function formatLeadLines(lead: LeadRequest): string[] {
   const createdAt = formatMoscowTime(lead.createdAt);
   if (createdAt) {
     lines.push(`Создана: ${createdAt} (МСК)`);
+  }
+
+  if (lead.consent?.edition) {
+    lines.push(`Согласие на обработку данных: дано, редакция от ${formatEdition(lead.consent.edition)}`);
   }
 
   const quiz = lead.quiz;

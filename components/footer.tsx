@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { LEGAL_PATHS, OPERATOR } from "@/lib/legal";
 import { getContactSettings, getSocialLinks } from "@/lib/site-settings";
 import type { ContactSettings, SocialLink, SocialPlatform } from "@/types/site";
+import { CookieSettingsButton } from "./cookie-settings-button";
 import styles from "./footer.module.css";
 
 const ICON_CLASS_MAP: Partial<Record<SocialPlatform, keyof typeof styles>> = {
@@ -21,7 +24,37 @@ export async function Footer() {
     <>
       <FooterDesktop contact={contact} socials={socials} />
       <FooterMobile contact={contact} socials={socials} />
+      <FooterLegal />
     </>
+  );
+}
+
+/**
+ * Строка с реквизитами оператора и документами. Одна на оба подвала: закон требует,
+ * чтобы политика обработки данных была доступна с каждой страницы, где данные собирают,
+ * а формы заявки есть почти везде.
+ */
+function FooterLegal() {
+  return (
+    <div className={styles.legal}>
+      <div className={styles.legalInner}>
+        <p className={styles.legalOwner}>
+          © {new Date().getFullYear()} RINART. {OPERATOR.shortName}, ОГРНИП {OPERATOR.ogrnip}, ИНН {OPERATOR.inn}
+        </p>
+        <nav className={styles.legalLinks} aria-label="Документы сайта">
+          <Link className={styles.legalLink} href={LEGAL_PATHS.privacy}>
+            Политика конфиденциальности
+          </Link>
+          <Link className={styles.legalLink} href={LEGAL_PATHS.consent}>
+            Согласие на обработку данных
+          </Link>
+          <Link className={styles.legalLink} href={LEGAL_PATHS.cookies}>
+            Файлы куки
+          </Link>
+          <CookieSettingsButton className={styles.legalLink}>Настройки куки</CookieSettingsButton>
+        </nav>
+      </div>
+    </div>
   );
 }
 

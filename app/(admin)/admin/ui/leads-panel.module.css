@@ -173,6 +173,27 @@
   cursor: pointer;
 }
 
+.remove {
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: rgba(17, 24, 39, 0.5);
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.remove:hover,
+.remove:focus-visible {
+  color: #b91c1c;
+}
+
+.remove:disabled {
+  cursor: progress;
+  opacity: 0.5;
+}
+
 .testToggle input {
   width: 16px;
   height: 16px;

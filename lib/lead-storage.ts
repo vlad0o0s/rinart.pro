@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { LEAD_RETENTION_YEARS } from "./legal";
 import type { Attribution, QuizContext } from "./lead-validation";
 
 export type LeadRequest = {
@@ -13,6 +14,12 @@ export type LeadRequest = {
   quiz?: QuizContext | null;
   /** Метки рекламы — по ним видно, какая кампания привела заявку. */
   attribution?: Attribution;
+  /**
+   * Согласие на обработку данных: редакция текста, которую видел человек, и браузер,
+   * из которого оно дано. Вместе с временем, адресом страницы и IP это и есть
+   * доказательство согласия — предоставить его обязан оператор.
+   */
+  consent?: { edition: string; userAgent?: string };
   /** Капчу подтвердить не удалось: заявку приняли, но она требует внимания. */
   unverified?: boolean;
   /** Время создания на сервере: часам на клиенте доверять нельзя. */
@@ -91,11 +98,99 @@ export async function setLeadTestFlag(key: string, isTest: boolean): Promise<boo
   });
 }
 
+/** Удаляет заявку — например, по требованию человека. `false` — заявка не найдена. */
+export async function deleteLead(key: string): Promise<boolean> {
+  return enqueue(async () => {
+    const leads = await readLeads();
+    const removed = leads.filter((item) => leadKey(item) === key);
+
+    if (!removed.length) {
+      return false;
+    }
+
+    await writeLeads(leads.filter((item) => leadKey(item) !== key));
+    await recordDeletions(removed, "manual");
+    return true;
+  });
+}
+
+/**
+ * Журнал удалений: когда и почему заявка уничтожена. Имени и телефона в нём нет — журнал
+ * не должен хранить то, что удалено; заявку в нём обозначает её идентификатор и дата.
+ * По журналу оператор подтверждает уничтожение данных, если об этом спросят.
+ */
+export type LeadDeletion = {
+  lead: string;
+  leadCreatedAt: string;
+  deletedAt: string;
+  /** `manual` — удалена в админке (в том числе по требованию человека), `retention` — истёк срок хранения. */
+  reason: "manual" | "retention";
+};
+
+const DELETIONS_FILE = path.join(process.cwd(), "data", "lead-deletions.json");
+const DELETIONS_LIMIT = 2000;
+
+export async function readLeadDeletions(): Promise<LeadDeletion[]> {
+  try {
+    const parsed = JSON.parse(await readFile(DELETIONS_FILE, "utf8")) as unknown;
+    return Array.isArray(parsed) ? (parsed as LeadDeletion[]) : [];
+  } catch {
+    // Журнала ещё нет или он не читается — удалению заявок это мешать не должно.
+    return [];
+  }
+}
+
+async function recordDeletions(leads: StoredLead[], reason: LeadDeletion["reason"]) {
+  if (!leads.length) {
+    return;
+  }
+  try {
+    const deletedAt = new Date().toISOString();
+    const entries: LeadDeletion[] = leads.map((lead) => ({
+      lead: leadKey(lead),
+      leadCreatedAt: lead.createdAt,
+      deletedAt,
+      reason,
+    }));
+    const journal = [...entries, ...(await readLeadDeletions())].slice(0, DELETIONS_LIMIT);
+    const tmpFile = DELETIONS_FILE + ".tmp";
+    await writeFile(tmpFile, JSON.stringify(journal, null, 2), "utf8");
+    await rename(tmpFile, DELETIONS_FILE);
+  } catch (error) {
+    // Заявка уже удалена; сбой записи журнала — повод посмотреть в журнал сервера, а не отказ.
+    console.error("[lead] deletion journal failed", error);
+  }
+}
+
+/**
+ * Заявка хранится не дольше срока, на который дано согласие. Запись с нечитаемой датой
+ * остаётся: молча потерять заявку из-за формата хуже, чем подержать её лишнее время.
+ */
+export function isWithinRetention(lead: Pick<StoredLead, "createdAt">, nowMs: number): boolean {
+  const createdMs = Date.parse(lead.createdAt);
+  if (Number.isNaN(createdMs)) {
+    return true;
+  }
+  const limit = new Date(nowMs);
+  limit.setFullYear(limit.getFullYear() - LEAD_RETENTION_YEARS);
+  return createdMs >= limit.getTime();
+}
+
 async function writeLeads(leads: StoredLead[]) {
+  // Просроченные заявки уходят при каждой записи файла — отдельной задачи по расписанию нет.
+  const now = Date.now();
+  const kept = leads.filter((lead) => isWithinRetention(lead, now));
   // Пишем через временный файл: оборванная запись не оставит обрезанный JSON.
   const tmpFile = LEADS_FILE + ".tmp";
-  await writeFile(tmpFile, JSON.stringify(leads.slice(0, 500), null, 2), "utf8");
+  await writeFile(tmpFile, JSON.stringify(kept.slice(0, 500), null, 2), "utf8");
   await rename(tmpFile, LEADS_FILE);
+
+  if (kept.length < leads.length) {
+    await recordDeletions(
+      leads.filter((lead) => !isWithinRetention(lead, now)),
+      "retention",
+    );
+  }
 }
 
 async function appendLead(lead: LeadRequest) {

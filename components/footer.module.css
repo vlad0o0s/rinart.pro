@@ -624,3 +624,86 @@
   }
 }
 
+
+/* ---------- Реквизиты и документы ---------- */
+
+.legal {
+  width: 100%;
+  padding: 14px 10px 18px;
+  background-color: #ffffff;
+  border-top: 1px solid rgba(37, 37, 37, 0.08);
+  font-family: var(--font-neue-haas), "Neue Haas Unica", sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(37, 37, 37, 0.6);
+}
+
+.legalInner {
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 32px;
+}
+
+.legalOwner {
+  margin: 0;
+}
+
+.legalLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+}
+
+.legalLink {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  /* Общие стили сайта задают кнопкам overflow-x: hidden — подчёркивание обрезалось бы. */
+  overflow: visible;
+  transition: color 0.2s ease;
+}
+
+.legalLink:hover,
+.legalLink:focus-visible {
+  color: #252525;
+}
+
+@media (max-width: 767px) {
+  .legal {
+    padding: 16px 16px 24px;
+  }
+
+  .legalInner {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .legalLinks {
+    gap: 8px 18px;
+  }
+}
+
+@media (min-width: 1921px) {
+  .legal {
+    padding: 0.73vw 0.52vw 0.94vw;
+    font-size: 0.625vw;
+  }
+
+  .legalInner {
+    max-width: none;
+    gap: 0.31vw 1.67vw;
+  }
+
+  .legalLinks {
+    gap: 0.31vw 1.04vw;
+  }
+}

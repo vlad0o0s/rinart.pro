@@ -311,6 +311,19 @@
   text-decoration: underline;
 }
 
+.policyNote {
+  /* Прижата к строке согласия: это пояснение к ней, а не отдельный блок формы. */
+  margin: -12px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(37, 37, 37, 0.56);
+}
+
+.policyNote a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 /* Область объявлений держит высоту заранее: без этого появление ошибки сдвигало
    кнопку под пальцем в момент нажатия. */
 .status {

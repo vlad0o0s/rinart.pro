@@ -4,9 +4,18 @@ import { useEffect, useRef } from "react";
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { METRIKA_COUNTER_ID, trackPageview } from "@/lib/analytics";
+import { ANALYTICS_STARTED_KEY, isAnalyticsAllowed, type CookieConsent } from "@/lib/cookie-consent";
+import { ATTRIBUTION_STORAGE_KEY } from "@/lib/lead-attribution";
+import { UTM_KEYS } from "@/lib/lead-validation";
+import { useCookieConsent } from "./use-cookie-consent";
 
 /**
  * Счётчик Метрики и учёт переходов внутри сайта.
+ *
+ * Счётчик загружается только после согласия посетителя на cookie: до нажатия «Принять»
+ * в баннере код Метрики на страницу не попадает и данные о посещении не собираются.
+ * Согласие читается из cookie — сервер отдаёт код сразу тем, кто уже согласился, а баннер
+ * включает счётчик без перезагрузки страницы.
  *
  * Next.js меняет страницы без перезагрузки, а код счётчика отправляет просмотр только при
  * загрузке документа. Поэтому Метрика видела одну страницу входа на весь визит: глубина
@@ -20,13 +29,22 @@ import { METRIKA_COUNTER_ID, trackPageview } from "@/lib/analytics";
 /** Сколько ждём, пока Next обновит <title> новой страницы, прежде чем отправить просмотр. */
 const TITLE_WAIT_MS = 1500;
 
+/** Метки рекламного клика: по ним Метрика относит визит к кампании Директа. */
+const AD_MARK_KEYS = [...UTM_KEYS, "yclid"];
+
 function isAdminPath(pathname: string | null) {
   return pathname === "/admin" || Boolean(pathname?.startsWith("/admin/"));
 }
 
-export function YandexMetrika() {
+type YandexMetrikaProps = {
+  /** Выбор о cookie, прочитанный сервером из запроса. */
+  initialConsent: CookieConsent | null;
+};
+
+export function YandexMetrika({ initialConsent }: YandexMetrikaProps) {
   const pathname = usePathname();
   const admin = isAdminPath(pathname);
+  const allowed = isAnalyticsAllowed(useCookieConsent(initialConsent));
 
   /** Счётчик уже запущен на одном из прошлых экранов этой вкладки. */
   const counterStartedRef = useRef(false);
@@ -41,8 +59,9 @@ export function YandexMetrika() {
     const repeated = lastSeenUrlRef.current === url;
     lastSeenUrlRef.current = url;
 
-    if (admin) {
+    if (admin || !allowed) {
       // В админке просмотры не отправляем, а при прямом входе не загружаем и сам счётчик.
+      // Без согласия на cookie счётчика на странице нет вовсе.
       return;
     }
 
@@ -50,7 +69,8 @@ export function YandexMetrika() {
     lastPublicUrlRef.current = url;
 
     if (!counterStartedRef.current) {
-      // Первый публичный экран вкладки: его просмотр отправляет `init`, второй был бы дублем.
+      // Первый публичный экран после запуска счётчика: его просмотр отправляет `init`,
+      // второй был бы дублем. Это и первый экран вкладки, и экран, на котором дали согласие.
       counterStartedRef.current = true;
       lastTitleRef.current = document.title;
       return;
@@ -96,9 +116,9 @@ export function YandexMetrika() {
 
     // Следующий переход или размонтирование: просмотр этой страницы не теряем.
     return send;
-  }, [pathname, admin]);
+  }, [pathname, admin, allowed]);
 
-  if (admin) {
+  if (admin || !allowed) {
     return null;
   }
 
@@ -116,16 +136,48 @@ export function YandexMetrika() {
           k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
         })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=${METRIKA_COUNTER_ID}', 'ym');
 
-        ym(${METRIKA_COUNTER_ID}, 'init', {
-          ssr: true,
-          webvisor: true,
-          clickmap: true,
-          ecommerce: "dataLayer",
-          referrer: document.referrer,
-          url: location.href,
-          accurateTrackBounce: true,
-          trackLinks: true,
-        });
+        (function () {
+          var url = location.href;
+          var referrer = document.referrer;
+          // Согласие могут дать не на первой странице визита. К этому времени в адресе уже нет
+          // рекламных меток, а источником перехода браузер считает сам сайт. Метки и внешний
+          // источник вкладка помнит с первого экрана — возвращаем их, иначе визит по рекламе
+          // выглядел бы прямым заходом. Только при первом запуске счётчика во вкладке: если
+          // дописывать метки при каждой загрузке страницы, один рекламный клик превратится
+          // в несколько визитов.
+          try {
+            var firstStart = !sessionStorage.getItem(${JSON.stringify(ANALYTICS_STARTED_KEY)});
+            sessionStorage.setItem(${JSON.stringify(ANALYTICS_STARTED_KEY)}, '1');
+            if (firstStart) {
+              var stored = JSON.parse(sessionStorage.getItem(${JSON.stringify(ATTRIBUTION_STORAGE_KEY)}) || '{}') || {};
+              var query = new URLSearchParams(location.search);
+              var restored = false;
+              ${JSON.stringify(AD_MARK_KEYS)}.forEach(function (key) {
+                if (stored[key] && !query.get(key)) {
+                  query.set(key, stored[key]);
+                  restored = true;
+                }
+              });
+              if (restored) {
+                url = location.origin + location.pathname + '?' + query.toString() + location.hash;
+              }
+              if (stored.referrer && (!referrer || referrer.indexOf(location.origin) === 0)) {
+                referrer = stored.referrer;
+              }
+            }
+          } catch (error) {}
+
+          ym(${METRIKA_COUNTER_ID}, 'init', {
+            ssr: true,
+            webvisor: true,
+            clickmap: true,
+            ecommerce: "dataLayer",
+            referrer: referrer,
+            url: url,
+            accurateTrackBounce: true,
+            trackLinks: true,
+          });
+        })();
       `}
     </Script>
   );

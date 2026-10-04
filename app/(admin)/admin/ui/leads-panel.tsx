@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatEdition } from "@/lib/legal";
 import styles from "./leads-panel.module.css";
 
 /**
@@ -22,16 +23,20 @@ type LeadRow = {
   referrer: string | null;
   campaign: string | null;
   hasQuiz: boolean;
+  consentEdition: string | null;
   unverified: boolean;
   isTest: boolean;
 };
 
 type MonthRow = { month: string; total: number; bySource: Record<string, number> };
 
+type DeletionRow = { lead: string; leadCreatedAt: string; deletedAt: string; reason: "manual" | "retention" };
+
 type LeadsResponse = {
   sources: LeadSource[];
   summary: { months: MonthRow[]; testCount: number };
   leads: LeadRow[];
+  deletions?: DeletionRow[];
 };
 
 /** Поиск Яндекса показываем всегда, даже с нулём: ради него счётчик и заведён. */
@@ -128,6 +133,41 @@ export function LeadsPanel() {
     [load],
   );
 
+  const removeLead = useCallback(
+    async (lead: LeadRow) => {
+      const who = [lead.name, lead.phone].filter(Boolean).join(", ");
+      const confirmed = window.confirm(
+        `Удалить заявку (${who}) без возможности восстановления?\n\nПисьмо с этой заявкой в почтовом ящике нужно удалить отдельно.`,
+      );
+      if (!confirmed) {
+        return;
+      }
+      setSavingKey(lead.key);
+      setError(null);
+      try {
+        const response = await fetch("/api/admin/leads", {
+          method: "DELETE",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: lead.key }),
+        });
+        if (response.status === 401) {
+          window.location.href = "/admin/login";
+          return;
+        }
+        if (!response.ok) {
+          throw new Error(`Ответ сервера: ${response.status}`);
+        }
+        await load();
+      } catch (removeError) {
+        setError(removeError instanceof Error ? removeError.message : "Не удалось удалить заявку");
+      } finally {
+        setSavingKey(null);
+      }
+    },
+    [load],
+  );
+
   const sourceLabels = useMemo(() => new Map((data?.sources ?? []).map((source) => [source.id, source.label])), [data]);
 
   const visibleSources = useMemo(() => {
@@ -202,7 +242,7 @@ export function LeadsPanel() {
               Проверочные заявки в итоги не входят{data.summary.testCount ? ` — сейчас их ${data.summary.testCount}` : ""}. Источник
               определяется по меткам ссылки и адресу, с которого человек пришёл. Переход с Яндекс Карт без меток браузер
               показывает как переход с Яндекса, поэтому он попадает в «Яндекс: поиск». Месяцы — по московскому времени; файл
-              хранит последние 500 заявок.
+              хранит последние 500 заявок, а заявки старше трёх лет удаляются сами — на этот срок человек даёт согласие.
             </p>
           </div>
 
@@ -220,6 +260,9 @@ export function LeadsPanel() {
                       <th scope="col">Имя</th>
                       <th scope="col">Телефон</th>
                       <th scope="col">Тест</th>
+                      <th scope="col">
+                        <span className={styles.srOnly}>Удаление</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -237,6 +280,9 @@ export function LeadsPanel() {
                           {pathOf(lead.pageUrl) ? <span className={styles.meta}>{pathOf(lead.pageUrl)}</span> : null}
                           {lead.hasQuiz ? <span className={styles.meta}>с ответами квиза</span> : null}
                           {lead.unverified ? <span className={styles.warn}>капча не подтверждена</span> : null}
+                          {lead.consentEdition ? (
+                            <span className={styles.meta}>согласие: редакция {formatEdition(lead.consentEdition)}</span>
+                          ) : null}
                         </td>
                         <td>{lead.name || "—"}</td>
                         <td className={styles.nowrap}>{lead.phone}</td>
@@ -251,6 +297,17 @@ export function LeadsPanel() {
                             <span className={styles.srOnly}>Проверочная заявка от {formatDate(lead.createdAt)}</span>
                           </label>
                         </td>
+                        <td>
+                          {/* Отзыв согласия: человек вправе потребовать удалить свои данные. */}
+                          <button
+                            className={styles.remove}
+                            type="button"
+                            disabled={savingKey === lead.key}
+                            onClick={() => void removeLead(lead)}
+                          >
+                            Удалить
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -260,6 +317,36 @@ export function LeadsPanel() {
               <p className={styles.empty}>Заявок пока нет.</p>
             )}
           </div>
+
+          {data.deletions?.length ? (
+            <details className={styles.card}>
+              <summary className={styles.cardTitle}>Журнал удалений — {data.deletions.length}</summary>
+              <p className={styles.note}>
+                Когда и почему заявка удалена. Имён и телефонов здесь нет: по журналу подтверждают, что данные
+                уничтожены, — например, в ответ на обращение человека или запрос Роскомнадзора.
+              </p>
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th scope="col">Удалена, МСК</th>
+                      <th scope="col">Заявка от</th>
+                      <th scope="col">Причина</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.deletions.map((row) => (
+                      <tr key={`${row.lead}-${row.deletedAt}`}>
+                        <td className={styles.nowrap}>{formatDate(row.deletedAt)}</td>
+                        <td className={styles.nowrap}>{formatDate(row.leadCreatedAt)}</td>
+                        <td>{row.reason === "retention" ? "истёк срок хранения" : "удалена в админке"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          ) : null}
         </>
       ) : loading ? (
         <p className={styles.empty}>Загружаем заявки...</p>

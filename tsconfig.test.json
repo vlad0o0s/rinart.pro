@@ -16,6 +16,8 @@
     "types": ["node"]
   },
   "include": [
+    "lib/legal.ts",
+    "lib/cookie-consent.ts",
     "lib/lead-validation.ts",
     "lib/lead-message.ts",
     "lib/lead-source.ts",

@@ -51,6 +51,8 @@ export const RESERVED_TOP_LEVEL_SLUGS = new Set([
   "masterskaja",
   "kontakty",
   "privacy",
+  "consent",
+  "cookies",
   "admin",
   "api",
   "lp",
