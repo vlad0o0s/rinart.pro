@@ -4,6 +4,7 @@ import { InvisibleSmartCaptcha } from "@yandex/smart-captcha";
 import { useEffect, useId, useRef } from "react";
 import { PHONE_HREF, PHONE_LABEL, TELEGRAM_HREF } from "@/lib/contacts";
 import { LEGAL_PATHS } from "@/lib/legal";
+import { SMARTCAPTCHA_SITE_KEY } from "@/lib/smart-captcha-site-key";
 import type { useLeadForm } from "./use-lead-form";
 import styles from "./lead-form.module.css";
 
@@ -17,10 +18,6 @@ import styles from "./lead-form.module.css";
  * посещений попадать не должны — этого требуют и условия сервиса.
  */
 const NO_KEYSTROKE_RECORDING = "ym-disable-keys";
-
-const CAPTCHA_SITE_KEY =
-  process.env.NEXT_PUBLIC_YANDEX_SMARTCAPTCHA_CLIENT_KEY ||
-  "ysc1_kSspdc4CreezvRnhYrKOF8CfF79arnKlhequLaHL7fe55cea";
 
 type LeadFormBodyProps = {
   form: ReturnType<typeof useLeadForm>;
@@ -163,7 +160,7 @@ export function LeadFormBody({ form, submitLabel, successSlot }: LeadFormBodyPro
         <div className={styles.captcha}>
           <InvisibleSmartCaptcha
             key={form.captcha.nonce}
-            sitekey={CAPTCHA_SITE_KEY}
+            sitekey={SMARTCAPTCHA_SITE_KEY}
             visible={form.captcha.visible}
             onSuccess={form.captcha.onSuccess}
             onTokenExpired={form.captcha.onTokenExpired}

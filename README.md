@@ -6,10 +6,9 @@
    ```bash
    npm install
    ```
-2. Создайте файл `.env.local` в корне проекта и добавьте настройки (символ `&` закодирован как `%26`):
+2. Создайте файл `.env.local` в корне проекта и добавьте настройки по образцу `.env.example` (символ `&` в строке подключения закодирован как `%26`). Для формы заявки и входа в админку нужен серверный ключ Yandex SmartCaptcha:
    ```env
-   NEXT_PUBLIC_RECAPTCHA_SITE_KEY="ваш_site_key"
-   RECAPTCHA_SECRET_KEY="ваш_secret_key"
+   YANDEX_SMARTCAPTCHA_SERVER_KEY="ваш_серверный_ключ"
    ```
 3. Примените SQL-схему к базе данных (однократно):
    ```bash

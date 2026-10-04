@@ -2343,10 +2343,20 @@
   cursor: pointer;
 }
 
+/* Виджет SmartCaptcha занимает всю ширину карточки; высота задана заранее,
+   чтобы кнопка входа не прыгала, пока виджет загружается. */
 .captchaWrapper {
   display: flex;
   justify-content: center;
+  min-height: 102px;
   padding: 8px 0 4px;
+}
+
+/* Уже 300 пикселей виджет не бывает. На узком телефоне он на пару пикселей шире полей —
+   выступ делится поровну между краями, а не уходит целиком вправо. */
+.captchaWrapper > :global(.smart-captcha) {
+  flex: 0 0 100%;
+  min-width: 300px;
 }
 
 .statusBar {

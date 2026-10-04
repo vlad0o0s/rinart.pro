@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import ReCAPTCHA from "react-google-recaptcha";
+import { SmartCaptcha } from "@yandex/smart-captcha";
+import { SMARTCAPTCHA_SITE_KEY } from "@/lib/smart-captcha-site-key";
 import styles from "./admin.module.css";
 
 const LOGIN_ERROR_DEFAULT = "Не удалось войти. Проверьте данные и попробуйте снова.";
+const CAPTCHA_REQUIRED = "Подтвердите, что вы не робот";
+const CAPTCHA_LOAD_ERROR = "Проверка «Я не робот» не загрузилась. Обновите страницу и попробуйте снова.";
 
 export function AdminLoginForm() {
   const router = useRouter();
@@ -13,10 +16,20 @@ export function AdminLoginForm() {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  const [recaptchaToken, setRecaptchaToken] = useState<string>("");
-  const recaptchaRef = useRef<ReCAPTCHA | null>(null);
-  // Captcha enabled
-  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
+  const [captchaToken, setCaptchaToken] = useState<string>("");
+  // Токен капчи одноразовый: после неудачной попытки виджет создаётся заново —
+  // у компонента SmartCaptcha нет сброса, его заменяет смена key.
+  const [captchaNonce, setCaptchaNonce] = useState(0);
+
+  const resetCaptcha = useCallback(() => {
+    setCaptchaToken("");
+    setCaptchaNonce((value) => value + 1);
+  }, []);
+
+  const handleCaptchaError = useCallback(() => {
+    setCaptchaToken("");
+    setStatus(CAPTCHA_LOAD_ERROR);
+  }, []);
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
@@ -24,8 +37,8 @@ export function AdminLoginForm() {
       if (submitting) return;
       setStatus("");
 
-      if (siteKey && !recaptchaToken) {
-        setStatus("Подтвердите, что вы не робот");
+      if (!captchaToken) {
+        setStatus(CAPTCHA_REQUIRED);
         return;
       }
 
@@ -35,17 +48,14 @@ export function AdminLoginForm() {
         const response = await fetch("/api/admin/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ login, password, recaptchaToken }),
+          body: JSON.stringify({ login, password, captchaToken }),
         });
 
         if (!response.ok) {
           const payload = await response.json().catch(() => ({}));
           setStatus(typeof payload.error === "string" ? payload.error : LOGIN_ERROR_DEFAULT);
           setSubmitting(false);
-          if (siteKey) {
-            recaptchaRef.current?.reset();
-            setRecaptchaToken("");
-          }
+          resetCaptcha();
           return;
         }
 
@@ -57,10 +67,11 @@ export function AdminLoginForm() {
         console.error("admin login failed", error);
         setStatus(LOGIN_ERROR_DEFAULT);
         setSubmitting(false);
+        resetCaptcha();
         return;
       }
     },
-    [login, password, router, submitting, siteKey, recaptchaToken],
+    [login, password, router, submitting, captchaToken, resetCaptcha],
   );
 
   return (
@@ -94,15 +105,17 @@ export function AdminLoginForm() {
           />
         </label>
 
-        {siteKey && (
-          <div className={styles.captchaWrapper}>
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              sitekey={siteKey}
-              onChange={(token) => setRecaptchaToken(token || "")}
-            />
-          </div>
-        )}
+        <div className={styles.captchaWrapper}>
+          <SmartCaptcha
+            key={captchaNonce}
+            sitekey={SMARTCAPTCHA_SITE_KEY}
+            language="ru"
+            onSuccess={setCaptchaToken}
+            onTokenExpired={resetCaptcha}
+            onNetworkError={handleCaptchaError}
+            onJavascriptError={handleCaptchaError}
+          />
+        </div>
 
         <button className={styles.loginButton} type="submit" disabled={submitting}>
           {submitting ? "Авторизация…" : "Войти в систему"}

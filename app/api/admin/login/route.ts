@@ -3,29 +3,35 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { findAdminUserByLogin, createAdminSession, deleteExpiredAdminSessions } from "@/lib/admin-repository";
 import { applyAdminSessionCookie, getSessionMaxAgeSeconds } from "@/lib/admin-auth";
-import { verifyRecaptchaToken } from "@/lib/recaptcha";
+import { verifyYandexSmartCaptcha } from "@/lib/yandex-smart-captcha";
 
 export async function POST(request: NextRequest) {
   try {
-    const { login, password, recaptchaToken } = (await request.json().catch(() => ({}))) as {
+    const { login, password, captchaToken } = (await request.json().catch(() => ({}))) as {
       login?: string;
       password?: string;
-      recaptchaToken?: string;
+      captchaToken?: string;
     };
 
     if (!login || !password) {
       return NextResponse.json({ error: "Введите логин и пароль" }, { status: 400 });
     }
 
-    // Captcha enabled
-    const shouldVerifyRecaptcha = true;
-    if (shouldVerifyRecaptcha) {
-      const forwardedFor = request.headers.get("x-forwarded-for");
-      const remoteIp = forwardedFor?.split(",")[0]?.trim();
-      const isRecaptchaValid = await verifyRecaptchaToken(recaptchaToken, remoteIp);
-      if (!isRecaptchaValid) {
-        return NextResponse.json({ error: "Подтвердите, что вы не робот" }, { status: 400 });
-      }
+    // Капча проверяется до обращения к базе: кроме неё, подбор пароля ничем не ограничен.
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const remoteIp = forwardedFor?.split(",")[0]?.trim();
+    const verdict = await verifyYandexSmartCaptcha(captchaToken, remoteIp);
+    if (verdict.status === "unavailable" && verdict.reason !== "token_missing") {
+      // Форма заявки при сбое сервиса проверки заявку принимает, чтобы не терять клиента.
+      // Вход в админку — наоборот: без подтверждённой капчи он закрыт.
+      console.error("Admin login: captcha check unavailable", verdict.reason);
+      return NextResponse.json(
+        { error: "Сервис проверки «Я не робот» не отвечает. Попробуйте через минуту." },
+        { status: 503 },
+      );
+    }
+    if (verdict.status !== "ok") {
+      return NextResponse.json({ error: "Подтвердите, что вы не робот" }, { status: 400 });
     }
 
     await deleteExpiredAdminSessions();
