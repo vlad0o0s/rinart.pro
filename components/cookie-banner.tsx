@@ -22,9 +22,11 @@ import styles from "./cookie-banner.module.css";
  * куки» в подвале — отозвать согласие должно быть так же просто, как дать. Страницу баннер
  * не перекрывает и фокус не перехватывает.
  *
- * Счётчик Метрики до согласия не работает. В мягком режиме согласием считается и нажатие
- * «Принять», и то, что человек, увидев баннер, продолжил пользоваться сайтом; в строгом —
- * только нажатие. Режим задаёт ANALYTICS_MODE в lib/cookie-consent.ts.
+ * В режиме уведомления счётчик Метрики работает с открытия страницы, а баннер сообщает
+ * об этом и даёт отказаться. В мягком и строгом режимах счётчик до согласия не работает.
+ * Согласием считается нажатие «Принять», а во всех режимах, кроме строгого, — и то, что
+ * человек, увидев баннер, продолжил пользоваться сайтом. Режим задаёт ANALYTICS_MODE
+ * в lib/cookie-consent.ts.
  *
  * В разметке, которую отдаёт сервер, баннера нет: он появляется после загрузки страницы
  * в браузере. Так текст о куки не попадает в поисковую выдачу вместо описания страницы.
@@ -86,7 +88,7 @@ export function CookieBanner({ initialConsent }: CookieBannerProps) {
   const lingering = consent?.choice === "implied" && lingerPath !== null && lingerPath === pathname;
   const visible = inBrowser && !admin && (undecided || settingsOpen || lingering);
   // На страницах документов человек как раз читает условия — чтение согласием не считается.
-  const watchActions = ANALYTICS_MODE === "implied" && visible && undecided && !LEGAL_PAGE_PATHS.includes(pathname ?? "");
+  const watchActions = ANALYTICS_MODE !== "explicit" && visible && undecided && !LEGAL_PAGE_PATHS.includes(pathname ?? "");
 
   useEffect(() => {
     const open = () => setSettingsOpen(true);
@@ -203,7 +205,13 @@ export function CookieBanner({ initialConsent }: CookieBannerProps) {
       <div className={styles.inner}>
         <div className={styles.copy}>
           <p className={styles.eyebrow}>Файлы куки (cookie)</p>
-          {ANALYTICS_MODE === "implied" ? (
+          {ANALYTICS_MODE === "notice" ? (
+            <p className={styles.text}>
+              Сайт использует файлы куки и сервис «Яндекс Метрика» — для статистики посещений и оценки рекламы.
+              Продолжая пользоваться сайтом или нажав «Принять», вы соглашаетесь на {consentLink}. Отключить
+              Метрику — кнопка «Отказаться». <Link href={LEGAL_PATHS.cookies}>Подробнее</Link>
+            </p>
+          ) : ANALYTICS_MODE === "implied" ? (
             <p className={styles.text}>
               Сайт использует файлы куки и сервис «Яндекс Метрика» — для статистики посещений и оценки рекламы.
               Продолжая пользоваться сайтом или нажав «Принять», вы соглашаетесь на {consentLink}.{" "}
@@ -223,7 +231,7 @@ export function CookieBanner({ initialConsent }: CookieBannerProps) {
             Принять
           </button>
           <button className={`${styles.button} ${styles.decline}`} type="button" onClick={() => choose("denied")}>
-            {ANALYTICS_MODE === "implied" ? "Отказаться" : "Только обязательные"}
+            {ANALYTICS_MODE === "explicit" ? "Только обязательные" : "Отказаться"}
           </button>
         </div>
       </div>

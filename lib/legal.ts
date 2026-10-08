@@ -37,9 +37,9 @@ export const LEGAL_PATHS = {
  * Даты редакций документов. Дата редакции согласия сохраняется вместе с заявкой: по ней
  * видно, с каким именно текстом согласился человек. Меняется текст — меняется дата.
  */
-export const POLICY_EDITION = "2026-10-04";
+export const POLICY_EDITION = "2026-10-08";
 export const CONSENT_EDITION = "2026-10-04";
-export const COOKIE_POLICY_EDITION = "2026-10-04";
+export const COOKIE_POLICY_EDITION = "2026-10-08";
 
 /** Сколько хранятся заявки: срок согласия и срок, после которого сайт удаляет заявку сам. */
 export const LEAD_RETENTION_YEARS = 3;

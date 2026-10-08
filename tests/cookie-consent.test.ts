@@ -38,6 +38,17 @@ test("согласие на прежний набор сервисов не де
   assert.equal(parseConsent(`granted.${CONSENT_SCOPE + 1}.1790000000`), null);
 });
 
+test("режим уведомления: счётчик работает с открытия страницы, пока человек не отказался", () => {
+  assert.equal(isAnalyticsAllowed(null, "notice"), true, "выбора ещё нет — счётчик уже работает");
+  assert.equal(isAnalyticsAllowed(granted, "notice"), true);
+  assert.equal(isAnalyticsAllowed(implied, "notice"), true);
+  assert.equal(isAnalyticsAllowed(denied, "notice"), false, "отказ выключает счётчик");
+
+  assert.equal(needsDecision(null, "notice"), true, "баннер показывается, пока выбора нет");
+  assert.equal(needsDecision(implied, "notice"), false);
+  assert.equal(needsDecision(denied, "notice"), false);
+});
+
 test("мягкий режим: счётчик включается после нажатия «Принять» или продолжения работы с сайтом", () => {
   assert.equal(isAnalyticsAllowed(null, "implied"), false, "пока человек ничего не сделал, счётчика нет");
   assert.equal(isAnalyticsAllowed(granted, "implied"), true);

@@ -84,8 +84,8 @@ export default async function RootLayout({
   const userAgent = headersList.get("user-agent") ?? "";
   const isBot = isBotUserAgent(userAgent);
   // Выбор посетителя о файлах куки. Сервер читает его из запроса и передаёт счётчику и баннеру:
-  // у согласившихся счётчик запускается сразу после загрузки страницы, а разметка сервера
-  // и браузера совпадает. Сам код счётчика в HTML не попадает — его вставляет браузер.
+  // у тех, кому аналитика разрешена, счётчик запускается сразу после загрузки страницы,
+  // а разметка сервера и браузера совпадает. Сам код счётчика в HTML не попадает — его вставляет браузер.
   const cookieConsent = parseConsent((await cookies()).get(CONSENT_COOKIE_NAME)?.value);
   const blocks = await getGlobalBlocks();
   // Логотип заставки — только файл с самого сайта. Запасной адрес в старых настройках ведёт
@@ -118,7 +118,7 @@ export default async function RootLayout({
         />
         <YandexMetrika initialConsent={cookieConsent} />
         <AttributionCapture />
-        {/* Пиксель для браузеров без JavaScript — только тем, кто согласился на аналитику. */}
+        {/* Пиксель для браузеров без JavaScript — только там, где аналитика разрешена. */}
         {isAnalyticsAllowed(cookieConsent) ? (
           <noscript>
             <div>

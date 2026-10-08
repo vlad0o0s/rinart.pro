@@ -9,6 +9,7 @@
 /**
  * `granted` — нажал «Принять». `denied` — нажал «Отказаться».
  * `implied` — увидел баннер и продолжил пользоваться сайтом, ничего не нажимая.
+ * Записи нет вовсе — человек только что открыл сайт и ещё ничего не сделал.
  */
 export type CookieConsentChoice = "granted" | "implied" | "denied";
 
@@ -44,7 +45,14 @@ export const CONSENT_CHANGE_EVENT = "rinart:cookie-consent";
 export const CONSENT_SETTINGS_EVENT = "rinart:cookie-settings";
 
 /**
- * Как посетитель даёт согласие на счётчик Метрики.
+ * Когда включается счётчик Метрики и как посетитель даёт согласие.
+ *
+ * `notice` — счётчик включается при открытии страницы, баннер на первом же экране сообщает
+ * об этом. Согласие — нажатие «Принять» или продолжение работы с сайтом после баннера;
+ * «Отказаться» выключает счётчик и убирает его файлы. Режим выбран 08.10.2026: в режиме
+ * `implied` в Метрику не попадали те, кто ушёл, ничего не тронув, а визит остальных
+ * отсчитывался от первого действия — отказы и время на сайте переставали быть сравнимыми
+ * с прошлыми периодами, и реклама оценивалась по искажённым данным.
  *
  * `implied` — нажатием «Принять» или тем, что, увидев баннер, продолжил пользоваться
  * сайтом: прокрутил страницу, нажал на что-нибудь, перешёл дальше. Счётчик включается
@@ -56,8 +64,8 @@ export const CONSENT_SETTINGS_EVENT = "rinart:cookie-settings";
  *
  * Переключение меняет и текст баннера, и документ о куки — они читают эту константу.
  */
-export type AnalyticsMode = "implied" | "explicit";
-export const ANALYTICS_MODE: AnalyticsMode = "implied";
+export type AnalyticsMode = "notice" | "implied" | "explicit";
+export const ANALYTICS_MODE: AnalyticsMode = "notice";
 
 export function serializeConsent(choice: CookieConsentChoice, nowMs: number): string {
   return `${choice}.${CONSENT_SCOPE}.${Math.floor(nowMs / 1000)}`;
@@ -92,13 +100,14 @@ export function consentMaxAgeSeconds(choice: CookieConsentChoice): number {
 
 export function isAnalyticsAllowed(consent: CookieConsent | null, mode: AnalyticsMode = ANALYTICS_MODE): boolean {
   if (!consent) {
-    return false;
+    // Выбора ещё нет: счётчик работает только в режиме, где он включается при открытии страницы.
+    return mode === "notice";
   }
   if (consent.choice === "granted") {
     return true;
   }
-  // Согласие без нажатия действует только в режиме, где оно предусмотрено.
-  return consent.choice === "implied" && mode === "implied";
+  // Согласие без нажатия действует только в режимах, где оно предусмотрено.
+  return consent.choice === "implied" && mode !== "explicit";
 }
 
 /**
@@ -141,7 +150,7 @@ export function readCookieValue(cookieHeader: string, name: string): string | nu
 
 /**
  * Отметка в хранилище вкладки: счётчик в ней уже запускался. Ставится вместе с запуском
- * счётчика, то есть только после согласия, и снимается при отказе.
+ * счётчика и снимается при отказе.
  */
 export const ANALYTICS_STARTED_KEY = "rinart-ym-started";
 
