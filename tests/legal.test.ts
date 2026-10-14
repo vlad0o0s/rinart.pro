@@ -8,6 +8,7 @@ import {
   LEGAL_PATHS,
   OPERATOR,
   POLICY_EDITION,
+  TERMS_EDITION,
   formatEdition,
 } from "../lib/legal";
 
@@ -19,7 +20,7 @@ test("дата редакции выводится по-русски", () => {
 });
 
 test("редакции документов записаны датами", () => {
-  for (const edition of [POLICY_EDITION, CONSENT_EDITION, COOKIE_POLICY_EDITION]) {
+  for (const edition of [POLICY_EDITION, CONSENT_EDITION, COOKIE_POLICY_EDITION, TERMS_EDITION]) {
     assert.match(edition, /^\d{4}-\d{2}-\d{2}$/);
   }
 });

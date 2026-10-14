@@ -31,6 +31,7 @@ export const LEGAL_PATHS = {
   privacy: "/privacy",
   consent: "/consent",
   cookies: "/cookies",
+  terms: "/terms",
 } as const;
 
 /**
@@ -40,6 +41,7 @@ export const LEGAL_PATHS = {
 export const POLICY_EDITION = "2026-10-08";
 export const CONSENT_EDITION = "2026-10-04";
 export const COOKIE_POLICY_EDITION = "2026-10-08";
+export const TERMS_EDITION = "2026-10-14";
 
 /** Сколько хранятся заявки: срок согласия и срок, после которого сайт удаляет заявку сам. */
 export const LEAD_RETENTION_YEARS = 3;

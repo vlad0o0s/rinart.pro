@@ -53,6 +53,7 @@ export const RESERVED_TOP_LEVEL_SLUGS = new Set([
   "privacy",
   "consent",
   "cookies",
+  "terms",
   "admin",
   "api",
   "lp",

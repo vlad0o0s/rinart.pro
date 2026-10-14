@@ -51,6 +51,9 @@ function FooterLegal() {
           <Link className={styles.legalLink} href={LEGAL_PATHS.cookies}>
             Файлы куки
           </Link>
+          <Link className={styles.legalLink} href={LEGAL_PATHS.terms}>
+            Пользовательское соглашение
+          </Link>
           <CookieSettingsButton className={styles.legalLink}>Настройки куки</CookieSettingsButton>
         </nav>
       </div>

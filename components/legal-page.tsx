@@ -10,7 +10,7 @@ import { getSocialLinks } from "@/lib/site-settings";
 import styles from "./legal-page.module.css";
 
 /**
- * Общая оболочка документов сайта: политика, согласие, файлы cookie.
+ * Общая оболочка документов сайта: политика, согласие, файлы cookie, пользовательское соглашение.
  *
  * Тексты лежат в коде страниц, а не в базе: редакция документа — юридически значимая
  * вещь, она меняется вместе с датой редакции и проходит через выкладку, а не правится
@@ -21,6 +21,7 @@ const DOCUMENTS = [
   { href: LEGAL_PATHS.privacy, label: "Политика конфиденциальности" },
   { href: LEGAL_PATHS.consent, label: "Согласие на обработку персональных данных" },
   { href: LEGAL_PATHS.cookies, label: "Файлы куки (cookie)" },
+  { href: LEGAL_PATHS.terms, label: "Пользовательское соглашение" },
 ];
 
 type LegalPageProps = {
