@@ -14,7 +14,7 @@ import styles from "./stati.module.css";
 
 export const dynamic = "force-dynamic";
 
-const TITLE = "Статьи об архитектуре и проектировании домов — RINART";
+const TITLE = "Статьи о проектировании частных домов — архитектурное бюро RINART";
 const DESCRIPTION =
   "Статьи архитектурного бюро RINART: как проектируют частные и загородные дома, из чего складывается проект, интерьеры и реконструкция.";
 
