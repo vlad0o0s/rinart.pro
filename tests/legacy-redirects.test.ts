@@ -13,7 +13,9 @@ test("старые адреса WordPress ведут на действующие
 
 test("ранний маршрут /projects/<slug> ведёт на адрес проекта", () => {
   assert.equal(resolveLegacyRedirect("/projects/idalgo"), "/idalgo");
-  assert.equal(resolveLegacyRedirect("/projects/16-uslanka/"), "/16-uslanka");
+  assert.equal(resolveLegacyRedirect("/projects/16-uslanka/"), "/uslanka");
+  assert.equal(resolveLegacyRedirect("/16-uslanka"), "/uslanka");
+  assert.equal(resolveLegacyRedirect("/16-uslanka/?utm_source=x"), "/uslanka?utm_source=x");
   // Админское API содержит тот же сегмент, но начинается не с него.
   assert.equal(resolveLegacyRedirect("/api/admin/projects/idalgo"), null);
   assert.equal(resolveLegacyRedirect("/projects"), null);

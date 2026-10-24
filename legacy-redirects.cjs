@@ -20,6 +20,15 @@ const EXACT = new Map([
   ["/portfolio", "/"],
 ]);
 
+/**
+ * Проекты, у которых сменился slug. Старый адрес остался в индексе Яндекса и отдавал 404,
+ * а Вебмастер показывал дубль заголовка «Дом Усланка» на двух адресах (24.10.2026).
+ */
+const RENAMED_SLUGS = new Map([["16-uslanka", "uslanka"]]);
+for (const [from, to] of RENAMED_SLUGS) {
+  EXACT.set(`/${from}`, `/${to}`);
+}
+
 /** Короткие ссылки WordPress вида /?p=<id записи>. */
 const WP_POST_IDS = new Map([
   ["23", "/proektirovanie"],
@@ -55,7 +64,8 @@ function resolveLegacyRedirect(rawUrl) {
 
   const project = PROJECT_PATH.exec(pathname);
   if (project) {
-    return withQuery(`/${project[1]}`, query);
+    // Сразу на актуальный slug, без второго перехода через переименованный адрес.
+    return withQuery(`/${RENAMED_SLUGS.get(project[1]) ?? project[1]}`, query);
   }
 
   if (pathname === "/" && query) {
