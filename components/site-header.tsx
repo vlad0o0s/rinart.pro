@@ -346,6 +346,9 @@ function MobileMenu({
     <nav
       className={`${styles.menu} ${menuOpen ? styles.menuOpen : ""}`}
       aria-hidden={!menuOpen}
+      // Закрытое меню только спрятано стилями: без inert его ссылки ловили фокус с клавиатуры,
+      // а программы чтения экрана упирались в «скрытые» пункты. На вид это не влияет.
+      inert={!menuOpen}
       ref={menuRef}
     >
       <div className={styles.menuPanel}>
