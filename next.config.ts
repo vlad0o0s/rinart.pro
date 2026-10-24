@@ -11,14 +11,8 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   /* config options here */
   reactCompiler: true,
-  experimental: {
-    /**
-     * Стили встраиваются прямо в HTML вместо четырёх отдельных файлов CSS, которые блокировали
-     * отрисовку (PageSpeed: «Запросы, блокирующие отрисовку», −170…700 мс на телефоне).
-     * Весь CSS сайта ~33 КБ, в сжатом HTML это несколько килобайт.
-     */
-    inlineCss: true,
-  },
+  // experimental.inlineCss пробовали 24.10.2026 и откатили: CSS встраивался дважды (в <style> и
+  // в данные React), а вместе с ним стили админки — HTML главной вырос с 18 до 78 КБ в сжатом виде.
   /**
    * Все чанки (JS/CSS) под /chunks: без долгого immutable на CDN — после деплоя не отдаём
    * устаревшие файлы по тому же URL и чаще согласуемся с новым HTML.
