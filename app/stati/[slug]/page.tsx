@@ -144,7 +144,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
           {article.coverImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={article.coverImageUrl} alt="" className={styles.cover} decoding="async" fetchPriority="high" />
+            <img src={article.coverImageUrl} alt={article.title} className={styles.cover} decoding="async" fetchPriority="high" />
           ) : null}
 
           {article.excerpt ? <p className={styles.lead}>{article.excerpt}</p> : null}
@@ -177,7 +177,7 @@ export default async function ArticlePage({ params }: PageProps) {
                       <Link href={`/${project.slug}`} className={styles.relatedProject}>
                         {project.heroImageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={project.heroImageUrl} alt="" loading="lazy" decoding="async" />
+                          <img src={project.heroImageUrl} alt={project.title.trim()} loading="lazy" decoding="async" />
                         ) : null}
                         <span>{project.title}</span>
                       </Link>

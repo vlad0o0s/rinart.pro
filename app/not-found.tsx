@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Страница не найдена — RINART",
   description: "Запрошенная страница не найдена. Перейдите в портфолио, к описанию проектирования или к контактам мастерской RINART.",
-  robots: { index: false, follow: true },
+  // robots не задаём: Next сам ставит noindex на страницу 404, а свой тег давал второй, отличающийся.
 };
 
 const LINK_STYLE = {

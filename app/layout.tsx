@@ -68,7 +68,11 @@ export const metadata: Metadata = {
     locale: "ru_RU",
     type: "website",
   },
+  // Коды подтверждения Яндекс Вебмастера и Google Search Console берутся из .env
+  // (YANDEX_VERIFICATION, GOOGLE_SITE_VERIFICATION): пока переменная не задана, тега нет.
   verification: {
+    ...(process.env.YANDEX_VERIFICATION ? { yandex: process.env.YANDEX_VERIFICATION } : {}),
+    ...(process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : {}),
     other: {
       "zen-verification": "81wapJfK78Sa5rJ98tOeBeMYIQHxazRrkULzKnpfAkw2PEpSuvhxlTZ1hsOLwKLR",
     },

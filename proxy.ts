@@ -6,7 +6,16 @@ import { NextResponse } from "next/server";
  * (иначе браузер запрашивает уже удалённые `/_next/static/chunks/*` → 500/ошибки).
  * Статика `/_next/static` и прочие исключения не трогаем.
  */
-export function proxy(_request: NextRequest) {
+export function proxy(request: NextRequest) {
+  // Адрес страницы в верхнем регистре (/PROEKTIROVANIE) отдавал 404 — ведём на строчный.
+  // Файлы с расширением (/img/Photo.webp) не трогаем: их имена регистрозависимы.
+  const { pathname } = request.nextUrl;
+  if (pathname !== pathname.toLowerCase() && !/\.[a-z0-9]+$/i.test(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.toLowerCase();
+    return NextResponse.redirect(url, 308);
+  }
+
   const response = NextResponse.next();
   response.headers.set(
     "Cache-Control",

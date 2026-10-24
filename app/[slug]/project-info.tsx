@@ -160,7 +160,7 @@ export function ProjectInfo({ title, descriptionHtml, descriptionParagraphs, onH
         <div className={styles.featureImageMobile}>
           <Image
             src={featureImage}
-            alt={title}
+            alt={title.trim()}
             className={styles.featureImageMobileImg}
             width={1600}
             height={1000}

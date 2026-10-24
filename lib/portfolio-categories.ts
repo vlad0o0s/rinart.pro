@@ -34,5 +34,7 @@ export function normalizeCategories(list: string[]): CategoryId[] {
 export function portfolioImageAlt(title: string, categories: string[]): string {
   const [first] = normalizeCategories(categories);
   const type = first ? CATEGORY_ALT_LABELS[first] : null;
-  return type ? `${title} — ${type}, бюро RINART` : `${title} — проект бюро RINART`;
+  // Названия в базе бывают с пробелом в начале — в alt он не нужен.
+  const name = title.trim();
+  return type ? `${name} — ${type}, бюро RINART` : `${name} — проект бюро RINART`;
 }

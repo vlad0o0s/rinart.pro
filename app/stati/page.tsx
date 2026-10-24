@@ -49,7 +49,7 @@ export default async function ArticlesPage() {
               <Link href={`${ARTICLES_PATH}/${article.slug}`} className={styles.cardLink}>
                 {article.coverImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={article.coverImageUrl} alt="" loading="lazy" decoding="async" className={styles.cardImage} />
+                  <img src={article.coverImageUrl} alt={article.title} loading="lazy" decoding="async" className={styles.cardImage} />
                 ) : null}
                 {article.publishedAt ? (
                   <time className={styles.cardDate} dateTime={article.publishedAt}>

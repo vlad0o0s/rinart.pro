@@ -85,7 +85,7 @@ export function RelatedProjectsSlider({ projects }: { projects: RelatedProject[]
                 {project.heroImageUrl ? (
                   <Image
                     src={project.heroImageUrl}
-                    alt={project.title}
+                    alt={project.title.trim()}
                     fill
                     sizes="(max-width: 768px) 50vw, 240px"
                     className={styles.relatedImage}

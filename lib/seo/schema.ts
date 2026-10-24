@@ -64,8 +64,10 @@ function absoluteUrl(url: string | null | undefined): string | null {
 
 function organizationEntity() {
   // Логотипа нет намеренно: раньше здесь стоял портрет основателя, а знак бюро ещё не прислали.
+  // ProfessionalService — разновидность LocalBusiness: у бюро есть офис с адресом и телефоном,
+  // это помогает в локальной выдаче. Часы и цены не указываем, пока бюро их не подтвердит.
   return {
-    "@type": "Organization",
+    "@type": ["Organization", "ProfessionalService"],
     "@id": ORGANIZATION_ID,
     name: BRAND_NAME,
     url: SITE_URL,
@@ -170,8 +172,20 @@ export function projectPageSchema(project: ProjectDetail) {
   ];
 }
 
-export function contactPageSchema() {
+/** Хлебные крошки раздела первого уровня: Главная → раздел. Только разметка, на странице их нет. */
+function sectionBreadcrumbSchema(name: string, path: string) {
   return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Главная", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name, item: `${SITE_URL}${path}` },
+    ],
+  };
+}
+
+export function contactPageSchema() {
+  return [{
     "@context": "https://schema.org",
     "@type": "ContactPage",
     name: "Контакты RINART",
@@ -179,11 +193,11 @@ export function contactPageSchema() {
     description:
       "Контактная информация архитектурного бюро RINART: телефон, почта, адрес офиса, мессенджеры и социальные сети.",
     mainEntity: organizationEntity(),
-  };
+  }, sectionBreadcrumbSchema("Контакты", "/kontakty")];
 }
 
 export function masterskajaPageSchema() {
-  return {
+  return [{
     "@context": "https://schema.org",
     "@type": "AboutPage",
     name: "Мастерская RINART",
@@ -191,7 +205,7 @@ export function masterskajaPageSchema() {
     description:
       "Команда архитектурной мастерской RINART, публикации и философия бюро. Узнайте, кто создаёт частную архитектуру и дизайн.",
     mainEntity: ORGANIZATION_REF,
-  };
+  }, sectionBreadcrumbSchema("Мастерская", "/masterskaja")];
 }
 
 type ArticleForSchema = {
@@ -288,9 +302,12 @@ export function servicePageSchema(service: { name: string; path: string; descrip
 }
 
 export function proektirovaniePageSchema() {
-  return servicePageSchema({
-    name: "Проектирование частных домов",
-    serviceType: "Архитектурное проектирование",
-    path: "/proektirovanie",
-  });
+  return [
+    servicePageSchema({
+      name: "Проектирование частных домов",
+      serviceType: "Архитектурное проектирование",
+      path: "/proektirovanie",
+    }),
+    sectionBreadcrumbSchema("Проектирование", "/proektirovanie"),
+  ];
 }
