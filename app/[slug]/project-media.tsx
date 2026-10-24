@@ -5,6 +5,10 @@ import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReveal } from "@/lib/use-reveal";
 import styles from "./page.module.css";
+import { buildResponsiveSrcSet } from "@/lib/image-srcset";
+
+/** Ширина картинки ленты: на десктопе колонка в половину экрана, на телефоне и планшете — весь экран. */
+const GALLERY_SIZES = "(max-width: 1024px) 100vw, 50vw";
 
 type Scheme = {
   title: string;
@@ -137,6 +141,13 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
       link.rel = "preload";
       link.as = "image";
       link.href = item.src;
+      // Тот же набор ширин и sizes, что у картинок ленты: браузер выбирает вариант по ширине
+      // экрана и берёт его потом из кеша. Без этого предзагружались оригиналы по 0,4–1,2 МБ —
+      // 3,4 МБ лишнего на странице проекта, причём лента их даже не использовала.
+      if (item.src.startsWith("/") && !item.src.startsWith("//")) {
+        link.setAttribute("imagesrcset", buildResponsiveSrcSet(item.src));
+        link.setAttribute("imagesizes", GALLERY_SIZES);
+      }
       document.head.appendChild(link);
       preloadLinks.push(link);
     });
@@ -248,9 +259,7 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
                   fetchPriority={index < 2 ? "high" : undefined}
                   width={1600}
                   height={1000}
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  // Раньше стоял unoptimized: в ленту уходили оригиналы по 0,4–1,2 МБ, и страница
-                  // проекта на телефоне весила 4,7 МБ. Полный размер остаётся в окне просмотра ниже.
+                  sizes={GALLERY_SIZES}
                   onClick={() => setActiveIndex(index)}
                 />
                 {item.type === "scheme" && item.caption ? (
