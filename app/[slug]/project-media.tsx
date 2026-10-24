@@ -249,7 +249,8 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
                   width={1600}
                   height={1000}
                   sizes="(max-width: 1024px) 100vw, 50vw"
-                  unoptimized
+                  // Раньше стоял unoptimized: в ленту уходили оригиналы по 0,4–1,2 МБ, и страница
+                  // проекта на телефоне весила 4,7 МБ. Полный размер остаётся в окне просмотра ниже.
                   onClick={() => setActiveIndex(index)}
                 />
                 {item.type === "scheme" && item.caption ? (
@@ -273,7 +274,6 @@ export function ProjectMedia({ title, featureImage, schemes, gallery, infoHeight
               width={1600}
               height={1000}
               sizes="100vw"
-              unoptimized
             />
             {item.type === "scheme" && item.caption ? (
               <figcaption className={styles.mediaCaption}>{item.caption}</figcaption>

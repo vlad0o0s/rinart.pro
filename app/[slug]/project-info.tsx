@@ -165,7 +165,6 @@ export function ProjectInfo({ title, descriptionHtml, descriptionParagraphs, onH
             width={1600}
             height={1000}
             sizes="100vw"
-            unoptimized
           />
         </div>
       ) : null}
