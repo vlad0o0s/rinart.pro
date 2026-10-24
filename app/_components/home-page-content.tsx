@@ -197,9 +197,15 @@ export function HomeProjectsSection({ projects }: HomeProjectsSectionProps) {
                         fetchPriority={index === 0 ? "high" : undefined}
                         priority={index === 0}
                         fill
-                        // Плитка неравномерная: широкие карточки занимают около 40vw, и при
-                        // прежних 22vw браузер подбирал слишком мелкий файл — изображение мылило.
-                        sizes="(max-width: 640px) 90vw, (max-width: 1200px) 50vw, 40vw"
+                        // Ширина карточки по сетке page.module.css (замерено 24.10.2026): до 640px —
+                        // две колонки (~53vw), 641–1024 — одна во всю ширину, 1025–1400 — широкая ~49vw
+                        // и узкая ~24vw, шире — широкая ~33vw и узкая ~16vw. Прежние 90vw на телефоне
+                        // заставляли качать файл 1080px под карточку в 219px, а 50vw на планшете мылили.
+                        sizes={
+                          isWideItem
+                            ? "(max-width: 640px) 55vw, (max-width: 1024px) 100vw, (max-width: 1400px) 50vw, 33vw"
+                            : "(max-width: 640px) 55vw, (max-width: 1024px) 100vw, (max-width: 1400px) 25vw, 17vw"
+                        }
                         quality={75}
                       />
                     ) : (

@@ -102,6 +102,9 @@ export default async function RootLayout({
   return (
     <html lang="ru" data-scroll-behavior="auto">
       <head>
+        {/* Заранее открываем соединение с Метрикой (Lighthouse: −190 мс на телефоне).
+            Только там, где счётчик разрешён: после отказа браузер к Яндексу не обращается. */}
+        {isAnalyticsAllowed(cookieConsent) ? <link rel="preconnect" href="https://mc.yandex.ru" /> : null}
         <noscript>
           {/* Без JavaScript анимацию заставки некому довести до конца, и занавес
               остался бы поверх страницы навсегда. Скрываем его сразу. */}
