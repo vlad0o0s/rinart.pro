@@ -40,6 +40,7 @@
   font-weight: 900;
   text-transform: uppercase;
   line-height: 1em;
+  color: #9bb698;
   opacity: 0;
   transform: translateY(14px);
 }
@@ -146,7 +147,7 @@
     font-weight: 900;
     text-transform: uppercase;
     line-height: 1em;
-    color: #252525;
+    color: #9bb698;
     width: 100%;
   }
 
